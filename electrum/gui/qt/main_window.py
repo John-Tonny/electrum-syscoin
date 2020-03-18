@@ -108,8 +108,8 @@ class StatusBarButton(QPushButton):
         if e.key() == Qt.Key_Return:
             self.func()
 
-
-class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger):
+###john
+class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
     payment_request_ok_signal = pyqtSignal()
     payment_request_error_signal = pyqtSignal()
@@ -253,6 +253,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger):
             self._update_check_thread = UpdateCheckThread(self)
             self._update_check_thread.checked.connect(on_version_received)
             self._update_check_thread.start()
+        ###john
+        self.assets_inited = None
+            
 
     def on_history(self, b):
         self.wallet.clear_coin_price_cache()
@@ -356,10 +359,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger):
             if self.wallet.network and self.wallet.network.is_connected() \
                     and len(self.wallet.get_addresses()) > 0 and self.assets_inited is None:
                 self.assets_inited = True
-                self.update_assets()
+                #self.update_assets()
             self.gui_object.network_updated_signal_obj.network_updated_signal \
                 .emit(event, args)
             self.network_signal.emit('status', None)
+            
         elif event == 'blockchain_updated':
             # to update number of confirmations in history
             self.need_update.set()

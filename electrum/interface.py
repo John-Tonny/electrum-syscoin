@@ -87,7 +87,8 @@ class NotificationSession(RPCSession):
 
     def _get_and_inc_msg_counter(self):
         # runs in event loop thread, no need for lock
-        self._msg_counter += 1
+        ###john
+        next(self._msg_counter)
         return self._msg_counter
 
     async def handle_request(self, request):
@@ -331,10 +332,10 @@ class Interface(PrintError):
             try:
                 return await func(self, *args, **kwargs)
             except GracefulDisconnect as e:
-                self.logger.log(e.log_level, f"disconnecting due to {repr(e)}")
+                self.print_error(e.log_level, f"disconnecting due to {repr(e)}")
             except aiorpcx.jsonrpc.RPCError as e:
-                self.logger.warning(f"disconnecting due to {repr(e)}")
-                self.logger.debug(f"(disconnect) trace for {repr(e)}", exc_info=True)
+                self.print_error(f"disconnecting due to {repr(e)}")
+                self.print_error(f"(disconnect) trace for {repr(e)}", exc_info=True)
             finally:
                 await self.network.connection_down(self)
                 self.got_disconnected.set_result(1)
@@ -354,7 +355,7 @@ class Interface(PrintError):
         try:
             await self.open_session(ssl_context)
         except (asyncio.CancelledError, ConnectError, aiorpcx.socks.SOCKSError) as e:
-            self.logger.info(f'disconnecting due to: {repr(e)}')
+            self.print_error(f'disconnecting due to: {repr(e)}')
             return
 
     def mark_ready(self):
@@ -415,17 +416,17 @@ class Interface(PrintError):
         return blockchain.deserialize_header(bytes.fromhex(res), height)
 
     async def request_chunk(self, height, tip=None, *, can_return_early=False):
-        index = height // 2016
+        index = height // constants.net.POW_BLOCK_ADJUST
         if can_return_early and index in self._requested_chunks:
             return
         self.print_error("requesting chunk from height {}".format(height))
-        size = 2016
+        size = constants.net.POW_BLOCK_ADJUST
         if tip is not None:
-            size = min(size, tip - index * 2016 + 1)
+            size = min(size, tip - index * constants.net.POW_BLOCK_ADJUST + 1)
             size = max(size, 0)
         try:
             self._requested_chunks.add(index)
-            res = await self.session.send_request('blockchain.block.headers', [index * 2016, size])
+            res = await self.session.send_request('blockchain.block.headers', [index * constants.net.POW_BLOCK_ADJUST, size])
         finally:
             try: self._requested_chunks.remove(index)
             except KeyError: pass
@@ -528,7 +529,7 @@ class Interface(PrintError):
                     last, height = await self.step(height)
                     continue
                 self.network.trigger_callback('network_updated')
-                height = (height // 2016 * 2016) + num_headers
+                height = (height // constants.net.POW_BLOCK_ADJUST * constants.net.POW_BLOCK_ADJUST) + num_headers
                 assert height <= next_height+1, (height, self.tip)
                 last = 'catchup'
             else:

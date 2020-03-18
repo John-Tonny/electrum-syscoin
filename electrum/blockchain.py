@@ -310,9 +310,14 @@ class Blockchain(Logger):
 
         if expected_header_hash and expected_header_hash != _hash:
             raise Exception("hash mismatches with expected: {} vs {}".format(expected_header_hash, _hash))
+            #return 
         if prev_hash != header.get('prev_block_hash'):
             raise Exception("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
         if constants.net.TESTNET or constants.net.REGTEST:
+            return
+        
+        ##john
+        if header['block_height'] >= 35160:
             return
         bits = cls.target_to_bits(target)
 
@@ -345,7 +350,12 @@ class Blockchain(Logger):
             header, start_position = deserialize_header(data, height,
                                                         expect_trailing_data=True,
                                                         start_position=start_position)
-            target = self.get_target(height, chunk_headers)
+            if (start_position % 80 != 0):
+                print("kkkkk:" + str(height))
+            
+            ###john
+            target = self.get_target(height//constants.net.POW_BLOCK_ADJUST-1, chunk_headers)
+            #target = self.get_target(height, chunk_headers)
             self.verify_header(header, prev_hash, target, expected_header_hash)
 
             chunk_headers[height] = header

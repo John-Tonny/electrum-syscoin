@@ -29,6 +29,9 @@ import sys
 import traceback
 import threading
 
+###john
+from typing import Optional
+
 
 
 try:

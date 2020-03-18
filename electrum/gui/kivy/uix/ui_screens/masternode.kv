@@ -1,0 +1,177 @@
+#:import _ electrum_dash.gui.kivy.i18n._
+#:import Decimal decimal.Decimal
+#:set btc_symbol chr(171)
+#:set mbtc_symbol chr(187)
+#:set font_light 'electrum_dash/gui/kivy/data/fonts/Roboto-Condensed.ttf'
+
+
+<CardLabel@Label>
+    color: 0.95, 0.95, 0.95, 1
+    size_hint: 1, None
+    text: ''
+    text_size: self.width, None
+    height: self.texture_size[1]
+    halign: 'left'
+    valign: 'top'
+
+
+<MasternodeItem@CardItem>
+    icon: 'atlas://electrum_dash/gui/kivy/theming/light/important'
+    txid: ''
+    index: ''
+    status: ''
+    alias: ''
+    collateral: ''
+    delegate: ''
+    announced: False
+    status_color: '#00FF00' if (self.status == 'ENABLED' or self.status == 'PRE_ENABLED') else '#FF8000'
+    Image:
+        id: icon
+        source: root.icon
+        size_hint: None, 1
+        allow_stretch: True
+        width: self.height*1.5
+        mipmap: True
+    BoxLayout:
+        orientation: 'vertical'
+        Widget
+        CardLabel:
+            text: root.txid + '-' + root.index
+            font_size: '13sp'
+        CardLabel:
+            color: .699, .699, .699, 1
+            font_size: '13sp'
+            shorten: True
+            text: u'[color={color}]{s}[/color]'.format(s=root.status, color=root.status_color) + '  ' + root.alias
+        Widget
+
+<MasternodeRecycleView>:
+    viewclass: 'MasternodeItem'
+    RecycleBoxLayout:
+        default_size: None, dp(56)
+        default_size_hint: 1, None
+        size_hint: 1, None
+        height: self.minimum_height
+        orientation: 'vertical'
+
+MasternodeScreen:
+    id: s
+    name: 'masternode'    
+    alias: ''
+    delegate: ''
+    collateral: ''
+    txid: ''
+    index: ''
+    info: ''
+    is_pr: False
+    content: masternode_container    
+    BoxLayout
+        padding: '12dp', '12dp', '12dp', '12dp'
+        spacing: '12dp'
+        orientation: 'vertical'
+        SendReceiveBlueBottom:
+            id: blue_bottom
+            size_hint: 1, None
+            height: self.minimum_height
+            BoxLayout:
+                id: alias_selection
+                size_hint: 1, None
+                height: blue_bottom.item_height
+                spacing: '5dp'
+                Image:
+                    source: 'atlas://electrum_dash/gui/kivy/theming/light/star_big_inactive'
+                    size_hint: None, None
+                    size: '22dp', '22dp'
+                    pos_hint: {'center_y': .5}
+                BlueButton:
+                    id: alias_e
+                    text: s.alias if s.alias else _('Alias')
+                    font_size: '13sp'
+                    shorten: True
+                    disabled: False
+                    on_release: Clock.schedule_once(lambda dt: app.masternode_dialog(_('Enter Alias'), s))
+            CardSeparator:
+                opacity: int(not root.is_pr)
+                color: blue_bottom.foreground_color            
+            BoxLayout:
+                id: delegate_selection
+                size_hint: 1, None
+                height: blue_bottom.item_height
+                spacing: '5dp'
+                Image:
+                    source: 'atlas://electrum_dash/gui/kivy/theming/light/dip3_op'
+                    size_hint: None, None
+                    size: '22dp', '22dp'
+                    pos_hint: {'center_y': .5}
+                BlueButton:
+                    id: delegate_e
+                    text: s.delegate if s.delegate else _('Delegete Key')
+                    font_size: '13sp'
+                    shorten: True
+                    disabled: False
+                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('Copy and paste the recipient address using the Paste button, or use the camera to scan a QR code.')))
+            CardSeparator:
+                opacity: int(not root.is_pr)
+                color: blue_bottom.foreground_color
+            BoxLayout:
+                id: collateral_selection
+                size_hint: 1, None
+                height: blue_bottom.item_height
+                spacing: '5dp'
+                Image:
+                    source: 'atlas://electrum_dash/gui/kivy/theming/light/globe'
+                    opacity: 0.7
+                    size_hint: None, None
+                    size: '22dp', '22dp'
+                    pos_hint: {'center_y': .5}
+                BlueButton:
+                    id: collateral_e
+                    text: s.collateral if s.collateral else _('Collateral Key')
+                    font_size: '13sp'
+                    disabled: False
+                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan.')))
+            CardSeparator:
+                opacity: int(not root.is_pr)
+                color: blue_bottom.foreground_color
+            BoxLayout:
+                id: txid_selection
+                size_hint: 1, None
+                height: blue_bottom.item_height
+                spacing: '5dp'
+                Image:
+                    source: 'atlas://electrum_dash/gui/kivy/theming/light/pen'
+                    size_hint: None, None
+                    size: '22dp', '22dp'
+                    pos_hint: {'center_y': .5}
+                BlueButton:
+                    id: txid_e
+                    text: s.txid + '-' + s.index if s.txid else _('Utxo')
+                    font_size: '13sp'
+                    disabled: False
+                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan.')))
+        BoxLayout:
+            size_hint: 1, None
+            height: '48dp'
+            IconButton:
+                id: qr
+                size_hint: 0.6, 1
+                on_release: Clock.schedule_once(lambda dt: app.scan_qr(on_complete=s.parent.on_qr_delegate))
+                icon: 'atlas://electrum_dash/gui/kivy/theming/light/camera'
+            Button:
+                text: _('Clear')
+                size_hint: 1, 1
+                on_release: s.parent.do_clear()
+            Button:
+                text: _('Paste')
+                size_hint: 1, 1
+                on_release: s.parent.do_paste()
+            Button:
+                text: _('Scan')
+                size_hint: 1, 1
+                on_release: s.parent.do_scan()
+        MasternodeRecycleView:
+            id: masternode_container
+            scroll_type: ['bars', 'content']
+            bar_width: '25dp'
+
+

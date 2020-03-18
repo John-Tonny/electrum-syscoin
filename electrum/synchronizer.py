@@ -62,6 +62,10 @@ class SynchronizerBase(NetworkJobOnDefaultServer):
     def __init__(self, network: 'Network'):
         self.asyncio_loop = network.asyncio_loop
         NetworkJobOnDefaultServer.__init__(self, network)
+        ###john
+        self._requests_answered = 0
+        self._requests_sent = 0
+
 
     def _reset(self):
         super()._reset()
@@ -159,7 +163,7 @@ class Synchronizer(SynchronizerBase):
         self.requested_histories[addr] = status
         h = address_to_scripthash(addr)
         result = await self.network.get_history_for_scripthash(h)
-        self.print_error("receiving history", addr, len(result))
+        self.logger.info("receiving history", addr, len(result))
         hashes = set(map(lambda item: item['tx_hash'], result))
         hist = list(map(lambda item: (item['tx_hash'], item['height']), result))
         # tx_fees
@@ -167,10 +171,10 @@ class Synchronizer(SynchronizerBase):
         tx_fees = dict(filter(lambda x:x[1] is not None, tx_fees))
         # Check that txids are unique
         if len(hashes) != len(result):
-            self.print_error("error: server history has non-unique txids: %s"% addr)
+            self.logger.info("error: server history has non-unique txids: %s"% addr)
         # Check that the status corresponds to what was announced
         elif history_status(hist) != status:
-            self.print_error("error: status mismatch: %s" % addr)
+            self.logger.info("error: status mismatch: %s" % addr)
         else:
             # Store received history
             self.wallet.receive_history_callback(addr, hist, tx_fees)
@@ -220,7 +224,7 @@ class Synchronizer(SynchronizerBase):
             raise SynchronizerFailure(f"received tx does not match expected txid ({tx_hash} != {tx.txid()})")
         tx_height = self.requested_tx.pop(tx_hash)
         self.wallet.receive_tx_callback(tx_hash, tx, tx_height)
-        self.print_error(f"received tx {tx_hash} height: {tx_height} bytes: {len(tx.raw)}")
+        self.logger.info(f"received tx {tx_hash} height: {tx_height} bytes: {len(tx.raw)}")
         # callbacks
         self.wallet.network.trigger_callback('new_transaction', self.wallet, tx)
 
@@ -268,7 +272,7 @@ class Notifier(SynchronizerBase):
             await self._add_address(addr)
 
     async def _on_address_status(self, addr, status):
-        self.print_error('new status for addr {}'.format(addr))
+        self.logger.info('new status for addr {}'.format(addr))
         headers = {'content-type': 'application/json'}
         data = {'address': addr, 'status': status}
         for url in self.watched_addresses[addr]:
@@ -277,6 +281,6 @@ class Notifier(SynchronizerBase):
                     async with session.post(url, json=data, headers=headers) as resp:
                         await resp.text()
             except Exception as e:
-                self.print_error(str(e))
+                self.logger.info(str(e))
             else:
-                self.print_error('Got Response for {}'.format(addr))
+                self.logger.info('Got Response for {}'.format(addr))
