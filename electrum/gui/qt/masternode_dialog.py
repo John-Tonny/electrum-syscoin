@@ -13,13 +13,13 @@ from PyQt5.QtWidgets import (QWidget, QTableView, QHeaderView,
                              QPushButton, QLineEdit, QHBoxLayout,
                              QFileDialog)
 
-from electrum_dash import bitcoin
-from electrum_dash.i18n import _
-from electrum_dash.masternode import MasternodeAnnounce
-from electrum_dash.masternode_manager import parse_masternode_conf
-from electrum_dash.protx_list import MNList
-from electrum_dash.util import bfh
-from electrum_dash.logging import Logger
+from electrum import bitcoin
+from electrum.i18n import _
+from electrum.masternode import MasternodeAnnounce
+from electrum.masternode_manager import parse_masternode_conf
+#from electrum.protx_list import MNList
+from electrum.util import bfh
+from electrum.logging import Logger
 
 from .masternode_widgets import (SignAnnounceWidget, masternode_status,
                                  MasternodeEditor, MasternodeOutputsTab)
@@ -285,17 +285,19 @@ class MasternodeDialog(QDialog, util.MessageBoxMixin, Logger):
         if len(self.manager.masternodes) == 0:
             self.masternodes_widget.add_masternode(MasternodeAnnounce(alias='default'), save=False)
         self.masternodes_widget.view.selectRow(0)
-
-        mn_list = self.gui.dip3_tab.mn_list
-        if mn_list:
-            mn_list.register_callback(self.on_mn_list_diff_updated,
-                                      ['mn-list-diff-updated'])
-        self.diff_updated.connect(self.on_diff_updated)
-
+        
+        #mn_list = self.gui.dip3_tab.mn_list
+        #if mn_list:
+        #    mn_list.register_callback(self.on_mn_list_diff_updated,
+        #                              ['mn-list-diff-updated'])
+        #self.diff_updated.connect(self.on_diff_updated)
+    
+        
     def closeEvent(self, event):
-        mn_list = self.gui.dip3_tab.mn_list
-        if mn_list:
-            mn_list.unregister_callback(self.on_mn_list_diff_updated)
+        #mn_list = self.gui.dip3_tab.mn_list
+        #if mn_list:
+        #    mn_list.unregister_callback(self.on_mn_list_diff_updated)
+        pass
 
     def on_mn_list_diff_updated(self, key, value):
         self.diff_updated.emit(value.get('state'))
@@ -334,22 +336,24 @@ class MasternodeDialog(QDialog, util.MessageBoxMixin, Logger):
         self.masternodes_widget.view.selectionModel().selectionChanged.connect(self.on_view_selection_changed)
 
         bottom_buttons = util.Buttons(util.CloseButton(self))
-
+        
+        
         vbox = QVBoxLayout()
-        self.dip3_warn = QLabel(_('Warning: DIP3 masternodes is active, '
-                                  'use DIP3 tab instead this dialog '
-                                  'to manage masternodes!'))
-        self.dip3_warn.setObjectName("dip3_warn")
-        mn_list = self.gui.dip3_tab.mn_list
-        dip3_state = mn_list.protx_state if mn_list else MNList.DIP3_UNKNOWN
-        self.on_dip3_state(dip3_state)
-        vbox.addWidget(self.dip3_warn)
+        #self.dip3_warn = QLabel(_('Warning: DIP3 masternodes is active, '
+        #                          'use DIP3 tab instead this dialog '
+        #                          'to manage masternodes!'))
+        #self.dip3_warn.setObjectName("dip3_warn")
+        #mn_list = self.gui.dip3_tab.mn_list
+        #dip3_state = mn_list.protx_state if mn_list else MNList.DIP3_UNKNOWN
+        #self.on_dip3_state(dip3_state)
+        #vbox.addWidget(self.dip3_warn)
         vbox.addWidget(QLabel(_('Masternodes:')))
         vbox.addWidget(self.masternodes_widget, stretch=1)
         vbox.addWidget(self.tabs)
         vbox.addLayout(bottom_buttons)
         self.setLayout(vbox)
-
+        
+        
     def create_view_masternode_tab(self):
         """Create the tab used to view masternodes."""
         desc = ' '.join(['In this tab, you can view your masternodes and fill in required data about them.',

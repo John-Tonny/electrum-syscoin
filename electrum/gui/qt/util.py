@@ -25,6 +25,10 @@ from electrum.util import (FileImportFailed, FileExportFailed,
                            resource_path)
 from electrum.paymentrequest import PR_UNPAID, PR_PAID, PR_EXPIRED
 
+###john
+import binascii
+
+
 if TYPE_CHECKING:
     from .main_window import ElectrumWindow
 
@@ -86,7 +90,6 @@ class ThreadedButton(QPushButton):
     def done(self):
         self.setEnabled(True)
         self.thread.stop()
-
 
 class WWLabel(QLabel):
     def __init__ (self, text="", parent=None):

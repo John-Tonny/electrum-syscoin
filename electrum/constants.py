@@ -38,6 +38,7 @@ def read_json(filename, default):
         r = default
     return r
 
+COLLATERAL_COINS = 1000
 
 class AbstractNet:
 

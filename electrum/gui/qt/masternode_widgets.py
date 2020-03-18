@@ -7,11 +7,11 @@ from PyQt5.QtWidgets import (QLineEdit, QListWidget, QAbstractItemView,
                              QCheckBox, QPushButton, QWidget, QSpinBox,
                              QHBoxLayout, QFormLayout, QDataWidgetMapper)
 
-from electrum_dash.constants import COLLATERAL_COINS
-from electrum_dash import bitcoin
-from electrum_dash.bitcoin import COIN
-from electrum_dash.i18n import _
-from electrum_dash.masternode import NetworkAddress, MasternodeAnnounce
+from electrum.constants import COLLATERAL_COINS
+from electrum import bitcoin
+from electrum.bitcoin import COIN
+from electrum.i18n import _
+from electrum.masternode import NetworkAddress, MasternodeAnnounce
 
 from . import util
 

@@ -9,11 +9,11 @@ from PyQt5.QtWidgets import (QLineEdit, QComboBox, QAbstractItemView,
                              QDataWidgetMapper, QHBoxLayout, QFormLayout,
                              QSpinBox, QTreeWidgetItem)
 
-from electrum_dash.i18n import _
-from electrum_dash.masternode_budget import BudgetProposal, BudgetVote
-from electrum_dash.masternode_manager import BUDGET_FEE_CONFIRMATIONS
-from electrum_dash.util import block_explorer_URL, format_satoshis_plain
-from electrum_dash.logging import get_logger
+from electrum.i18n import _
+from electrum.masternode_budget import BudgetProposal, BudgetVote
+from electrum.masternode_manager import BUDGET_FEE_CONFIRMATIONS
+from electrum.util import block_explorer_URL, format_satoshis_plain
+from electrum.logging import get_logger
 
 from .amountedit import BTCAmountEdit
 from . import util

@@ -3,17 +3,17 @@ import base64
 import threading
 from decimal import Decimal
 
-from electrum_dash.constants import COLLATERAL_COINS
-from electrum_dash import bitcoin
-from electrum_dash import ecc
-from electrum_dash.blockchain import hash_header
-from electrum_dash.masternode import MasternodeAnnounce, NetworkAddress
-from electrum_dash.util import AlreadyHaveAddress, bfh, bh2u
-from electrum_dash.util import format_satoshis_plain
+from electrum.constants import COLLATERAL_COINS
+from electrum import bitcoin
+from electrum import ecc
+from electrum.blockchain import hash_header
+from electrum.masternode import MasternodeAnnounce, NetworkAddress
+from electrum.util import AlreadyHaveAddress, bfh, bh2u
+from electrum.util import format_satoshis_plain
 
 from kivy.app import App
 from kivy.logger import Logger
-from electrum_dash.plugin import run_hook
+from electrum.plugin import run_hook
 import traceback
 
 

@@ -77,6 +77,7 @@ from .exception_window import Exception_Hook
 from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
+from .transaction_dialog import show_transaction
 from .fee_slider import FeeSlider
 from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialog,
                    WindowModalDialog, ChoicesLayout, HelpLabel, FromList, Buttons,
@@ -87,6 +88,10 @@ from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialo
 from .installwizard import WIF_HELP_TEXT
 from .history_list import HistoryList, HistoryModel
 from .update_checker import UpdateCheck, UpdateCheckThread
+
+###john
+from electrum.masternode_manager import MasternodeManager
+from .masternode_dialog import MasternodeDialog
 
 
 class StatusBarButton(QPushButton):
@@ -126,6 +131,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.gui_object = gui_object
         self.config = config = gui_object.config  # type: SimpleConfig
         self.gui_thread = gui_object.gui_thread
+        
+        ###john
+        self.masternode_manager = None
 
         self.setup_exception_hook()
 
@@ -167,6 +175,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.send_tab = self.create_send_tab()
         self.receive_tab = self.create_receive_tab()
         self.addresses_tab = self.create_addresses_tab()
+        self.masternode_tab = self.create_masternode_tab()
         self.utxo_tab = self.create_utxo_tab()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
@@ -203,7 +212,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         QShortcut(QKeySequence("F5"), self, self.update_wallet)
         QShortcut(QKeySequence("Ctrl+PgUp"), self, lambda: wrtabs.setCurrentIndex((wrtabs.currentIndex() - 1)%wrtabs.count()))
         QShortcut(QKeySequence("Ctrl+PgDown"), self, lambda: wrtabs.setCurrentIndex((wrtabs.currentIndex() + 1)%wrtabs.count()))
-
+        ###john
+        QShortcut(QKeySequence("Ctrl+M"), self, self.show_masternode_dialog)
+        
         for i in range(wrtabs.count()):
             QShortcut(QKeySequence("Alt+" + str(i + 1)), self, lambda i=i: wrtabs.setCurrentIndex(i))
 
@@ -419,6 +430,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     @profiler
     def load_wallet(self, wallet):
         wallet.thread = TaskThread(self, self.on_error)
+        ###john
+        self.masternode_manager = MasternodeManager(self.wallet, self.config)
+        
         self.update_recently_visited(wallet.storage.path)
         self.need_update.set()
         # Once GUI has been initialized check if we want to announce something since the callback has been called before the GUI was initialized
@@ -615,6 +629,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         add_toggle_action(view_menu, self.utxo_tab)
         add_toggle_action(view_menu, self.contacts_tab)
         add_toggle_action(view_menu, self.console_tab)
+
+        ###john
+        wallet_menu.addSeparator()
+        wallet_menu.addAction(_("Masternodes"), self.show_masternode_dialog)
 
         tools_menu = menubar.addMenu(_("&Tools"))
 
@@ -822,6 +840,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             icon = read_QIcon("status_disconnected.png")
 
         elif self.network.is_connected():
+            ###john
+            self.masternode_manager.send_subscriptions()
+            
             server_height = self.network.get_server_height()
             server_lag = self.network.get_local_height() - server_height
             fork_str = "_fork" if len(self.network.get_blockchains())>1 else ""
@@ -3484,3 +3505,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                      "to see it, you need to broadcast it."))
             win.msg_box(QPixmap(icon_path("offline_tx.png")), None, _('Success'), msg)
             return True
+
+    def show_masternode_dialog(self):
+        d = MasternodeDialog(self.masternode_manager, self)
+        d.exec_()

@@ -319,10 +319,10 @@ class Commands:
     @command('wp')
     def getprivatekeys(self, address, password=None):
         """Get private keys of addresses. You may pass a single wallet address, or a list of wallet addresses."""
-        if isinstance(address, str):
-            address = address.strip()
-        if is_address(address):
-            return self.wallet.export_private_key(address, password)[0]
+        #if isinstance(address, str):
+        #    address = address.strip()
+        #if is_address(address):
+        return self.wallet.export_private_key(address, password)[0]
         domain = address
         return [self.wallet.export_private_key(address, password)[0] for address in domain]
 
@@ -752,6 +752,15 @@ class Commands:
         return {
             "confirmations": self.wallet.get_tx_height(txid).conf,
         }
+
+    @command('n')
+    def exportcp(self, cpfile):
+        """Export checkpoints to file"""
+        try:
+            self.network.export_checkpoints(cpfile)
+            return 'Exporting checkpoints done'
+        except Exception as e:
+            return 'Error exporting checkpoints: ' + str(e)
 
     @command('')
     def help(self):

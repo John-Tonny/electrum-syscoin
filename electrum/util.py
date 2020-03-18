@@ -113,6 +113,11 @@ def base_asset_unit_name_to_decimal_point(au: str, unit_name: str) -> int:
     except KeyError:
         raise UnknownBaseUnit(unit_name) from None
 
+# Raised when importing a key that's already in the wallet.
+class AlreadyHaveAddress(Exception):
+    def __init__(self, msg, addr):
+        super(AlreadyHaveAddress, self).__init__(msg)
+        self.addr = addr
 
 class NotEnoughFunds(Exception):
     def __str__(self):

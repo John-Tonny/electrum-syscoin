@@ -426,6 +426,14 @@ def get_address_from_output_script(_bytes: bytes, *, net=None) -> Tuple[int, str
     return TYPE_SCRIPT, bh2u(_bytes)
 
 
+def parse_outpoint(vds):
+    d = {}
+    prevout_hash = hash_encode(vds.read_bytes(32))
+    prevout_n = vds.read_uint32()
+    d['prevout_hash'] = prevout_hash
+    d['prevout_n'] = prevout_n
+    return d
+
 def parse_input(vds, full_parse: bool):
     d = {}
     prevout_hash = hash_encode(vds.read_bytes(32))
