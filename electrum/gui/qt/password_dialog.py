@@ -307,3 +307,59 @@ class PasswordDialog(WindowModalDialog):
         if not self.exec_():
             return
         return self.pw.text()
+
+class RegisterDialog(WindowModalDialog):
+
+    def __init__(self, parent=None, msg=None):
+        msg = msg or _('Please enter your mobile and password')
+        WindowModalDialog.__init__(self, parent, _("Register"))
+        self.mobilephone = QLineEdit()
+        self.pw = pw = QLineEdit()
+        pw.setEchoMode(2)
+        self.pw1 = pw1 = QLineEdit()
+        pw1.setEchoMode(2)
+        vbox = QVBoxLayout()
+        vbox.addWidget(QLabel(msg))
+        grid = QGridLayout()        
+        grid.setSpacing(8)
+        grid.addWidget(QLabel(_('MobilePhone:')), 1, 0)
+        grid.addWidget(self.mobilephone, 1, 1)
+        grid.addWidget(QLabel(_('Password:')), 2, 0)
+        grid.addWidget(pw, 2, 1)
+        grid.addWidget(QLabel(_('Retry Password:')), 3, 0)
+        grid.addWidget(pw1, 3, 1)
+        vbox.addLayout(grid)
+        vbox.addLayout(Buttons(CancelButton(self), OkButton(self)))
+        self.setLayout(vbox)
+        run_hook('register_dialog', self.mobilephone, pw, pw1, grid, 1)
+
+    def run(self):
+        if not self.exec_():
+            return
+        return self.mobilephone.text(), self.pw.text(), self.pw1.text()
+    
+class LoginDialog(WindowModalDialog):
+
+    def __init__(self, parent=None, msg=None):
+        msg = msg or _('Please enter your mobile and password')
+        WindowModalDialog.__init__(self, parent, _("Login"))
+        self.mobilephone = QLineEdit()
+        self.pw = pw = QLineEdit()
+        pw.setEchoMode(2)
+        vbox = QVBoxLayout()
+        vbox.addWidget(QLabel(msg))
+        grid = QGridLayout()        
+        grid.setSpacing(8)
+        grid.addWidget(QLabel(_('MobilePhone:')), 1, 0)
+        grid.addWidget(self.mobilephone, 1, 1)
+        grid.addWidget(QLabel(_('Password:')), 2, 0)
+        grid.addWidget(pw, 2, 1)
+        vbox.addLayout(grid)
+        vbox.addLayout(Buttons(CancelButton(self), OkButton(self)))
+        self.setLayout(vbox)
+        run_hook('register_dialog', self.mobilephone, pw, grid, 1)
+
+    def run(self):
+        if not self.exec_():
+            return
+        return self.mobilephone.text(), self.pw.text()

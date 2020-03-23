@@ -140,14 +140,20 @@ class BCDataStream(object):
         return self.read_cursor < len(self.input)
 
     def read_boolean(self): return self.read_bytes(1)[0] != chr(0)
+    ###john
+    def read_char(self): return self._read_num('<b')
+    def read_uchar(self): return self._read_num('<B')    
     def read_int16(self): return self._read_num('<h')
     def read_uint16(self): return self._read_num('<H')
     def read_int32(self): return self._read_num('<i')
     def read_uint32(self): return self._read_num('<I')
     def read_int64(self): return self._read_num('<q')
     def read_uint64(self): return self._read_num('<Q')
-
+    
     def write_boolean(self, val): return self.write(chr(1) if val else chr(0))
+    ###john    
+    def write_char(self, val): return self._write_num('<b', val)
+    def write_uchar(self, val): return self._write_num('<B', val) 
     def write_int16(self, val): return self._write_num('<h', val)
     def write_uint16(self, val): return self._write_num('<H', val)
     def write_int32(self, val): return self._write_num('<i', val)

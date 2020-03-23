@@ -139,6 +139,7 @@ class Synchronizer(SynchronizerBase):
     def __init__(self, wallet: 'AddressSynchronizer'):
         self.wallet = wallet
         SynchronizerBase.__init__(self, wallet.network)
+        self._requests_sent = 0
 
     def _reset(self):
         super()._reset()

@@ -106,6 +106,11 @@ class Software_KeyStore(KeyStore):
         key = ecc.ECPrivkey(privkey)
         return key.sign_message(message, compressed)
 
+    def sign_masternode_message(self, sequence, message, password):
+        privkey, compressed = self.get_private_key(sequence, password)
+        key = ecc.ECPrivkey(privkey)
+        return key.sign_masternode_message(message, compressed)
+
     def decrypt_message(self, sequence, message, password):
         privkey, compressed = self.get_private_key(sequence, password)
         ec = ecc.ECPrivkey(privkey)

@@ -38,7 +38,7 @@ def read_json(filename, default):
         r = default
     return r
 
-COLLATERAL_COINS = 1000
+COLLATERAL_COINS = 100000
 
 class AbstractNet:
 
@@ -146,7 +146,8 @@ class SyscoinMainnet(AbstractNet):
     POW_TARGET_SPACING = 60  # 60 seconds
     POW_BLOCK_ADJUST = int(POW_TARGET_TIMESPAN / POW_TARGET_SPACING)
 
-    GENESIS = "0000022642db0346b6e01c2a397471f4f12e65d4f4251ec96c1f85367a61a7ab"
+    #GENESIS = "0000022642db0346b6e01c2a397471f4f12e65d4f4251ec96c1f85367a61a7ab"
+    GENESIS = "000004e3b842222bcd2b8b85fe53449e27f8d9d6cc12802c0bc2b03d8a5a6e5a"    
     DEFAULT_PORTS = {'t': '58881', 's': '58882'}
     DEFAULT_SERVERS = read_json('servers.json', {
         "104.248.3.80": {

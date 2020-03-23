@@ -7,12 +7,15 @@ from .constants import COLLATERAL_COINS
 from . import bitcoin
 from . import ecc
 from .blockchain import hash_header
-from .masternode import MasternodeAnnounce, NetworkAddress
+from .masternode import MasternodeAnnounce, NetworkAddress, MasternodePing
 from .masternode_budget import BudgetProposal, BudgetVote
 from .util import AlreadyHaveAddress, bfh, bh2u
 from .util import format_satoshis_plain
 from .logging import get_logger
 
+###john
+import random
+import copy
 
 _logger = get_logger(__name__)
 
@@ -94,24 +97,37 @@ class MasternodeManager(object):
         self.config = config
         # Subscribed masternode statuses.
         self.masternode_statuses = {}
-
+        self.subcribe_height = 0
+        self.test = True
         self.load()
-
+    
+    def set_wallet(self, wallet):
+        self.wallet = wallet
+        self.load()
+    
     def load(self):
         """Load masternodes from wallet storage."""
-        masternodes = self.wallet.storage.get('masternodes', {})
-        self.masternodes = [MasternodeAnnounce.from_dict(d) for d in masternodes.values()]
-        proposals = self.wallet.storage.get('budget_proposals', {})
+        self.masternodes= {}        
+        if self.wallet is None:
+            return
+        
+        masternodes = self.wallet.storage.get('masternodes2', {})
+        for key in masternodes.keys():
+            mn = masternodes[key]        
+            self.masternodes[key] = MasternodeAnnounce.from_dict(mn)
+        
+        proposals = self.wallet.storage.get('budget_proposals', {})        
         self.proposals = [BudgetProposal.from_dict(d) for d in proposals.values()]
         self.budget_votes = [BudgetVote.from_dict(d) for d in self.wallet.storage.get('budget_votes', [])]
 
     def send_subscriptions(self):
         if not self.wallet.network.is_connected():
             return
-        self.subscribe_to_masternodes()
+        self.subscribe_to_masternodes1()
 
     def subscribe_to_masternodes(self):
-        for mn in self.masternodes:
+        for key in self.masternodes.keys():
+            mn = self.masternodes[key]
             collateral = mn.get_collateral_str()
             if not '-' in collateral or len(collateral.split('-')[0]) != 64:
                 continue
@@ -129,37 +145,73 @@ class MasternodeManager(object):
                         _logger.info(f'subscribe_to_masternodes: {repr(e)}')
                 network.run_from_another_thread(update_collateral_status())
 
-    def get_masternode(self, alias):
+    def get_masternode(self, collateral):
         """Get the masternode labelled as alias."""
-        for mn in self.masternodes:
-            if mn.alias == alias:
-                return mn
+        for key in self.masternodes.keys():
+            if key == collateral:
+                return self.masternodes[key]
 
     def get_masternode_by_hash(self, hash_):
-        for mn in self.masternodes:
+        for key in self.masternodes.keys():
+            mn = self.masternodes[key]
             if mn.get_hash() == hash_:
                 return mn
-
+            
+    def isexist_from_name(self, mn):
+        for key in self.masternodes.keys():
+            if mn.alias == self.masternodes[key].alias :
+                return True, mn.alias
+        return False, mn.alias        
+    
+    def isexist_from_delegate(self, mn):
+        for key in self.masternodes.keys():
+            if mn.delegate_key == self.masternodes[key].delegate_key :
+                return True, mn.delegate_key
+        return False, mn.delegate_key
+    
     def add_masternode(self, mn, save = True):
         """Add a new masternode."""
-        if any(i.alias == mn.alias for i in self.masternodes):
-            raise Exception('A masternode with alias "%s" already exists' % mn.alias)
-        self.masternodes.append(mn)
+        key = mn.vin['prevout_hash'] + '-' + str(mn.vin['prevout_n'])
+        mn1 = self.masternodes.get(key)
+        
+        isexist, alias = self.isexist_from_name(mn)
+        if isexist:
+            raise Exception('A masternode with alias "%s" already exists' % alias)        
+        if mn.delegate_key != '':
+            isexist, delegate = self.isexist_from_delegate(mn)            
+            if isexist:
+                raise Exception('A masternode with Private Key "%s" already exists' % self.parent.wallet.get_delegate_private_key(delegate_key))                    
+        
+        if  mn1 is None:
+            self.masternodes[key] = mn
+        else:
+            if mn1.delegate_key == mn.delegate_key:                
+                raise Exception('A masternode with Private Key "%s" already exists' % self.parent.wallet.get_delegate_private_key(mn.delegate_key))
+            self.masternodes[key] = mn
         if save:
             self.save()
 
-    def remove_masternode(self, alias, save = True):
+    def remove_masternode(self, collateral, save = True):
         """Remove the masternode labelled as alias."""
-        mn = self.get_masternode(alias)
+        mn = self.get_masternode(collateral)
         if not mn:
             raise Exception('Nonexistent masternode')
         # Don't delete the delegate key if another masternode uses it too.
-        if not any(i.alias != mn.alias and i.delegate_key == mn.delegate_key for i in self.masternodes):
+        bDel = True
+        for key in self.masternodes.keys():
+            mn1 = self.masternodes[key]
+            if (mn1.alias != mn.alias and mn1.delegate_key == mn.delegate_key):
+                bDel = False
+                break
+        
+        if bDel:        
             self.wallet.delete_masternode_delegate(mn.delegate_key)
-
-        self.masternodes.remove(mn)
+        
+        self.masternodes.pop(collateral)
         if save:
             self.save()
+            
+        
 
     def populate_masternode_output(self, alias):
         """Attempt to populate the masternode's data using its output."""
@@ -194,7 +246,7 @@ class MasternodeManager(object):
         coins = self.wallet.get_utxos(domain, excluded_addresses=excluded,
                                       mature_only=True, confirmed_only=True)
         
-        used_vins = map(lambda mn: '%s:%d' % (mn.vin.get('prevout_hash'), mn.vin.get('prevout_n', 0xffffffff)), self.masternodes)
+        used_vins = map(lambda key: '%s:%d' % (self.masternodes[key].vin.get('prevout_hash'), self.masternodes[key].vin.get('prevout_n', 0xffffffff)), self.masternodes.keys())
         unused = lambda d: '%s:%d' % (d['prevout_hash'], d['prevout_n']) not in used_vins
         correct_amount = lambda d: d['value'] == COLLATERAL_COINS * bitcoin.COIN
 
@@ -244,19 +296,21 @@ class MasternodeManager(object):
     def save(self):
         """Save masternodes."""
         masternodes = {}
-        for mn in self.masternodes:
-            masternodes[mn.alias] = mn.dump()
+        for key in self.masternodes.keys():
+            mn = self.masternodes[key]
+            masternodes[key] = mn.dump()
+            
         proposals = {p.get_hash(): p.dump() for p in self.proposals}
         votes = [v.dump() for v in self.budget_votes]
 
-        self.wallet.storage.put('masternodes', masternodes)
+        self.wallet.storage.put('masternodes2', masternodes)        
         self.wallet.storage.put('budget_proposals', proposals)
         self.wallet.storage.put('budget_votes', votes)
 
-    def sign_announce(self, alias, password):
-        """Sign a Masternode Announce message for alias."""
-        self.check_can_sign_masternode(alias)
-        mn = self.get_masternode(alias)
+    def sign_announce(self, key, password):
+        """Sign a Masternode Announce message for alias."""        
+        #self.check_can_sign_masternode(alias)
+        mn = self.get_masternode(key)
         # Ensure that the masternode's vin is valid.
         if mn.vin.get('scriptSig') is None:
             mn.vin['scriptSig'] = ''
@@ -275,12 +329,12 @@ class MasternodeManager(object):
         # After creating the Masternode Ping, sign the Masternode Announce.
         address = bitcoin.public_key_to_p2pkh(bfh(mn.collateral_key))
         ######john
-        mn.sig = self.wallet.sign_message(address, mn.serialize_for_sig(update_time=True), password)
+        mn.sig = self.wallet.sign_masternode_message(address, mn.serialize_for_sig(), password)
         print("address:", address)
         print("announce sig:", base64.b64encode(mn.sig))
         return mn
 
-    def send_announce(self, alias):
+    def send_announce(self, key):
         """Broadcast a Masternode Announce message for alias to the network.
 
         Returns a 2-tuple of (error_message, was_announced).
@@ -288,7 +342,7 @@ class MasternodeManager(object):
         if not self.wallet.network.is_connected():
             raise Exception('Not connected')
 
-        mn = self.get_masternode(alias)
+        mn = self.get_masternode(key)
         # Vector-serialize the masternode.
         serialized = '01' + mn.serialize()
         print(serialized)
@@ -306,7 +360,7 @@ class MasternodeManager(object):
                 r['result'] = {}
                 r['error'] = str(e)
             try:
-                self.on_broadcast_announce(alias, r)
+                self.on_broadcast_announce(key, r)
             except Exception as e:
                 errmsg.append(str(e))
             finally:
@@ -319,7 +373,7 @@ class MasternodeManager(object):
             errmsg = errmsg[0]
         return (errmsg, mn.announced)
 
-    def on_broadcast_announce(self, alias, r):
+    def on_broadcast_announce(self, key, r):
         """Validate the server response."""
         err = r.get('error')
         if err:
@@ -327,7 +381,7 @@ class MasternodeManager(object):
 
         result = r.get('result')
 
-        mn = self.get_masternode(alias)
+        mn = self.get_masternode(key)
         mn_hash = mn.get_hash()
         mn_dict = result.get(mn_hash)
         if not mn_dict:
@@ -356,7 +410,8 @@ class MasternodeManager(object):
     def import_masternode_conf_lines(self, conf_lines, password):
         """Import a list of MasternodeConfLine."""
         def already_have(line):
-            for masternode in self.masternodes:
+            for key in self.masternodes.keys():
+                masternode = self.masternodes[key]
                 # Don't let aliases collide.
                 if masternode.alias == line.alias:
                     return True
@@ -369,14 +424,27 @@ class MasternodeManager(object):
         for conf_line in conf_lines:
             if already_have(conf_line):
                 continue
-            # Import delegate WIF key for signing last_ping.
-            public_key = self.import_masternode_delegate(conf_line.wif)
-
             addr = conf_line.addr.split(':')
             addr = NetworkAddress(ip=addr[0], port=int(addr[1]))
             vin = {'prevout_hash': conf_line.txid, 'prevout_n': conf_line.output_index}
-            mn = MasternodeAnnounce(alias=conf_line.alias, vin=vin,  
-                    delegate_key = public_key, addr=addr)
+            
+            ret, collateral = self.get_transaction(vin['prevout_hash'], vin['prevout_n'])
+            if not ret:
+                contunue
+                
+            try:
+                collateral = self.wallet.get_public_keys(collateral)[0]       
+            except Exception as e:
+                collateral = ''
+                continue
+                
+            try:
+                delegate = self.import_masternode_delegate(conf_line.wif)
+            except Exception as e:
+                continue
+                            
+            mn = MasternodeAnnounce(alias=conf_line.alias, vin=vin, collateral_key= collateral, 
+                    delegate_key = delegate, addr=addr)
             self.add_masternode(mn)
             try:
                 self.populate_masternode_output(mn.alias)
@@ -385,8 +453,6 @@ class MasternodeManager(object):
             num_imported += 1
 
         return num_imported
-
-
 
     def get_votes(self, alias):
         """Get budget votes that alias has cast."""
@@ -582,7 +648,8 @@ class MasternodeManager(object):
         """Callback for when a masternode's status changes."""
         collateral = response['params'][0]
         mn = None
-        for masternode in self.masternodes:
+        for key in self.masternodes.keys():
+            masternode = self.masternodes[key]
             if masternode.get_collateral_str() == collateral:
                 mn = masternode
                 break
@@ -599,3 +666,94 @@ class MasternodeManager(object):
         _logger.info(f'Received updated status for masternode '
                      f'{mn.alias}: "{status}"')
         self.masternode_statuses[collateral] = status
+        
+    ###john
+    def is_used_masternode(self, coin):
+        key = coin.get('prevout_hash') + '-' + str(coin.get('prevout_n'))
+        if self.masternodes.get(key) is None:
+            return False       
+        return True
+
+    def get_default_alias(self):
+        while True:
+            alias = 'mn-' + str(int(random.random()*10000))
+            if any(self.masternodes[key].alias == alias for key in self.masternodes.keys()):
+                continue
+            return alias
+
+    def subscribe_to_masternodes1(self):
+        if self.subcribe_height >= self.wallet.network.interface.tip :
+            return
+        self.subcribe_height = self.wallet.network.interface.tip                    
+        for mn in self.masternodes:
+            collateral = mn.get_collateral_str()
+            if not '-' in collateral or len(collateral.split('-')[0]) != 64:
+                continue
+            if not (self.masternode_statuses.get(collateral)) is None:
+                network = self.wallet.network
+                method = network.interface.session.send_request
+                request = ('masternode.subscribe', [collateral])
+                async def update_collateral_status():
+                    self.masternode_statuses[collateral] = ''
+                    try:
+                        res = await method(*request)
+                        response = {'params': request[1], 'result': res}
+                        self.masternode_subscription_response(response)
+                    except Exception as e:
+                        _logger.info(f'subscribe_to_masternodes: {repr(e)}')
+                network.run_from_another_thread(update_collateral_status())
+ 
+    def update_masternodes_status(self):
+        if self.subcribe_height >= self.wallet.network.interface.tip - 5  :
+            return
+        self.subcribe_height = self.wallet.network.interface.tip                    
+        collateral = []
+        for key in self.masternodes.keys():
+            mn = self.masternodes[key]
+            address = bitcoin.public_key_to_p2pkh(bfh(mn.collateral_key))
+            collateral.append(address)
+            
+        if len(self.masternodes) > 0:
+            network = self.wallet.network            
+            method = network.interface.session.send_request
+            request = ('masternode.list', [collateral])            
+            async def update_collateral_status():
+                try:
+                    res = await method(*request)
+                    self.show_masternode_status(res)
+                except Exception as e:
+                    _logger.info(f'list_to_masternodes: {repr(e)}')
+    
+            network.run_from_another_thread(update_collateral_status())
+     
+    def get_transaction(self, txid, index):
+        tx = self.wallet.db.get_transaction(txid)
+        if not tx:
+            return
+        ctx = copy.deepcopy(tx)  # type: Transaction
+        try:
+            ctx.deserialize()
+        except BaseException as e:
+            raise SerializationError(e)
+        
+        outputs = ctx._outputs[index]
+        address = outputs.address
+        if outputs.value != COLLATERAL_COINS * bitcoin.COIN:
+            return False, address
+        
+        return True, address
+        
+    def show_masternode_status(self, response):
+        for mn in response:
+            mn1 = self.masternodes.get(mn['vin'])
+            if mn1 is None:
+                continue
+            
+            mn1.status = mn['status']
+            mn1.lastseen = int(mn['lastseen'])
+            mn1.activeseconds = int(mn['activeseconds'])
+            ip, port = mn['ip'].split(":")
+            mn1.addr = NetworkAddress(ip=ip, port=int(port))
+            
+            self.save()
+            

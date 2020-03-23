@@ -86,7 +86,7 @@ from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialo
                    OkButton, InfoButton, WWLabel, TaskThread, CancelButton,
                    CloseButton, HelpButton, MessageBoxMixin, EnterButton, expiration_values,
                    ButtonsLineEdit, CopyCloseButton, import_meta_gui, export_meta_gui,
-                   filename_field, address_field, WaitingDialog)
+                   filename_field, address_field)
 from .installwizard import WIF_HELP_TEXT
 from .history_list import HistoryList, HistoryModel
 from .update_checker import UpdateCheck, UpdateCheckThread
@@ -561,6 +561,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if not filename:
             return
         self.gui_object.new_window(filename)
+
 
     def backup_wallet(self):
         path = self.wallet.storage.path
@@ -3565,62 +3566,65 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         #grid.setColumnStretch(5, 1)
 
         self.alias_e = MyLineEdit()
-        self.alias_label = QLabel(_('Alias:'))
-        grid.addWidget(self.alias_label, 1, 0)
+        msg = _('Alias.') + '\n\n'\
+              + _('alias')
+        alias_label = HelpLabel(_('Alias:'), msg)
+        grid.addWidget(alias_label, 1, 0)
         grid.addWidget(self.alias_e, 1, 1)
         
-        self.ip_e = MyLineEdit()
-        self.ip_label =QLabel(_('Address IP:'))
-        grid.addWidget(self.ip_label, 1, 2)
-        grid.addWidget(self.ip_e, 1, 3)
-
-        self.port_e = MyLineEdit()
-        self.port_label = QLabel(_('Port:'))
-        grid.addWidget(self.port_label, 1, 4)
-        grid.addWidget(self.port_e, 1, 5)
+        self.addr_e = MyLineEdit()
+        msg = _('Addrress.') + '\n\n'\
+              + _('addr')
+        addr_label = HelpLabel(_('Address IP:'), msg)
+        grid.addWidget(addr_label, 1, 2)
+        grid.addWidget(self.addr_e, 1, 3, 1, -1)
 
         self.txid_e = MyLineEdit()
-        self.txid_label = QLabel(_('Collateral Txid:'))
-        grid.addWidget(self.txid_label, 2, 0)
+        msg = _('Collateral Vircle Output.') + '\n\n'\
+              + _('txid')
+        txid_label = HelpLabel(_('Collateral Txid:'), msg)
+        grid.addWidget(txid_label, 2, 0)
         grid.addWidget(self.txid_e, 2, 1, 1, -1)
 
         self.index_e = MyLineEdit()
-        self.index_label = QLabel(_('Collateral Index'))
-        grid.addWidget(self.index_label, 3, 0)
+        msg = _('Collateral Vircle Output.') + '\n\n'\
+              + _('index:')
+        index_label = HelpLabel(_('Collateral Index'), msg)
+        grid.addWidget(index_label, 3, 0)
         grid.addWidget(self.index_e, 3, 1)
 
         self.address_e = MyLineEdit()
-        self.address_label = QLabel(_('Address:'))
-        grid.addWidget(self.address_label, 3, 2)
+        msg = _('Collateral Vircle Output.') + '\n\n'\
+              + _('address')
+        address_label = HelpLabel(_('Address:'), msg)
+        grid.addWidget(address_label, 3, 2)
         grid.addWidget(self.address_e, 3, 3, 1, -1)
 
         self.delegate_e = MyLineEdit()
-        self.delegate_label = QLabel(_('Masternode Private Key:'))
-        grid.addWidget(self.delegate_label, 4, 0)
+        msg = _('Masternode Private Key.') + '\n\n'\
+              + _('key)')
+        delegate_label = HelpLabel(_('Masternode Private Key:'), msg)
+        grid.addWidget(delegate_label, 4, 0)
         grid.addWidget(self.delegate_e, 4, 1, 1, -1)
 
-        self.masternode_hide_button = EnterButton(_("Hide"), self.masternode_hide)
-        self.masternode_import_button = EnterButton(_("Import"), self.masternode_import)
-        self.masternode_scan_button = EnterButton(_("Scan"), self.masternode_scan)
-        self.masternode_scan_button.setToolTip(_('Display the details of your transaction before signing it.'))
-        self.masternode_generate_button = EnterButton(_("Generate"), self.masternode_generate)
-        self.masternode_activate_button = EnterButton(_("Activate"), self.masternode_do_activate)
-        self.masternode_clear_button = EnterButton(_("Clear"), self.masternode_clear)
-        self.masternode_remove_button = EnterButton(_("Remove"), self.masternode_do_remove)
-        self.masternode_remove_all_button = EnterButton(_("Remove All"), self.masternode_remove_all)
-        self.masternode_monit_button = EnterButton(_("Monit"), self.masternode_monit)
+        self.import_masternode_button = EnterButton(_("Import"), self.masternode_import)
+        self.scan_button = EnterButton(_("Scan"), self.masternode_scan)
+        self.scan_button.setToolTip(_('Display the details of your transaction before signing it.'))
+        self.generate_button = EnterButton(_("Generate"), self.masternode_generate)
+        self.activate_button = EnterButton(_("Activate"), self.do_activate)
+        self.clear_button = EnterButton(_("Clear"), self.masternode_clear)
+        self.remove_button = EnterButton(_("Remove"), self.masternode_remove)
+        self.monit_button = EnterButton(_("Monit"), self.masternode_monit)
         buttons = QHBoxLayout()
-        buttons.addWidget(self.masternode_hide_button)
-        buttons.addWidget(self.masternode_import_button)
-        buttons.addWidget(self.masternode_generate_button)
+        buttons.addWidget(self.import_masternode_button)
+        buttons.addWidget(self.generate_button)
         buttons.addStretch(1)
-        buttons.addWidget(self.masternode_scan_button)
-        buttons.addWidget(self.masternode_clear_button)
-        buttons.addWidget(self.masternode_remove_button)
-        buttons.addWidget(self.masternode_remove_all_button)
-        buttons.addWidget(self.masternode_activate_button)
-        buttons.addWidget(self.masternode_monit_button)
-        grid.addLayout(buttons, 5, 1, 1, -1)
+        buttons.addWidget(self.scan_button)
+        buttons.addWidget(self.clear_button)
+        buttons.addWidget(self.remove_button)
+        buttons.addWidget(self.activate_button)
+        buttons.addWidget(self.monit_button)
+        grid.addLayout(buttons, 5, 0, 1, 3)
                 
         vbox0 = QVBoxLayout()
         vbox0.addLayout(grid)
@@ -3633,7 +3637,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         
         self.masternode_list = l = MasternodeList(self)
         vbox1.addWidget(l)
-        vbox.addLayout(vbox1)                
+        vbox.addLayout(vbox1)        
+        
+        vbox.addStretch(1)        
+        vbox.addWidget(self.invoices_label)
+        vbox.addWidget(self.invoice_list)
+        vbox.setStretchFactor(self.invoice_list, 1000)
+        w.searchable_list = self.invoice_list
+
         run_hook('create_masternode_tab', grid)
         return w
     
@@ -3670,7 +3681,20 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_error(str(e))
             
     def masternode_activate(self, collateral):
-        self.sign_announce(collateral[0])
+        collateral = mn.get_collateral_str()
+        if not '-' in collateral or len(collateral.split('-')[0]) != 64:
+            return
+        network = self.wallet.network
+        method = network.interface.session.send_request
+        request = ('masternode.subscribe', [collateral])
+        async def update_collateral_status():
+            self.masternode_statuses[collateral] = ''
+            try:
+                res = await method(*request)
+                response = {'params': request[1], 'result': res}
+            except Exception as e:
+                _logger.info(f'subscribe_to_masternodes: {repr(e)}')
+        network.run_from_another_thread(update_collateral_status())        
     
     def masternode_monit(self):        
         vin = {'prevout_hash': self.txid_e.text(), 'prevout_n': int(self.index_e.text())}                    
@@ -3697,24 +3721,17 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         except Exception as e:
             self.show_error(str(e))        
         
-    def masternode_remove_all(self):
-        reply = QMessageBox.question(self, 'Message', "Are you sure to remove all?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        if reply == QMessageBox.Yes:
-            self.masternode_manager.masternodes = {}
-            self.masternode_manager.save()
-            self.masternode_list.update()
-    
-    def masternode_do_remove(self):
-        pass
-
     def masternode_remove(self, collateral):
-        reply = QMessageBox.question(self, 'Message', "Are you sure to remove all?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        if reply == QMessageBox.Yes:
-            try:
-                self.masternode_manager.remove_masternode(collateral[0])
-                self.masternode_list.update()
-            except Exception as e:
-                self.show_error(str(e))
+        self.masternode_manager.masternodes = {}
+        self.masternode_manager.save()
+        self.masternode_list.update()
+        '''
+        try:
+            self.masternode_manager.remove_masternode(collateral[0])
+            self.masternode_list.update()
+        except Exception as e:
+            self.show_error(str(e))
+        '''
 
     def masternode_generate(self):
         private_key = b'\x80' + os.urandom(32)
@@ -3724,8 +3741,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     
     def masternode_import(self):
         text = QFileDialog.getOpenFileName(None, _('Select a file to import'), '', '*.conf')
-        filename, ext = text
-        if filename !='' and len(text) == 2:
+        if text and len(text) == 2:
             self.import_masternode_conf(text[0])
             self.masternode_list.update()
     
@@ -3798,7 +3814,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         
         return True
     
-    def masternode_do_activate(self):
+    def do_activate(self):
         '''
         if self.check_status(obj):
             self.app.show_info('Masternode has already been activated')
@@ -3830,148 +3846,84 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def check_collateral(self, collateral):
         if len(collateral) == 0:
             return False
-        return True   
+        return True
 
-    def sign_announce(self, key=None):
-        """Sign an announce for alias. This is called by SignAnnounceWidget."""
+    def sign_announce(self):
+        """Sign a Masternode Announce message for alias."""
+        #self.check_can_sign_masternode(alias)   
+        #if self.app.wallet.has_password() and password is None:
+        #    return
         
-        if key is None:
-            alias = self.alias_e.text()
-            try:
-                delegate = self.wallet.import_masternode_delegate(self.delegate_e.text())
-            except AlreadyHaveAddress:
-                txin_type, key, is_compressed = bitcoin.deserialize_privkey(self.delegate_e.text())
-                delegate = ecc.ECPrivkey(key).get_public_key_hex(compressed=is_compressed)
-            except Exception as e:
-                self.show_error(_("InValid Deletate Key"))
+        alias = self.alias_e.text()
+        try:
+            delegate = self.wallet.import_masternode_delegate(self.delegate_e.text())
+        except AlreadyHaveAddress:
+            txin_type, key, is_compressed = bitcoin.deserialize_privkey(self.delegate_e.text())
+            delegate = ecc.ECPrivkey(key).get_public_key_hex(compressed=is_compressed)
+        except Exception as e:
+            self.show_error(_("InValid Deletate Key"))
+            return
+                
+        try:
+            collateral = self.wallet.get_public_keys(self.address_e.text())[0]            
+        except Exception as e:
+            self.app.show_error(_("InValid Collateral Key"))
+            return
+        
+        try:
+            txid = self.txid_e.text()
+            index = self.index_e.text()
+            key = txid + "-" + str(index)
+            vin = {'prevout_hash': txid, 'prevout_n': int(index)}    
+            mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(ip="1.2.3.4", port=9069),
+                                    collateral_key=collateral, delegate_key=delegate, sig='', sig_time=0,
+                                    protocol_version=31800, last_ping=MasternodePing(),announced=False)             
+            #self.masternode_manager.add_masternode(mn, save=True)            
+        except Exception as e:
+            self.show_error(str(e))
+            #self.app.masternode_manager.rename_masternode(mn)
+        '''               
+        password = None
+        if self.wallet.has_keystore_encryption():
+            password = self.password_dialog()
+            if not password:
                 return
-                    
-            try:
-                collateral = self.wallet.get_public_keys(self.address_e.text())[0]            
-            except Exception as e:
-                self.app.show_error(_("InValid Collateral Key"))
-                return
-            
-            try:
-                txid = self.txid_e.text()
-                index = self.index_e.text()
-                key = txid + "-" + str(index)
-                vin = {'prevout_hash': txid, 'prevout_n': int(index)}    
-                mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(ip="1.2.3.4", port=9069),
-                                        collateral_key=collateral, delegate_key=delegate, sig='', sig_time=0,
-                                        protocol_version=31800, last_ping=MasternodePing(),announced=False)             
-                #self.masternode_manager.add_masternode(mn, save=True)            
-            except Exception as e:
-                self.show_error(str(e))
-                #self.app.masternode_manager.rename_masternode(mn)
-                    
         '''
-        pw = None
-        if self.manager.wallet.has_password():
-            pw = self.gui.password_dialog(msg=_('Please enter your password to activate masternode "%s".' % alias))
-            if pw is None:
-                return
-        ''' 
-        pw = 'htjonny'
-
-        mn = self.masternode_manager.get_masternode(key)
+        password = 'htjonny'
+        self.send_announce(key, password)
         
-        def sign_thread():
-            return self.masternode_manager.sign_announce(key, pw)
-
-        def on_sign_successful(mn):
-            self.print_msg('Successfully signed Masternode Announce.')
-            self.send_announce(key)
-        # Proceed to broadcasting the announcement, or re-enable the button.
-        def on_sign_error(err):
-            self.show_error('Error signing MasternodeAnnounce:')
-            # Print traceback information to error log.
-            self.print_error(''.join(traceback.format_tb(err[2])))
-            self.print_error(''.join(traceback.format_exception_only(err[0],
-                                                                      err[1])))
-
-        WaitingDialog(self, _('Signing Masternode Announce...'), sign_thread, on_sign_successful, on_sign_error)
-
-    def send_announce(self, key):
-        """Send an announce for a masternode."""
-        def send_thread():
-            return self.masternode_manager.send_announce(key)
-
-        def on_send_successful(result):
-            errmsg, was_announced = result
-            if errmsg:
-                self.print_error(f'Failed to broadcast MasternodeAnnounce: '
-                                  f'{errmsg}')
-                self.show_critical(errmsg, title=_('Error Sending'))
+    def send_announce(self, key, password):
+        def on_success(errmsg, was_announced):
+            if len(errmsg) > 0 :
+                self.show_error("k2:" + errmsg)
             elif was_announced:
-                self.print_msg(f'Successfully broadcasted '
-                                 f'MasternodeAnnounce for "{key}"')
-                self.show_message(_('Masternode activated successfully.'),
-                                  title=_('Success'))
-            self.masternode_list.update()
-
-        def on_send_error(err):
-            self.print_error('Error sending Masternode Announce message:')
-            # Print traceback information to error log.
-            self.print_error(''.join(traceback.format_tb(err[2])))
-            self.print_error(''.join(traceback.format_exception_only(err[0],
-                                                                      err[1])))
+                self.show_info('Masternode activated successfully.')
             self.masternode_list.update()
             
-        self.print_msg('Sending Masternode Announce message...')
-        WaitingDialog(self, _('Broadcasting masternode...'), send_thread, on_send_successful, on_send_error)
+        def on_failure(error):
+            self.show_error("k3:" + error)
+            self.masternode_list.update()
+        
+        try:
+            self.masternode_manager.sign_announce(key, password)
+        except Exception as e:
+            self.show_error("sign announce fail")
+            return
+        
+        try:
+            self._send_announce(key, on_success, on_failure)
+        except Exception as e:
+            self.show_error(str(e))
+    
+    def _send_announce(self, *args):
+        threading.Thread(target=self._sign_announce, args=args).start()
+    
+    def _sign_announce(self, key, on_success, on_failure):
+        try:
+            errmsg, was_announced = self.masternode_manager.send_announce(key)            
+        except Exception as e:
+            Clock.schedule_once(lambda dt: on_failure(_("broadcast announce fail")))
+            return
+        Clock.schedule_once(lambda dt: on_success(errmsg, was_announced))
+    
 
-    def masternode_hide(self):
-        show = self.masternode_hide_button.text()
-        if show == "Hide":
-            self.masternode_hide_button.setText("Show")
-            self.alias_e.hide()
-            self.alias_label.hide()
-            self.ip_e.hide()
-            self.ip_label.hide()
-            self.port_e.hide()
-            self.port_label.hide()
-            
-            self.txid_e.hide()
-            self.txid_label.hide()
-            
-            self.index_e.hide()
-            self.index_label.hide()
-            self.address_e.hide()
-            self.address_label.hide()
-            
-            self.delegate_e.hide()
-            self.delegate_label.hide()
-            
-            self.masternode_generate_button.hide()
-            self.masternode_clear_button.hide()
-            self.masternode_activate_button.hide()
-            self.masternode_monit_button.hide()
-            self.masternode_scan_button.hide()
-            self.masternode_remove_button.hide()
-        else:
-            self.masternode_hide_button.setText("Hide")
-            self.alias_e.show()
-            self.alias_label.show()
-            self.ip_e.show()
-            self.ip_label.show()
-            self.port_e.show()
-            self.port_label.show()
-            
-            self.txid_e.hide()
-            self.txid_label.hide()
-            
-            self.index_e.show()
-            self.index_label.show()
-            self.address_e.show()
-            self.address_label.show()
-            
-            self.delegate_e.show()
-            self.delegate_label.show()
-
-            self.masternode_generate_button.show()
-            self.masternode_clear_button.show()
-            self.masternode_activate_button.show()
-            self.masternode_monit_button.show()
-            self.masternode_scan_button.show()
-            self.masternode_remove_button.show()

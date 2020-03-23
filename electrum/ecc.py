@@ -40,12 +40,10 @@ from . import msqr
 from . import constants
 from .logging import get_logger
 
-
 _logger = get_logger(__name__)
 do_monkey_patching_of_python_ecdsa_internals_with_libsecp256k1()
 
 CURVE_ORDER = SECP256k1.order
-
 
 def generator():
     return ECPubkey.from_point(generator_secp256k1)
@@ -266,6 +264,17 @@ class ECPubkey(object):
         # check message
         self.verify_message_hash(sig65[1:], h)
 
+    def verify_masternode_message_for_address(self, sig65: bytes, message: bytes) -> None:
+        assert_bytes(message)
+        ###john
+        h = sha256d(message)#[::-1]  
+        public_key, compressed = self.from_signature65(sig65, h)
+        # check public key
+        if public_key != self:
+            raise Exception("Bad signature")
+        # check message
+        self.verify_message_hash(sig65[1:], h)
+
     def verify_message_hash(self, sig_string: bytes, msg_hash: bytes) -> None:
         assert_bytes(sig_string)
         if len(sig_string) != 64:
@@ -417,6 +426,31 @@ class ECPrivkey(ECPubkey):
 
         message = to_bytes(message, 'utf8')
         msg_hash = sha256d(msg_magic(message))
+        sig_string = self.sign(msg_hash,
+                               sigencode=sig_string_from_r_and_s,
+                               sigdecode=get_r_and_s_from_sig_string)
+        sig65, recid = bruteforce_recid(sig_string)
+        return sig65
+
+    def sign_masternode_message(self, message: bytes, is_compressed: bool) -> bytes:
+        def bruteforce_recid(sig_string):
+            for recid in range(4):
+                sig65 = construct_sig65(sig_string, recid, is_compressed)
+                try:
+                    self.verify_masternode_message_for_address(sig65, message)
+                    return sig65, recid
+                except Exception as e:
+                    continue
+            else:
+                return "", ""
+                #raise Exception("error: cannot sign message. no recid fits..")
+
+        ###john
+        msg_hash = sha256d(message)#[::-1]  
+        print("msg:", bh2u(message))
+        print("msg_hash:", bh2u(msg_hash))
+        #msg_hash = bfh('d7120a61931176acd7524eb3c901d468cecc4a0d08c2279b98250ff323d47bab')
+        #msg_hash = sha256d(msg_magic(message))
         sig_string = self.sign(msg_hash,
                                sigencode=sig_string_from_r_and_s,
                                sigdecode=get_r_and_s_from_sig_string)

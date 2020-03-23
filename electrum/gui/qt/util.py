@@ -463,7 +463,7 @@ class ElectrumItemDelegate(QStyledItemDelegate):
 
 class MyTreeView(QTreeView):
 
-    def __init__(self, parent: 'ElectrumWindow', create_menu, stretch_column=None, editable_columns=None):
+    def __init__(self, parent: 'ElectrumWindow', create_menu, stretch_column=None, editable_columns=None, tv=None):
         super().__init__(parent)
         self.parent = parent
         self.config = self.parent.config
@@ -471,13 +471,16 @@ class MyTreeView(QTreeView):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(create_menu)
         self.setUniformRowHeights(True)
+        
+        self.tv = tv
+        self.doubleClicked.connect(self.tree_clicked)
 
         # Control which columns are editable
         if editable_columns is None:
             editable_columns = {stretch_column}
         else:
             editable_columns = set(editable_columns)
-        self.editable_columns = editable_columns
+        self.editable_columns = editable_columns        
         self.setItemDelegate(ElectrumItemDelegate(self))
         self.current_filter = ""
 
@@ -490,10 +493,17 @@ class MyTreeView(QTreeView):
         # So to speed the UI up considerably, set it to
         # only look at as many rows as currently visible.
         self.header().setResizeContentsPrecision(0)
-
+    
+    def tree_clicked(self, Qmodelidx):
+        if not (self.tv is None):
+            self.tv.on_clicked(Qmodelidx)
+        
     def set_editability(self, items):
         for idx, i in enumerate(items):
             i.setEditable(idx in self.editable_columns)
+    
+    def disable_editability(self):
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def selected_in_column(self, column: int):
         items = self.selectionModel().selectedIndexes()

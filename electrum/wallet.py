@@ -43,10 +43,10 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union, NamedTuple
 from .i18n import _
 from .util import (NotEnoughFunds, PrintError, UserCancelled, profiler,
                    format_satoshis, format_fee_satoshis, NoDynamicFeeEstimates,
-                   WalletFileException, BitcoinException,
+                   WalletFileException, BitcoinException, AlreadyHaveAddress,
                    InvalidPassword, format_time, timestamp_to_datetime, Satoshis,
                    Fiat, bfh, bh2u, TxMinedInfo, print_error)
-from .bitcoin import (COIN, TYPE_ADDRESS, is_address, address_to_script,
+from .bitcoin import (COIN, TYPE_ADDRESS, is_address, address_to_script, public_key_to_p2pkh,
                       is_minikey, relayfee, dust_threshold)
 from .crypto import sha256d
 from . import keystore
@@ -223,6 +223,9 @@ class Abstract_Wallet(AddressSynchronizer):
         self.receive_requests      = storage.get('payment_requests', {})
 
         self.calc_unused_change_addresses()
+
+        #john Delegate keys for signing Masternode Pings.
+        self.masternode_delegates = storage.get('masternode_delegates', {})
 
         # save wallet type the first time
         if self.storage.get('wallet_type') is None:
@@ -1274,6 +1277,10 @@ class Abstract_Wallet(AddressSynchronizer):
         index = self.get_address_index(address)
         return self.keystore.sign_message(index, message, password)
 
+    def sign_masternode_message(self, address, message, password):
+        index = self.get_address_index(address)
+        return self.keystore.sign_masternode_message(index, message, password)
+
     def decrypt_message(self, pubkey, message, password):
         addr = self.pubkeys_to_address(pubkey)
         index = self.get_address_index(addr)
@@ -1339,6 +1346,51 @@ class Abstract_Wallet(AddressSynchronizer):
             else:
                 p = self.price_at_timestamp(txid, price_func)
                 return p * txin_value/Decimal(COIN)
+
+    #john  Abstract_Wallet additions
+    def get_delegate_private_key(self, pubkey):
+        """Get the private delegate key for pubkey."""
+        return self.masternode_delegates.get(pubkey, '')
+
+    def import_masternode_delegate(self, sec):
+        """Import the private key for a masternode."""
+        try:
+            txin_type, key, is_compressed = bitcoin.deserialize_privkey(sec)
+            pubkey = ecc.ECPrivkey(key)\
+                .get_public_key_hex(compressed=is_compressed)
+            address = public_key_to_p2pkh(pubkey)
+        except BaseException:
+            raise Exception('Invalid private key')
+
+        if self.masternode_delegates.get(pubkey):
+            raise AlreadyHaveAddress('Masternode key already in wallet',
+                                     address)
+
+        self.masternode_delegates[pubkey] = sec
+        self.storage.put('masternode_delegates', self.masternode_delegates)
+            
+        return pubkey
+
+    def delete_masternode_delegate(self, pubkey):
+        if self.masternode_delegates.get(pubkey):
+            del self.masternode_delegates[pubkey]
+            self.storage.put('masternode_delegates', self.masternode_delegates)
+
+    def sign_masternode_ping(self, ping, pubkey):
+        """Sign a Masternode Ping for address."""
+        sec = self.masternode_delegates.get(pubkey)
+        if not sec:
+            raise Exception('Private key not known for public key %s' % pubkey)
+        ping.sign(sec)
+        return True
+
+    def sign_budget_vote(self, vote, pubkey):
+        """Sign a Budget Vote for address."""
+        sec = self.masternode_delegates.get(pubkey)
+        if not sec:
+            raise Exception('Private key not known for public key %s' % pubkey)
+        return vote.sign(sec)
+
 
     def is_billing_address(self, addr):
         # overloaded for TrustedCoin wallets
