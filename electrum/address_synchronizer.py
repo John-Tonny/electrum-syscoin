@@ -583,7 +583,14 @@ class AddressSynchronizer(PrintError):
 
     def is_up_to_date(self):
         with self.lock: return self.up_to_date
-
+    
+    ###john
+    def get_history_sync_state_details(self) -> Tuple[int, int]:
+        if self.synchronizer:
+            return self.synchronizer.num_requests_sent_and_answered()
+        else:
+            return 0, 0
+        
     @with_transaction_lock
     def get_tx_delta(self, tx_hash, address):
         """effect of tx on address"""

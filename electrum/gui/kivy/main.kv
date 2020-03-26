@@ -372,7 +372,7 @@
     TabbedCarousel:
         id: panel
         tab_height: '48dp'
-        tab_width: panel.width/3
+        tab_width: panel.width/4
         strip_border: 0, 0, 0, 0
         SendScreen:
             id: send_screen
@@ -383,6 +383,9 @@
         ReceiveScreen:
             id: receive_screen
             tab: receive_tab
+        MasternodeScreen:
+            id: masternode_screen
+            tab: masternode_tab
         CleanHeader:
             id: send_tab
             text: _('Send')
@@ -395,6 +398,10 @@
             id: receive_tab
             text: _('Receive')
             slide: 2
+        CleanHeader:
+            id: masternode_tab
+            text: _('Masternode')
+            slide: 3
 
 
 <ActionOvrButton@ActionButton>
@@ -449,6 +456,9 @@ BoxLayout:
                 ActionOvrButton:
                     name: 'network'
                     text: _('Network')
+                ActionOvrButton:
+                    name: 'conversion'
+                    text: _('Conversion')
                 ActionOvrButton:
                     name: 'settings'
                     text: _('Settings')

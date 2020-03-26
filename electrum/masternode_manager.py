@@ -16,6 +16,9 @@ from .logging import get_logger
 ###john
 import random
 import copy
+from electrum import blockchain 
+
+#from electrum.gui.kivy.i18n import _
 
 _logger = get_logger(__name__)
 
@@ -111,7 +114,7 @@ class MasternodeManager(object):
         if self.wallet is None:
             return
         
-        masternodes = self.wallet.storage.get('masternodes2', {})
+        masternodes = self.wallet.storage.get('masternodes', {})
         for key in masternodes.keys():
             mn = masternodes[key]        
             self.masternodes[key] = MasternodeAnnounce.from_dict(mn)
@@ -211,8 +214,6 @@ class MasternodeManager(object):
         if save:
             self.save()
             
-        
-
     def populate_masternode_output(self, alias):
         """Attempt to populate the masternode's data using its output."""
         mn = self.get_masternode(alias)
@@ -250,7 +251,7 @@ class MasternodeManager(object):
         unused = lambda d: '%s:%d' % (d['prevout_hash'], d['prevout_n']) not in used_vins
         correct_amount = lambda d: d['value'] == COLLATERAL_COINS * bitcoin.COIN
 
-        # Valid outputs have a value of exactly 10000 VOLLAR and
+        # Valid outputs have a value of exactly 1000 VOLLAR and
         # are not in use by an existing masternode.
         is_valid = lambda d: correct_amount(d) and unused(d)
 
@@ -262,9 +263,9 @@ class MasternodeManager(object):
         """Return the private delegate key for pubkey (if we have it)."""
         return self.wallet.get_delegate_private_key(pubkey)
 
-    def check_can_sign_masternode(self, alias):
+    def check_can_sign_masternode(self, collateral):
         """Raise an exception if alias can't be signed and announced to the network."""
-        mn = self.get_masternode(alias)
+        mn = self.get_masternode(collateral)
         if not mn:
             raise Exception('Nonexistent masternode')
         if not mn.vin.get('prevout_hash'):
@@ -273,9 +274,8 @@ class MasternodeManager(object):
             raise Exception('Collateral key is not specified')
         if not mn.delegate_key:
             raise Exception('Masternode delegate key is not specified')
-        ###john
-        #if not mn.addr.ip:
-        #    raise Exception('Masternode has no IP address')
+        if not mn.addr.ip:
+            raise Exception('Masternode has no IP address')
 
         # Ensure that the collateral payment has >= MASTERNODE_MIN_CONFIRMATIONS.
         tx_height = self.wallet.get_tx_height(mn.vin['prevout_hash'])
@@ -303,7 +303,7 @@ class MasternodeManager(object):
         proposals = {p.get_hash(): p.dump() for p in self.proposals}
         votes = [v.dump() for v in self.budget_votes]
 
-        self.wallet.storage.put('masternodes2', masternodes)        
+        self.wallet.storage.put('masternodes', masternodes)        
         self.wallet.storage.put('budget_proposals', proposals)
         self.wallet.storage.put('budget_votes', votes)
 
@@ -430,7 +430,7 @@ class MasternodeManager(object):
             
             ret, collateral = self.get_transaction(vin['prevout_hash'], vin['prevout_n'])
             if not ret:
-                contunue
+                continue
                 
             try:
                 collateral = self.wallet.get_public_keys(collateral)[0]       
@@ -682,9 +682,10 @@ class MasternodeManager(object):
             return alias
 
     def subscribe_to_masternodes1(self):
-        if self.subcribe_height >= self.wallet.network.interface.tip :
+        local_height = self.blockchain.height()
+        if self.subcribe_height >= local_height - 5:
             return
-        self.subcribe_height = self.wallet.network.interface.tip                    
+        self.subcribe_height = local_height                    
         for mn in self.masternodes:
             collateral = mn.get_collateral_str()
             if not '-' in collateral or len(collateral.split('-')[0]) != 64:
@@ -704,9 +705,10 @@ class MasternodeManager(object):
                 network.run_from_another_thread(update_collateral_status())
  
     def update_masternodes_status(self):
-        if self.subcribe_height >= self.wallet.network.interface.tip - 5  :
+        local_height = blockchain.get_best_chain().height()
+        if self.subcribe_height >= local_height - 5 :
             return
-        self.subcribe_height = self.wallet.network.interface.tip                    
+        self.subcribe_height = local_height   
         collateral = []
         for key in self.masternodes.keys():
             mn = self.masternodes[key]
@@ -757,3 +759,29 @@ class MasternodeManager(object):
             
             self.save()
             
+    def check_register(self, register_info, mobilephone, password, password1, bregister):        
+        if bregister:
+            if password != password1:
+                raise Exception("password is not equal")
+            
+        if len(password) < 3:
+            raise Exception("password length >=8")
+        
+        if len(mobilephone) < 11:
+            raise Exception(_("mobilephone length >=8"))
+
+        if bregister:
+            if not (register_info is None):
+                raise Exception("mobilephone is have register")
+            address = self.wallet.create_new_address(False)            
+            self.wallet.storage.put('masternoderegister', {mobilephone:(password, address)})
+            return address
+            
+        if register_info.get(mobilephone) is None:
+            raise Exception("no register")
+        
+        pw , address = register_info.get(mobilephone)        
+        if pw != password:
+            raise Exception("password incorrect")
+        
+        return address

@@ -335,7 +335,7 @@ class RegisterDialog(WindowModalDialog):
 
     def run(self):
         if not self.exec_():
-            return
+            return None, None, None
         return self.mobilephone.text(), self.pw.text(), self.pw1.text()
     
 class LoginDialog(WindowModalDialog):

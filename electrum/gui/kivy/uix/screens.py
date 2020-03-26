@@ -29,10 +29,23 @@ from electrum import simple_config
 
 from .context_menu import ContextMenu
 
-
 from electrum.gui.kivy.i18n import _
 
+###john
+import os
+import base58
+from electrum import ecc
+from electrum.constants import COLLATERAL_COINS
+from electrum.masternode import MasternodeAnnounce, NetworkAddress, MasternodePing
+from electrum.util import AlreadyHaveAddress, bfh, bh2u
+from electrum.crypto import sha256d
+from jnius import autoclass
+
 class HistoryRecycleView(RecycleView):
+    pass
+
+###john
+class MasternodeRecycleView(RecycleView):
     pass
 
 class CScreen(Factory.Screen):
@@ -64,6 +77,8 @@ class CScreen(Factory.Screen):
 
     @profiler
     def load_screen(self):
+        if self.kvname == 'masternode':
+            self.check_register()
         self.screen = Builder.load_file('electrum/gui/kivy/uix/ui_screens/' + self.kvname + '.kv')
         self.add_widget(self.screen)
         self.loaded = True
@@ -501,3 +516,309 @@ class TabbedCarousel(Factory.TabbedPanel):
             self.carousel.add_widget(widget)
             return
         super(TabbedCarousel, self).add_widget(widget, index=index)
+
+###john
+class MasternodeScreen(CScreen):
+
+    kvname = 'masternode'
+
+    def __init__(self, **kwargs):
+        super(MasternodeScreen, self).__init__(**kwargs)
+        self.menu_actions = [ ('Remove', self.do_remove), ('Remove All', self.do_removeall), ('Activate', self.do_activate)]
+                     
+    def do_clear(self):
+        self.screen.alias =''
+        self.screen.collateral = ''
+        self.screen.utxo = ''
+        self.screen.delegate = ''
+        self.screen.ip = ''
+        self.screen.is_pr = False
+        self.screen.info = ''
+        
+    def do_show(self):
+        self.register_disabled()
+        pass
+    
+    def do_remove(self, obj):        
+        try:
+            key = obj.txid + '-' + str(obj.index)
+            self.app.masternode_manager.remove_masternode(key)
+            self.do_clear()
+            self.update()
+            return
+        except Exception as e:
+            self.app.show_error(str(e))
+
+    def do_removeall(self, obj):        
+        try:
+            self.app.masternode_manager.masternodes = {}
+            self.app.masternode_manager.save()
+            self.do_clear()
+            self.update()
+            return
+        except Exception as e:
+            self.app.show_error(str(e))
+                
+    def do_save(self):
+        key = self.screen.utxo
+        self.app.show_info("kk88:"+ key)
+        mn = self.app.masternode_manager.get_masternode(key)
+        if mn is None:
+            key = None
+            
+        try:
+            self.check_save(key)
+        except Exception as e:
+            self.app.show_error("pp1:" + str(e))
+            return
+        
+        try:
+            delegate_pub = self.app.masternode_manager.import_masternode_delegate(self.screen.delegate)
+        except Exception as e:
+            self.app.show_error("pp2:" + str(e))
+            pass
+                
+        try:
+            txin_type, txin_key, is_compressed = bitcoin.deserialize_privkey(self.screen.delegate)
+            delegate_pub = ecc.ECPrivkey(txin_key).get_public_key_hex(compressed=is_compressed)
+        except Exception as e:
+            self.app.show_error(_('Invalid Masternode Private Key'))
+            return
+                       
+        try:
+            collateral_pub = self.app.wallet.get_public_keys(self.screen.collateral)[0]            
+        except Exception as e:
+            self.app.show_error(_("InValid Collateral Key"))
+            
+        try:
+            if mn is None:
+                self.app.show_info("bbbbb1:" + str(key) + '-' + str(type(key)))
+                return
+            mn.alias = self.screen.alias
+            mn.delegate_key = delegate_pub
+            mn.collateral_key = collateral_pub
+            ipaddress , port = self.screen.ip.split(":")
+            self.app.show_info(self.screen.ip)
+            mn.addr.ip = ipaddress
+            mn.addr.port = int(port)
+            self.app.masternode_manager.save()
+            self.update()        
+        except Exception as e:
+            self.app.show_error("pp3:" + str(e))
+        
+    def do_scan(self):
+        try:
+            exclude_frozen = True
+            coins = self.app.masternode_manager.get_masternode_outputs(exclude_frozen=exclude_frozen)
+            for coin in coins:
+                key = coin.get('prevout_hash') +'-' + str(coin.get('prevout_n'))
+                if not (self.app.masternode_manager.masternodes.get(key) is None):
+                    continue
+                
+                vin = {'prevout_hash': coin['prevout_hash'], 'prevout_n': coin['prevout_n']}                        
+                try:
+                    collateral = self.app.wallet.get_public_keys(coin['address'])[0]       
+                except Exception as e:
+                    self.app.show_error("bbb:" + str(e))
+                
+                alias = self.app.masternode_manager.get_default_alias()      
+                mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(),
+                                        collateral_key=collateral, delegate_key='', sig='', sig_time=0,
+                                        protocol_version=70015, last_ping=MasternodePing(),announced=False)             
+                self.app.masternode_manager.add_masternode(mn, save=False)
+
+            self.app.masternode_manager.save()
+            self.update()            
+        except Exception as e:
+            self.app.show_error("kkk:" + str(e))
+            return 
+        
+    def do_activate(self, obj):
+        if self.check_status(obj):
+            self.app.show_info('Masternode has already been activated')
+            return
+        msg=[]
+        msg.append(_("Enter your PIN code to proceed"))
+        key = obj.txid + '-' + str(obj.index)
+        self.app.protected('\n'.join(msg), self.sign_announce, (key,))   
+                                
+    def sign_announce(self, key, password):
+        if self.app.wallet.has_password() and password is None:
+            return
+        def on_success(key):
+            self.app.show_info("Successfully signed Masternode Announce.")
+            self.send_announce(key)
+            
+        def on_failure(error):
+            self.app.show_error('Error signing MasternodeAnnounce:')
+        
+        self.app.sign_announce(key, password, on_success, on_failure)
+            
+    def send_announce(self, key):
+        def on_success(errmsg, was_announced):
+            if len(errmsg) > 0 :
+                self.app.show_error("k2:" + errmsg)
+            elif was_announced:
+                self.app.show_info('Masternode activated successfully.')
+            self.update()
+            
+        def on_failure(error):
+            self.app.show_error("k3:" + error)
+            self.update()
+        
+        self.app.send_announce(key, on_success, on_failure)
+
+    def get_card(self, utxo, collateral, delegate, status, announced, alias, ip):
+        icon = "atlas://electrum/gui/kivy/theming/light/important" 
+        icon_announced = "atlas://electrum/gui/kivy/theming/light/instantsend_locked" 
+        ri = {}
+        ri['screen'] = self
+        if status == 'ENABLED' or status == 'PRE_ENABLED':
+            ri['icon'] = icon_announced
+        else:
+            ri['icon'] = icon 
+        ri['txid'], ri['index'] = utxo.split('-')
+        ri['collateral'] = collateral
+        ri['delegate'] = delegate
+        ri['status'] = status
+        ri['announced'] = announced
+        ri['alias'] = alias
+        ri['ipaddress'], ri['port'] = ip.split(":")
+        return ri
+
+    def update(self, see_all=False):
+        if self.app.wallet is None:
+            return
+        try:
+            masternode_card = self.screen.ids.masternode_container
+            cards = []
+            for key in self.app.masternode_manager.masternodes.keys():                
+                try:
+                    mn = self.app.masternode_manager.masternodes[key]
+                    collateral = mn.get_collateral_str()
+                    status = mn.status 
+                    utxo = str(mn.vin['prevout_hash']) + '-' + str(mn.vin['prevout_n'])
+                    ip = mn.addr.ip + ":" + str(mn.addr.port)
+                    ci = self.get_card(utxo, str(mn.collateral_key), mn.delegate_key, str(status), mn.announced, mn.alias, ip)
+                    cards.append(ci)
+                except Exception as e:
+                    self.app.show_error("k1:" + str(e))
+                    continue
+            
+            masternode_card.data = cards
+        except Exception as e:
+            self.app.show_error("k3:" + str(e))
+         
+    def show_masternode(self, obj):
+        self.screen.alias = obj.alias
+        self.screen.collateral = bitcoin.public_key_to_p2pkh(bfh(obj.collateral))
+        self.screen.utxo = obj.txid + '-' + str(obj.index)
+        self.screen.delegate = self.app.wallet.get_delegate_private_key(obj.delegate)
+        self.screen.ip = '4.5.6.7:9069'
+        if len(obj.ipaddress) > 0:
+            self.screen.ip = obj.ipaddress + ":" + str(obj.port)
+
+    def show_menu(self, obj):
+        self.hide_menu()
+        self.context_menu = ContextMenu(obj, self.menu_actions)
+        self.add_widget(self.context_menu)
+        self.show_masternode(obj)
+        
+    def do_paste(self):
+        data = self.app._clipboard.paste()
+        if not data:
+            self.app.show_info(_("Clipboard is empty"))
+            return
+        # try to decode as deletage key
+        try:
+            txin_type, key, is_compressed = bitcoin.deserialize_privkey(data)
+            pubkey = ecc.ECPrivkey(key).get_public_key_hex(compressed=is_compressed)
+            self.screen.delegate = data
+        except Exception as e:
+            self.app.show_error("Invalid Delegate Key")
+        
+    def do_generate(self):
+        private_key = b'\x80' + os.urandom(32)
+        checksum = sha256d(private_key)[0:4]
+        wif = base58.b58encode(private_key + checksum)        
+        self.screen.delegate= str(wif, encoding='utf-8')
+    
+    def on_qr_delegate(self, data):
+        try:
+            txin_type, key, is_compressed = bitcoin.deserialize_privkey(data)
+            pubkey = ecc.ECPrivkey(key).get_public_key_hex(compressed=is_compressed)
+            self.screen.delegate = data
+        except Exception as e:
+            self.show_error("Unable to decode Delegate Key data")            
+
+    def check_status(self, obj):
+        if obj.status == 'ENABLED' or obj.status == 'PRE_ENABLED':
+            return True
+        return False                
+    
+    def check_save(self, collateral=None):
+        if (self.screen.alias is None) or len(self.screen.alias) == 0:                
+            raise Exception('Alias is not specified')        
+        if (self.screen.collateral is None) or len(self.screen.collateral) == 0:
+            raise Exception('Collateral payment is not specified')
+        if (self.screen.delegate is None) or len(self.screen.delegate) == 0:
+            raise Exception('Masternode delegate key is not specified')
+        if (self.screen.ip is None) or len(self.screen.ip) == 0:
+            raise Exception('Masternode has no IP address')
+                
+        for key in self.app.masternode_manager.masternodes.keys():
+            if not (collateral is None):
+                if key == collateral:
+                    continue
+            mn = self.app.masternode_manager.masternodes[key]
+            if mn.alias == self.screen.alias:
+                raise Exception(_('A masternode with alias "%s" already exists' % self.screen.alias))
+            delegate = self.app.wallet.get_delegate_private_key(mn.delegate_key)            
+            if delegate == self.screen.delegate:
+                raise Exception(_('A masternode with private key "%s" already exists' % self.screen.deletage))
+            ipaddress, port = self.screen.ip.split(":")
+            if mn.addr.ip == ipaddress:
+                raise Exception(_('A masternode with ip address "%s" already exists' % self.screen.ip))
+        return True
+                                
+    def check_register(self):  
+        register_info = self.app.wallet.storage.get('masternoderegister')
+        if register_info is None:
+            self.app.masternode_register()
+                                
+    def account_register(self, mobilephone, address):
+        async def _account_register(mobilephone, address):
+            async with aiohttp.ClientSession() as session:
+                url = 'http://52.82.33.173:8080/useracocunt/accpet'
+                payload = {'phone': mobilephone, 'userAccount': address}
+                async with session.post(url, data=payload) as resp:
+                    print(await resp.text())
+    
+        loop = self.network.asyncio_loop
+        tasks = [_account_register(mobilephone, address)]
+        loop.run_until_complete(asyncio.wait(tasks))
+        
+    def register_disabled(self):
+        if self.app.wallet.storage.get('masternoderegister') is None:
+            self.screen.save.disabled = True
+            self.screen.clear.disabled = True
+            self.screen.paste.disabled = True
+            self.screen.qr.disabled = True
+            self.screen.test.disabled = True
+            self.screen.generate.disabled = True
+            self.screen.mimport.disabled = True
+            self.screen.scan.disabled = True
+         
+    def do_import(self):
+        from jnius import autoclass  # SDcard Android        
+        # Get path to SD card Android
+        try:
+            Environment = autoclass('android.os.Environment')
+            sdpath = Environment.get_running_app().getExternalStorageDirectory()
+            self.app.show_info(sdpath)
+        # Not on Android
+        except Exception as e:
+            self.app.show_error(str(e))
+            return
+            
+

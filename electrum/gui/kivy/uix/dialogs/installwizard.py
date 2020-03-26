@@ -24,9 +24,9 @@ from ...i18n import _
 from .password_dialog import PasswordDialog
 
 # global Variables
-is_test = (platform == "linux")
+is_test = True #(platform == "linux")
 test_seed = "grape impose jazz bind spatial mind jelly tourist tank today holiday stomach"
-test_seed = "time taxi field recycle tiny license olive virus report rare steel portion achieve"
+test_seed = "ghost phrase buyer moon kitchen special peasant mass until end rocket present"
 test_xpub = "xpub661MyMwAqRbcEbvVtRRSjqxVnaWVUMewVzMiURAKyYratih4TtBpMypzzefmv8zUNebmNVzB3PojdC5sV2P9bDgMoo9B3SARw1MXUUfU1GL"
 
 Builder.load_string('''

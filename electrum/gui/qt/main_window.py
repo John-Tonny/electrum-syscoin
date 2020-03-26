@@ -97,6 +97,8 @@ from electrum.masternode_manager import MasternodeManager, parse_masternode_conf
 from electrum.masternode import MasternodeAnnounce, NetworkAddress, MasternodePing
 import base58
 from electrum.crypto import sha256d
+import aiohttp
+
 
 class StatusBarButton(QPushButton):
     def __init__(self, icon, tooltip, func):
@@ -185,6 +187,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         
         ###john
         self.masternode_tab = self.create_masternode_tab()
+        self.money_ratio = 0.88
                 
         tabs.addTab(self.create_history_tab(), read_QIcon("tab_history.png"), _('History'))
         tabs.addTab(self.send_tab, read_QIcon("tab_send.png"), _('Send'))
@@ -306,31 +309,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         show = not self.config.get('show_{}_tab'.format(tab.tab_name), False)
         if tab.tab_name == 'masternode':
             if show:
-                register_info = self.wallet.storage.get('masternoderegister')
-                try:
-                    if register_info is None:
-                        mobilephone, pw, pw1 = self.register_dialog('')
-                        if (pw is None) or (pw1 is None) or (mobilephone is None) :
-                            # User cancelled password input
-                            return
-                        
-                        bregister = True
-                    else:
-                        mobilephone, pw = self.login_dialog('')
-                        if (pw is None) or (mobilephone is None) :
-                            # User cancelled password input
-                            return
-                        
-                        pw1 = None
-                        bregister = False                
-                        
-                except Exception as e:
+                if not self.check_register():
                     return
-                    
-                if not self.check_register(register_info, mobilephone, pw, pw1, bregister):
-                    
-                    return
-            
+                
         self.config.set_key('show_{}_tab'.format(tab.tab_name), show)
         item_text = (_("Hide {}") if show else _("Show {}")).format(tab.tab_description)
         tab.menu_action.setText(item_text)
@@ -895,7 +876,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     text +=  " [%s unconfirmed]"%(self.format_amount(u, is_diff=True).strip())
                 if x:
                     text +=  " [%s unmatured]"%(self.format_amount(x, is_diff=True).strip())
-
+                    
+                if self.money_ratio > 0:
+                    text +=  " [%f Convertible proportion]"%(self.money_ratio)
+                
                 # append fiat balance and price
                 if self.fx.is_enabled():
                     text += self.fx.get_fiat_status_text(c + u + x,
@@ -3765,38 +3749,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         words = {'adjective': adjective, 'configurations': configurations, 'noun': noun, 'num': num,}
         msg = '{num} {noun} {configurations} imported.\n\nPlease wait for transactions involving {adjective} {configurations} to be retrieved before activating {adjective} {noun}.'.format(**words)
         self.show_message(_(msg), title=_('Success'))
-    
 
-    def check_register(self, register_info, mobilephone, password, password1, bregister):        
-        if bregister:
-            if password != password1:
-                self.show_error("password is not equal")
-                return False
-            
-        if len(password) < 3:
-            self.show_error("password length >=8")
-            return False
-        
-        if len(mobilephone) < 11:
-            self.show_error("mobilephone length >=8")
-            return False
-
-        if bregister:
-            if not (register_info is None):
-                self.show_error("mobilephone is have register")
-                return False            
-            self.wallet.storage.put('masternoderegister', {mobilephone:password})
-            return True
-            
-        if register_info.get(mobilephone) is None:
-            self.show_error("no register")
-            return False            
-        
-        if register_info.get(mobilephone) != password:
-            self.show_error("password incorrect")
-            return False            
-        
-        return True
     
     def masternode_do_activate(self):
         '''
@@ -3975,3 +3928,58 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.masternode_monit_button.show()
             self.masternode_scan_button.show()
             self.masternode_remove_button.show()
+
+    def check_register(self):
+        register_info = None #self.wallet.storage.get('masternoderegister')
+        try:
+            if register_info is None:
+                mobilephone, pw, pw1 = self.register_dialog('')
+                if (pw is None) or (pw1 is None) or (mobilephone is None) :
+                    # User cancelled password input
+                    return False
+                
+                bregister = True
+            else:
+                mobilephone, pw = self.login_dialog('')
+                if (pw is None) or (mobilephone is None) :
+                    # User cancelled password input
+                    return False
+                
+                pw1 = None
+                bregister = False                                
+        except Exception as e:
+            self.show_error(str(e))
+            return False
+            
+        try:
+            address = self.masternode_manager.check_register(register_info, mobilephone, pw, pw1, bregister)                    
+            r_queue = queue.Queue()
+            self.account_register(mobilephone, address, r_queue)                
+            while(True):
+                response = json.loads(r_queue.get())
+                if response["code"] != 200 :                        
+                    return False
+                self.show_message(_('Account Register successfully.'),
+                                  title=_('Success'))
+                return True
+            return False
+        except Exception as e:
+            self.show_error(str(e))
+            return False
+                
+    def account_register(self, mobilephone, address, r_queue):        
+        loop = self.wallet.network.asyncio_loop         
+        async def _account_register(mobilephone, address, r_queue):
+            async with aiohttp.ClientSession() as session:
+                url = 'http://52.82.33.173:8080/useracocunt/accpet'
+                payload = {'phone': mobilephone, 'userAccount': address}
+                async with session.post(url, data=payload) as resp:
+                    response = await resp.text()
+                    r_queue.put(response)
+
+        asyncio.run_coroutine_threadsafe(_account_register(mobilephone, address, r_queue), loop)
+
+    def get_money_ratio(self):
+        self.money_ratio = 0.724
+                    
+    

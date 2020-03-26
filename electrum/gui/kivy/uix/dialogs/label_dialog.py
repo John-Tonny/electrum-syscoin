@@ -42,7 +42,7 @@ Builder.load_string('''
                 size_hint: 0.5, None
                 height: '48dp'
                 on_release:
-                    root.callback(input.text)
+                    root.callback(popup.title, input.text)
                     popup.dismiss()
 ''')
 
