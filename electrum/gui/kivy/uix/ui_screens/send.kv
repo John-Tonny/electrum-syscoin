@@ -53,7 +53,7 @@ SendScreen:
                     default_text: _('Amount')
                     text: s.amount if s.amount else _('Amount')
                     disabled: root.is_pr
-                    on_release: Clock.schedule_once(lambda dt: app.amount_dialog(s, True))
+                    on_release: Clock.schedule_once(lambda dt: app.amount_dialog(s, True, 'send'))
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color

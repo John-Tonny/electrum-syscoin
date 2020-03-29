@@ -73,6 +73,17 @@ class EnterButton(QPushButton):
         if e.key() == Qt.Key_Return:
             self.func()
 
+class EnterParamsButton(QPushButton):
+    def __init__(self, text, func, preview, mode):
+        QPushButton.__init__(self, text)
+        self.func = func
+        self.preview = preview
+        self.mode = mode
+        self.clicked.connect(lambda:func(preview, mode))
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Return:
+            self.func(self.preview, self.mode)
 
 class ThreadedButton(QPushButton):
     def __init__(self, text, task, on_success=None, on_error=None):

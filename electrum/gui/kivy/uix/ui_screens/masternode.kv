@@ -64,7 +64,6 @@ MasternodeScreen:
     utxo: ''
     delegate: ''
     ip: ''
-    info: ''
     is_pr: False
     content: masternode_container    
     BoxLayout
@@ -90,7 +89,7 @@ MasternodeScreen:
                     text: s.alias if s.alias else _('Alias')
                     font_size: '13sp'
                     shorten: True
-                    disabled: False
+                    disabled: root.is_pr
                     on_release: Clock.schedule_once(lambda dt: app.masternode_dialog(_('Enter Alias'), s))
             CardSeparator:
                 opacity: int(not root.is_pr)
@@ -110,7 +109,8 @@ MasternodeScreen:
                     id: collateral_e
                     text: s.collateral if s.collateral else _('Collateral Key')
                     font_size: '13sp'
-                    disabled: False
+                    disabled: root.is_pr
+                    shorten: True                    
                     on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan.')))
             CardSeparator:
                 opacity: int(not root.is_pr)
@@ -129,7 +129,8 @@ MasternodeScreen:
                     id: utxo_e
                     text: s.utxo if s.utxo else _('Collateral Utxo')
                     font_size: '13sp'
-                    disabled: False
+                    shorten: True
+                    disabled: root.is_pr
                     on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan.')))
             CardSeparator:
                 opacity: int(not root.is_pr)
@@ -149,8 +150,8 @@ MasternodeScreen:
                     text: s.delegate if s.delegate else _('Masternode Private Key')
                     font_size: '13sp'
                     shorten: True
-                    disabled: False
-                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('Copy and paste the masternode private key using the Paste button, or use the camera to scan a QR code.')))
+                    disabled: root.is_pr
+                    on_release: app.choose_masternode_vps_dialog(root)
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color                    
@@ -169,32 +170,38 @@ MasternodeScreen:
                     text: s.ip if s.ip else _('Masternode IP Address')
                     font_size: '13sp'
                     shorten: True
-                    disabled: False
-                    on_release: Clock.schedule_once(lambda dt: app.masternode_dialog(_('Enter IP Address'), s))
+                    disabled: root.is_pr
+                    on_release: app.choose_masternode_vps_dialog(root)
         BoxLayout:
+            id: column_1
             size_hint: 1, None
             height: '48dp'
             IconButton:
                 id: save
-                size_hint: 0.5, 1
+                size_hint: 0.6, 1
+                disabled: root.is_pr
                 on_release: s.parent.do_save()
                 icon: 'atlas://electrum/gui/kivy/theming/light/save'
             Button:
                 id: clear
                 text: _('Clear')
                 size_hint: 1, 1
+                disabled: root.is_pr
                 on_release: s.parent.do_clear()
             Button:
                 id: paste
                 text: _('Paste')
                 size_hint: 1, 1
+                disabled: root.is_pr
                 on_release: s.parent.do_paste()
             IconButton:
                 id: qr
-                size_hint: 0.5, 1
+                size_hint: 0.6, 1
+                disabled: root.is_pr
                 on_release: Clock.schedule_once(lambda dt: app.scan_qr(on_complete=s.parent.on_qr_delegate))
                 icon: 'atlas://electrum/gui/kivy/theming/light/camera'
         BoxLayout:
+            id: column_2
             size_hint: 1, None
             height: '48dp'
             Button:
@@ -202,22 +209,21 @@ MasternodeScreen:
                 text: _('Show')
                 size_hint: 1, 1
                 on_release: s.parent.do_show()
-                disabled: False
             Button:
                 id: generate
                 text: _('Generate')
                 size_hint: 1, 1
+                disabled: root.is_pr
                 on_release: s.parent.do_generate()
-                disabled: False
             Button:
-                id: mimport
                 text: _('Import')
                 size_hint: 1, 1
+                disabled: root.is_pr
                 on_release: s.parent.do_import()
             Button:
-                id: scan
                 text: _('Scan')
                 size_hint: 1, 1
+                disabled: root.is_pr
                 on_release: s.parent.do_scan()
         MasternodeRecycleView:
             id: masternode_container

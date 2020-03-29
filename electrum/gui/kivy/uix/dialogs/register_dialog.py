@@ -87,7 +87,7 @@ class RegisterDialog(Factory.Popup):
         self.mobilephone = None
         self.pw = None
         self.new_password = None
-        self.title = 'Electrum' + ('  -  ' + "Masternode Login" if is_change==0 else 'Masternode Register')
+        self.title = 'Masternode Login' if is_change==0 else 'Masternode Register'
         
     def check_login(self):
         register_info = self.wallet.storage.get('masternoderegister')
@@ -127,6 +127,7 @@ class RegisterDialog(Factory.Popup):
                 self.success = True
                 self.pw = pw
                 if self.check_login():
+                    self.message = _('Please wait...')
                     self.dismiss()
                 else:
                     self.message = _('Enter your mobile phone')
@@ -142,7 +143,7 @@ class RegisterDialog(Factory.Popup):
             elif self.is_change == 4:
                 self.new_password = pw
                 self.success = (self.pw == self.new_password)
-                self.mode = True
+                self.message = _('Please wait...')                
                 self.dismiss()                
 
     def update_mobilephone(self, c):

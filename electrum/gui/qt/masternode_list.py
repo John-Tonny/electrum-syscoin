@@ -111,8 +111,8 @@ class MasternodeList(MyTreeView):
                     # would not be editable if openalias
                     persistent = QPersistentModelIndex(idx)
                     menu.addAction(_("Edit {}").format(column_title), lambda p=persistent: self.edit(QModelIndex(p)))
-            menu.addAction(_("Masternode Activate"), lambda: self.parent.masternode_activate(selected_keys))
             menu.addAction(_("Masternode Remove"), lambda: self.parent.masternode_remove(selected_keys))
+            menu.addAction(_("Masternode Activate"), lambda: self.parent.masternode_activate(selected_keys))
             URLs = [block_explorer_URL(self.config, 'addr', key) for key in filter(is_address, selected_keys)]
             if URLs:
                 menu.addAction(_("View on block explorer"), lambda: [webbrowser.open(u) for u in URLs])
@@ -167,4 +167,11 @@ class MasternodeList(MyTreeView):
         self.parent.delegate_e.setText(delegate)  
         self.parent.ip_e.setText(ip)
         self.parent.port_e.setText(port)
+        self.parent.masternode_select(ip + ':' + port)
+        if len(delegate) > 0:
+            self.parent.masternode_combo.setDisabled(True)
+        else:
+            self.parent.masternode_combo.setDisabled(False)
+            self.parent.masternode_refresh()
+            
         

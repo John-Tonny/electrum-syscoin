@@ -44,10 +44,8 @@ from .uix.dialogs import OutputList, OutputItem
 from .uix.dialogs import TopLabel, RefLabel
 
 ###john
+from electrum.constants import DESTROY_ADDRESS
 from electrum.masternode_manager import MasternodeManager
-import json
-import queue
-import aiohttp
 
 #from kivy.core.window import Window
 #Window.softinput_mode = 'below_target'
@@ -80,6 +78,9 @@ Label.register('Roboto',
 from electrum.util import (base_units, NoDynamicFeeEstimates, decimal_point_to_base_unit_name,
                            base_unit_name_to_decimal_point, NotEnoughFunds, UnknownBaseUnit,
                            DECIMAL_POINT_DEFAULT)
+
+from electrum.constants import MASTERNODE_PORTS
+from electrum.client import Client
 
 class ElectrumWindow(App):
 
@@ -292,7 +293,8 @@ class ElectrumWindow(App):
         
         ###john
         self.masternode_manager = None     
-        self.money_ratio = 0.88
+        self.masternode_vps = {}
+        self.client = None
 
         title = _('Electrum App')
         self.electrum_config = config = kwargs.get('config', None)
@@ -331,6 +333,7 @@ class ElectrumWindow(App):
         self._password_dialog = None
         self._register_dialog = None
         self._conversion_dialog = None
+        self._info_dialog = None
         self.fee_status = self.electrum_config.get_fee_status()
 
     def on_pr(self, pr):
@@ -648,12 +651,21 @@ class ElectrumWindow(App):
         self._settings_dialog.open()
     
     def conversion_dialog(self):
+        if not self.check_register():
+            return
         from .uix.dialogs.conversion import ConversionDialog
         if self._conversion_dialog is None:
             self._conversion_dialog = ConversionDialog(self)
         self._conversion_dialog.update()
         self._conversion_dialog.open()        
-
+        
+    def info_dialog(self):
+        from .uix.dialogs.info import InfoDialog
+        if self._info_dialog is None:
+            self._info_dialog = InfoDialog(self)
+        self._info_dialog.update()
+        self._info_dialog.open()        
+ 
     def popup_dialog(self, name):
         if name == 'settings':
             self.settings_dialog()
@@ -664,6 +676,8 @@ class ElectrumWindow(App):
         ###john
         elif name == 'conversion':
             self.conversion_dialog()
+        elif name == 'info':
+            self.info_dialog()
         elif name == 'status':
             popup = Builder.load_file('electrum/gui/kivy/uix/ui_screens/'+name+'.kv')
             master_public_keys_layout = popup.ids.master_public_keys
@@ -758,6 +772,7 @@ class ElectrumWindow(App):
         ###john
         """Load masternodes from wallet storage."""        
         self.load_masternode()
+        self.client = Client(wallet)
         
         # Once GUI has been initialized check if we want to announce something
         # since the callback has been called before the GUI was initialized
@@ -800,7 +815,7 @@ class ElectrumWindow(App):
         else:
             c, u, x = self.wallet.get_balance()
             text = self.format_amount(c+x+u)
-            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(self.money_ratio)
+            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(self.client.money_ratio)
             self.fiat_balance = self.fx.format_amount(c+u+x) + ' [size=22dp]%s[/size]'% self.fx.ccy
 
     def update_wallet_synchronizing_progress(self, *dt):
@@ -809,14 +824,17 @@ class ElectrumWindow(App):
         if not self.wallet.up_to_date:
             self._trigger_update_status()
 
-    def get_max_amount(self):
+    def get_max_amount(self, mode):
         from electrum.transaction import TxOutput
         if run_hook('abort_send', self):
             return ''
         inputs = self.wallet.get_spendable_coins(None, self.electrum_config)
         if not inputs:
             return ''
-        addr = str(self.send_screen.screen.address) or self.wallet.dummy_address()
+        if mode == 'send':
+            addr = str(self.send_screen.screen.address) or self.wallet.dummy_address()
+        else:
+            addr = DESTROY_ADDRESS
         outputs = [TxOutput(TYPE_ADDRESS, addr, '!')]
         try:
             tx = self.wallet.make_unsigned_transaction(inputs, outputs, self.electrum_config)
@@ -1016,19 +1034,27 @@ class ElectrumWindow(App):
         from .uix.dialogs.label_dialog import LabelDialog
         if title == _('Enter Alias'):
             text = screen.alias
+        elif title == _('Enter Account'):
+            text = screen.account
+        elif title == _('Enter Bank'):
+            text = screen.bank
         elif title == _('Enter IP Address'):
             text, port = screen.ip.split(':')
         def callback(title, text):
             if title == _('Enter Alias'):
                 screen.alias = text
+            elif title == _('Enter Account'):
+                screen.account = text
+            elif title == _('Enter Bank'):
+                screen.bank = text
             elif title == _('Enter IP Address'):
                 screen.ip = ''
                 if len(text) > 0:
-                    screen.ip = text + ":9069"
+                    screen.ip = text + ":" + MASTERNODE_PORTS
         d = LabelDialog(title, text, callback)
         d.open()
 
-    def amount_dialog(self, screen, show_max):
+    def amount_dialog(self, screen, show_max, mode):
         from .uix.dialogs.amount_dialog import AmountDialog
         amount = screen.amount
         if amount:
@@ -1036,7 +1062,7 @@ class ElectrumWindow(App):
             assert u == self.base_unit
         def cb(amount):
             screen.amount = amount
-        popup = AmountDialog(show_max, amount, cb)
+        popup = AmountDialog(show_max, mode, amount, cb)
         popup.open()
 
     def invoices_dialog(self, screen):
@@ -1193,6 +1219,12 @@ class ElectrumWindow(App):
             return
         Clock.schedule_once(lambda dt: on_success(errmsg, announced))
         
+    def check_register(self):  
+        register_info = self.wallet.storage.get('masternoderegister')
+        if register_info is None:
+            return self.masternode_register()
+        return True
+        
     def masternode_register(self):
         from .uix.dialogs.register_dialog import RegisterDialog
         if self._register_dialog is None:
@@ -1201,35 +1233,58 @@ class ElectrumWindow(App):
         def on_success(mobilephone, password):
             address = self.wallet.create_new_address(False)
                         
-            r_queue = queue.Queue()
-            self.account_register(mobilephone, address, r_queue)                
-            while(True):
-                response = json.loads(r_queue.get())
-                if response["code"] != 200 :                        
-                    return
-                self.wallet.storage.put('masternoderegister', {mobilephone:(password, address)})
-                self.show_message(_('Account Register successfully.'),
-                                  title=_('Register'))
-                return
+            response = self.client.post_register(mobilephone, address)                
+            if response["code"] != 200 :                        
+                return False
+            self.wallet.storage.put('masternoderegister', {mobilephone:(password, address)})
+            self.show_info(_('Account Register successfully.'))
+            return True
             
         on_failure = lambda: self.show_error(_("masternode registr failure"))
         self._register_dialog.init(self, self.wallet, message, on_success, on_failure, is_change=2)
         self._register_dialog.open()  
+                
+    def get_mobile_phone(self):
+        register_info = self.wallet.storage.get('masternoderegister')        
+        if register_info is None:        
+            return ''
+        for key in register_info.keys():
+            return key    
             
-    def account_register(self, mobilephone, address, r_queue):        
-        loop = self.wallet.network.asyncio_loop         
-        async def _account_register(mobilephone, address, r_queue):
-            async with aiohttp.ClientSession() as session:
-                url = 'http://52.82.33.173:8080/useracocunt/accpet'
-                payload = {'phone': mobilephone, 'userAccount': address}
-                async with session.post(url, data=payload) as resp:
-                    response = await resp.text()
-                    r_queue.put(response)
-
-        asyncio.run_coroutine_threadsafe(_account_register(mobilephone, address, r_queue), loop)
-    
-    
-    def get_money_ratio(self):
-        self.money_ratio = 0.8278
+    def choose_masternode_vps_dialog(self, screen):
+        from .uix.dialogs.choice_dialog import ChoiceDialog
+        def cb2(host):
+            screen.ip = host
+            screen.delegate = self.masternode_vps[host]            
+        self.masternode_vps = self.client.get_masternodes()
+        masternode_vps=[]
+        for key in self.masternode_vps.keys():
+            masternode_vps.append(key)
+        ChoiceDialog(_('Choose a masternode vps'), sorted(masternode_vps), '', cb2).open()
         
-    
+    def choose_payment_dialog(self, popup):
+        from .uix.dialogs.choice_dialog import ChoiceDialog
+        def cb2(mode):
+            popup.mode = mode
+        modes = ['weixin', 'zhifubao', 'bank']
+        ChoiceDialog(_('Choose payment'), sorted(modes), 'weixin', cb2).open()
+
+    def broadcast_conversion(self, tx, on_complete, pr=None):
+        if self.network and self.network.is_connected():
+            self.show_info(_('Sending'))
+            threading.Thread(target=self._broadcast_conversion_thread, args=(tx, on_complete)).start()
+        else:
+            self.show_info(_('Cannot broadcast transaction') + ':\n' + _('Not connected'))
+
+    def _broadcast_conversion_thread(self, tx, on_complete):
+        status = False
+        try:
+            self.network.run_from_another_thread(self.network.broadcast_transaction(tx))
+        except TxBroadcastError as e:
+            msg = e.get_message_for_gui()
+        except BestEffortRequestFailed as e:
+            msg = repr(e)
+        else:
+            status, msg = True, tx
+        Clock.schedule_once(lambda dt: on_complete(status, msg))
+

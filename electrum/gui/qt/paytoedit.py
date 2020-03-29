@@ -77,6 +77,9 @@ class PayToEdit(CompletionTextEdit, ScanQRTextEdit, PrintError):
     def setExpired(self):
         self.setStyleSheet(util.ColorScheme.RED.as_stylesheet(True))
 
+    def setAmount(self, amount_e):
+        self.amount_edit = amount_e
+
     def parse_address_and_amount(self, line):
         x, y = line.split(',')
         out_type, out = self.parse_output(x)

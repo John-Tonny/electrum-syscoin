@@ -48,7 +48,6 @@ Builder.load_string('''
                 id: kb
                 amount: ''
                 fiat_amount: ''
-                mode: ''
                 is_fiat: False
                 on_fiat_amount: if self.is_fiat: self.amount = app.fiat_to_btc(self.fiat_amount)
                 on_amount: if not self.is_fiat: self.fiat_amount = app.btc_to_fiat(self.amount)
@@ -92,7 +91,7 @@ Builder.load_string('''
                     text: 'Max'
                     on_release:
                         kb.is_fiat = False
-                        kb.amount = app.get_max_amount(kb.mode)
+                        kb.amount = app.get_max_amount_conversion()
                 Button:
                     size_hint: 1, None
                     height: '48dp'
@@ -119,13 +118,12 @@ Builder.load_string('''
 
 from kivy.properties import BooleanProperty
 
-class AmountDialog(Factory.Popup):
+class AmountConversionDialog(Factory.Popup):
     show_max = BooleanProperty(False)
-    def __init__(self, show_max, mode, amount, cb):
+    def __init__(self, show_max, amount, cb):
         Factory.Popup.__init__(self)
         self.show_max = show_max
         self.callback = cb
-        self.ids.kb.mode = mode
         if amount:
             self.ids.kb.amount = amount
 

@@ -16,7 +16,6 @@ from .logging import get_logger
 ###john
 import random
 import copy
-from electrum import blockchain 
 
 #from electrum.gui.kivy.i18n import _
 
@@ -247,6 +246,8 @@ class MasternodeManager(object):
         coins = self.wallet.get_utxos(domain, excluded_addresses=excluded,
                                       mature_only=True, confirmed_only=True)
         
+        
+        '''
         used_vins = map(lambda key: '%s:%d' % (self.masternodes[key].vin.get('prevout_hash'), self.masternodes[key].vin.get('prevout_n', 0xffffffff)), self.masternodes.keys())
         unused = lambda d: '%s:%d' % (d['prevout_hash'], d['prevout_n']) not in used_vins
         correct_amount = lambda d: d['value'] == COLLATERAL_COINS * bitcoin.COIN
@@ -256,6 +257,7 @@ class MasternodeManager(object):
         is_valid = lambda d: correct_amount(d) and unused(d)
 
         coins = filter(is_valid, coins)
+        '''
         
         return coins
 
@@ -668,11 +670,20 @@ class MasternodeManager(object):
         self.masternode_statuses[collateral] = status
         
     ###john
-    def is_used_masternode(self, coin):
+    def is_used_masternode_from_coin(self, coin):
         key = coin.get('prevout_hash') + '-' + str(coin.get('prevout_n'))
-        if self.masternodes.get(key) is None:
+        mn = self.masternodes.get(key)
+        if mn is None and coin['value'] == COLLATERAL_COINS * bitcoin.COIN:
             return False       
         return True
+
+    def is_used_masternode_from_host(self, host):
+        ip, port = host.split(":")
+        for key in self.masternodes.keys():
+            mn = self.masternodes[key]
+            if mn.addr.ip == ip and mn.addr.port == int(port):
+                return True
+        return False
 
     def get_default_alias(self):
         while True:
@@ -704,10 +715,11 @@ class MasternodeManager(object):
                         _logger.info(f'subscribe_to_masternodes: {repr(e)}')
                 network.run_from_another_thread(update_collateral_status())
  
-    def update_masternodes_status(self):
-        local_height = blockchain.get_best_chain().height()
-        if self.subcribe_height >= local_height - 5 :
-            return
+    def update_masternodes_status(self, update=False):
+        local_height = self.wallet.get_local_height()
+        if not update:
+            if self.subcribe_height >= local_height - 5 :
+                return            
         self.subcribe_height = local_height   
         collateral = []
         for key in self.masternodes.keys():
@@ -768,7 +780,7 @@ class MasternodeManager(object):
             raise Exception("password length >=8")
         
         if len(mobilephone) < 11:
-            raise Exception(_("mobilephone length >=8"))
+            raise Exception("mobilephone length >=8")
 
         if bregister:
             if not (register_info is None):

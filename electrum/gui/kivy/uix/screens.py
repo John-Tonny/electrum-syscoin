@@ -9,7 +9,7 @@ from kivy.cache import Cache
 from kivy.clock import Clock
 from kivy.compat import string_types
 from kivy.properties import (ObjectProperty, DictProperty, NumericProperty,
-                             ListProperty, StringProperty)
+                             ListProperty, StringProperty, ReferenceListProperty)
 
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.label import Label
@@ -78,7 +78,7 @@ class CScreen(Factory.Screen):
     @profiler
     def load_screen(self):
         if self.kvname == 'masternode':
-            self.check_register()
+            self.app.check_register()
         self.screen = Builder.load_file('electrum/gui/kivy/uix/ui_screens/' + self.kvname + '.kv')
         self.add_widget(self.screen)
         self.loaded = True
@@ -525,6 +525,15 @@ class MasternodeScreen(CScreen):
     def __init__(self, **kwargs):
         super(MasternodeScreen, self).__init__(**kwargs)
         self.menu_actions = [ ('Remove', self.do_remove), ('Remove All', self.do_removeall), ('Activate', self.do_activate)]
+                
+        self.blue_bottom_pos = 0
+        self.column_1_pos = 0
+        self.column_2_pos = 0
+        self.masternode_container_pos = 0
+        self.x = 0
+                
+        #self.register_status()        
+        self.test = True
                      
     def do_clear(self):
         self.screen.alias =''
@@ -536,10 +545,47 @@ class MasternodeScreen(CScreen):
         self.screen.info = ''
         
     def do_show(self):
-        self.register_disabled()
-        pass
+        if self.test:
+            
+            self.blue_bottom_pos = self.screen.ids.blue_bottom.y
+            self.column_1_pos = self.screen.ids.column_1.y
+            self.column_2_pos = self.screen.ids.column_2.y
+            self.masternode_container_pos = self.screen.ids.masternode_container.y
+            #self.x = self.screen.ids.blue_buttom.x
+            
+            self.screen.alias = str(self.blue_bottom_pos)
+            self.screen.collateral = str(self.column_1_pos)
+            self.screen.utxo = str(self.column_2_pos)
+            self.screen.delegate = str(self.masternode_container_pos)   
+            self.screen.ip = str(self.screen.ids.blue_bottom.height)
+            
+            try:
+                self.test = False            
+                self.screen.ids.blue_buttom.pos = ReferenceListProperty(10000, 10000)            
+                self.screen.ids.column_1.pos = ReferenceListProperty(10000, 10000)
+                self.screen.ids.masternode_container.pos = ReferenceListProperty(10000, 10000)
+            except Exception as e:
+                self.app.show_error(str(e))
+            '''
+            y1 = self.column_1_pos - self.column_2_pos
+            y2 = self.masternode_container_pos - self.column_2_pos
+            self.screen.ids.column_1.y = self.blue_bottom_pos
+            self.screen.ids.column_2.y = self.screen.ids.column_1.y + y1
+            self.screen.ids.masternode_container.y = self.screen.ids.column_2.y + y2
+            '''
+        else:
+            self.test = True
+            self.screen.ids.blue_bottom.y = self.blue_bottom_pos
+            self.screen.ids.column_1.y = self.column_1_pos
+            self.screen.ids.column_2.y = self.column_2_pos
+            self.screen.ids.masternode_container.y = self.masternode_container_pos        
     
     def do_remove(self, obj):        
+        from .dialogs.question import Question
+        d = Question(_('Are you sure you want to delete it?'), lambda b: self._do_remove(obj))
+        d.open()
+    
+    def _do_remove(self, obj):
         try:
             key = obj.txid + '-' + str(obj.index)
             self.app.masternode_manager.remove_masternode(key)
@@ -550,6 +596,11 @@ class MasternodeScreen(CScreen):
             self.app.show_error(str(e))
 
     def do_removeall(self, obj):        
+        from .dialogs.question import Question
+        d = Question(_('Are you sure you want to delete all of them?'), lambda b: self._do_removeall())
+        d.open()
+    
+    def _do_removeall(self):
         try:
             self.app.masternode_manager.masternodes = {}
             self.app.masternode_manager.save()
@@ -589,7 +640,8 @@ class MasternodeScreen(CScreen):
             collateral_pub = self.app.wallet.get_public_keys(self.screen.collateral)[0]            
         except Exception as e:
             self.app.show_error(_("InValid Collateral Key"))
-            
+            return 
+        
         try:
             if mn is None:
                 self.app.show_info("bbbbb1:" + str(key) + '-' + str(type(key)))
@@ -714,7 +766,7 @@ class MasternodeScreen(CScreen):
         self.screen.collateral = bitcoin.public_key_to_p2pkh(bfh(obj.collateral))
         self.screen.utxo = obj.txid + '-' + str(obj.index)
         self.screen.delegate = self.app.wallet.get_delegate_private_key(obj.delegate)
-        self.screen.ip = '4.5.6.7:9069'
+        self.screen.ip = '47.104.25.28:9069'
         if len(obj.ipaddress) > 0:
             self.screen.ip = obj.ipaddress + ":" + str(obj.port)
 
@@ -729,7 +781,7 @@ class MasternodeScreen(CScreen):
         if not data:
             self.app.show_info(_("Clipboard is empty"))
             return
-        # try to decode as deletage key
+        # try to decode as delegate key
         try:
             txin_type, key, is_compressed = bitcoin.deserialize_privkey(data)
             pubkey = ecc.ECPrivkey(key).get_public_key_hex(compressed=is_compressed)
@@ -775,17 +827,12 @@ class MasternodeScreen(CScreen):
                 raise Exception(_('A masternode with alias "%s" already exists' % self.screen.alias))
             delegate = self.app.wallet.get_delegate_private_key(mn.delegate_key)            
             if delegate == self.screen.delegate:
-                raise Exception(_('A masternode with private key "%s" already exists' % self.screen.deletage))
+                raise Exception(_('A masternode with private key "%s" already exists' % self.screen.delegate))
             ipaddress, port = self.screen.ip.split(":")
             if mn.addr.ip == ipaddress:
                 raise Exception(_('A masternode with ip address "%s" already exists' % self.screen.ip))
         return True
-                                
-    def check_register(self):  
-        register_info = self.app.wallet.storage.get('masternoderegister')
-        if register_info is None:
-            self.app.masternode_register()
-                                
+                                                                
     def account_register(self, mobilephone, address):
         async def _account_register(mobilephone, address):
             async with aiohttp.ClientSession() as session:
@@ -798,16 +845,10 @@ class MasternodeScreen(CScreen):
         tasks = [_account_register(mobilephone, address)]
         loop.run_until_complete(asyncio.wait(tasks))
         
-    def register_disabled(self):
+    def register_status(self):
+        self.screen.is_pr = False
         if self.app.wallet.storage.get('masternoderegister') is None:
-            self.screen.save.disabled = True
-            self.screen.clear.disabled = True
-            self.screen.paste.disabled = True
-            self.screen.qr.disabled = True
-            self.screen.test.disabled = True
-            self.screen.generate.disabled = True
-            self.screen.mimport.disabled = True
-            self.screen.scan.disabled = True
+            self.screen.is_pr = True
          
     def do_import(self):
         from jnius import autoclass  # SDcard Android        
@@ -821,4 +862,3 @@ class MasternodeScreen(CScreen):
             self.app.show_error(str(e))
             return
             
-
