@@ -38,7 +38,7 @@ Builder.load_string('''
                 CardSeparator
                 SettingsItem:
                     title: _('Account')
-                    description: self.app.get_mobile_phone()
+                    description: root.get_mobile_phone()
                     action: partial(root.do_action)
                 CardSeparator
                 SettingsItem:
@@ -62,16 +62,11 @@ class InfoDialog(Factory.Popup):
     def update(self):
         pass
 
+    def get_mobile_phone(self):
+        return self.app.client.get_phone()
+    
     def get_profit_address(self):
         return self.app.client.get_profit_address()
-        '''
-        register_info = self.app.wallet.storage.get('masternoderegister')        
-        if register_info is None:        
-            return ''
-        for key in register_info.keys():
-            password, profit_address = register_info[key]
-            return profit_address
-        '''
         
     def get_destroy_address(self):
         return DESTROY_ADDRESS

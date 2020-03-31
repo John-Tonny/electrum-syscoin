@@ -38,7 +38,7 @@ from electrum.plugin import run_hook
 from .util import MyTreeView, import_meta_gui, export_meta_gui
 
 from electrum.util import bfh, bh2u
-from electrum.bitcoin import public_key_to_p2pkh
+from electrum.bitcoin import public_key_to_p2pkh, COIN
 
 import time, datetime
 
@@ -69,7 +69,7 @@ class ConversionList(MyTreeView):
         Columns.PAYACCOUNT: _('PayAccount'),
         Columns.PAYBANK: _('PayBank'),
         Columns.AMOUNT: _('Amount'),        
-        Columns.MONEY: _('Money'),        
+        Columns.MONEY: _('CashMoney'),        
     }
     filter_columns = [Columns.CDATE, Columns.TXID]    
     
@@ -98,7 +98,7 @@ class ConversionList(MyTreeView):
             column_data = '\n'.join(self.model().itemFromIndex(s_idx).text()
                                     for s_idx in self.selected_in_column(column))
             menu.addAction(_("Copy {}").format(column_title), lambda: self.parent.app.clipboard().setText(column_data))
-            menu.addAction(_("Conversion Commit"), lambda: self.parent.conversion_activate(selected_keys))
+            #menu.addAction(_("Conversion Commit"), lambda: self.parent.conversion_activate(selected_keys))
 
         run_hook('create_conversion_menu', menu, selected_keys)
         menu.exec_(self.viewport().mapToGlobal(position))
@@ -109,26 +109,12 @@ class ConversionList(MyTreeView):
         self.update_headers(self.__class__.headers)
         set_current = None
         
-        is_commit, data = self.parent.get_conversion_commit()
-        if is_commit:
-                status = data.get('txFlag') if not data.get('txFlag') is None else ''
-                sdate = data.get('createTime') if not data.get('createTime') is None else ''
-                txId = data.get('txId') if not data.get('txId') is None else ''
-                payWay = data.get('payWay') if not data.get('payWay') is None else ''
-                payName = data.get('payName') if not data.get('payName') is None else ''
-                payAccount = data.get('payAccount') if not data.get('payAccount') is None else ''
-                payBank = data.get('payBank') if not data.get('payBank') is None else ''
-                payBankSub = data.get('payBankSub', '') if not data.get('payBankSub') is None else ''
-                payBank += payBankSub
-                amount = str(data.get('amount')) if not data.get('amount') is None else ''
-                money = ''
-                
-                items = [QStandardItem(x) for x in (status, sdate, txId, payWay, payName, payAccount, payBank, amount, money)]
-                items[self.Columns.TXID].setEditable(False)
-                items[self.Columns.TXID].setData(txId, Qt.UserRole)
-                row_count = self.model().rowCount()
-                self.model().insertRow(row_count, items)
-                self.disable_editability()            
+        conversion_txid = ''
+        is_commit = False
+        if not self.parent.client is None:
+            is_commit, conversion_data = self.parent.client.get_conversion_commit()
+            if is_commit:
+                conversion_txid = conversion_data.get('txId') if not conversion_data.get('txId') is None else ''                        
         
         conversion_list = self.parent.get_conversion_list()
         if len(conversion_list) > 0:
@@ -145,7 +131,32 @@ class ConversionList(MyTreeView):
             payBank = data.get('payBank') if not data.get('payBank') is None else ''
             payBankSub = data.get('payBankSub', '') if not data.get('payBankSub') is None else ''
             payBank += payBankSub
-            amount = str(data.get('amount')) if not data.get('amount') is None else ''
+            amount = str(data.get('amount')/COIN) if not data.get('amount') is None else ''
+            money = str(data.get('cashMoney')/COIN) if not data.get('cashMoney') is None else ''
+            
+            if is_commit:
+                if txId == conversion_txid:
+                    is_commit = False
+                    self.parent.wallet.storage.put('conversion_masternode', {})
+            
+            items = [QStandardItem(x) for x in (status, sdate, txId, payWay, payName, payAccount, payBank, amount, money)]
+            items[self.Columns.TXID].setEditable(False)
+            items[self.Columns.TXID].setData(txId, Qt.UserRole)
+            row_count = self.model().rowCount()
+            self.model().insertRow(row_count, items)
+            self.disable_editability()            
+            
+        if is_commit:
+            status = conversion_data.get('txFlag') if not conversion_data.get('txFlag') is None else ''
+            sdate = conversion_data.get('createTime') if not conversion_data.get('createTime') is None else ''
+            txId = conversion_data.get('txId') if not conversion_data.get('txId') is None else ''
+            payWay = conversion_data.get('payWay') if not conversion_data.get('payWay') is None else ''
+            payName = conversion_data.get('payName') if not conversion_data.get('payName') is None else ''
+            payAccount = conversion_data.get('payAccount') if not conversion_data.get('payAccount') is None else ''
+            payBank = conversion_data.get('payBank') if not conversion_data.get('payBank') is None else ''
+            payBankSub = conversion_data.get('payBankSub', '') if not conversion_data.get('payBankSub') is None else ''
+            payBank += payBankSub
+            amount = str(conversion_data.get('amount')/COIN) if not conversion_data.get('amount') is None else ''
             money = ''
             
             items = [QStandardItem(x) for x in (status, sdate, txId, payWay, payName, payAccount, payBank, amount, money)]
@@ -154,6 +165,7 @@ class ConversionList(MyTreeView):
             row_count = self.model().rowCount()
             self.model().insertRow(row_count, items)
             self.disable_editability()            
+            
         
         self.set_current_idx(set_current)
         # FIXME refresh loses sort order; so set "default" here:

@@ -54,7 +54,7 @@ Builder.load_string('''
 class WalletDialog(Factory.Popup):
 
     def new_wallet(self, app, dirname):
-        def cb(text):
+        def cb(title, text):
             if text:
                 app.load_wallet_by_name(os.path.join(dirname, text))
         d = LabelDialog(_('Enter wallet name'), '', cb)

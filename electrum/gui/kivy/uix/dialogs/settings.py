@@ -48,12 +48,6 @@ Builder.load_string('''
                     action: partial(root.unit_dialog, self)
                 CardSeparator
                 SettingsItem:
-                    status: root.fx_status()
-                    title: _('Fiat Currency') + ': ' + self.status
-                    description: _("Display amounts in fiat currency.")
-                    action: partial(root.fx_dialog, self)
-                CardSeparator
-                SettingsItem:
                     status: 'ON' if bool(app.plugins.get('labels')) else 'OFF'
                     title: _('Labels Sync') + ': ' + self.status
                     description: _("Save and synchronize your labels.")

@@ -143,7 +143,7 @@ class HistoryScreen(CScreen):
         from .dialogs.label_dialog import LabelDialog
         key = obj.tx_hash
         text = self.app.wallet.get_label(key)
-        def callback(text):
+        def callback(title, text):
             self.app.wallet.set_label(key, text)
             self.update()
         d = LabelDialog(_('Enter Transaction Label'), text, callback)
@@ -543,8 +543,9 @@ class MasternodeScreen(CScreen):
         self.screen.ip = ''
         self.screen.is_pr = False
         self.screen.info = ''
-        
-    def do_show(self):
+            
+    
+    def do_hide(self):
         if self.test:
             
             self.blue_bottom_pos = self.screen.ids.blue_bottom.y
@@ -612,7 +613,6 @@ class MasternodeScreen(CScreen):
                 
     def do_save(self):
         key = self.screen.utxo
-        self.app.show_info("kk88:"+ key)
         mn = self.app.masternode_manager.get_masternode(key)
         if mn is None:
             key = None
@@ -663,8 +663,7 @@ class MasternodeScreen(CScreen):
             exclude_frozen = True
             coins = self.app.masternode_manager.get_masternode_outputs(exclude_frozen=exclude_frozen)
             for coin in coins:
-                key = coin.get('prevout_hash') +'-' + str(coin.get('prevout_n'))
-                if not (self.app.masternode_manager.masternodes.get(key) is None):
+                if self.app.masternode_manager.is_used_masternode_from_coin(coin):
                     continue
                 
                 vin = {'prevout_hash': coin['prevout_hash'], 'prevout_n': coin['prevout_n']}                        
@@ -676,7 +675,7 @@ class MasternodeScreen(CScreen):
                 alias = self.app.masternode_manager.get_default_alias()      
                 mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(),
                                         collateral_key=collateral, delegate_key='', sig='', sig_time=0,
-                                        protocol_version=70015, last_ping=MasternodePing(),announced=False)             
+                                        last_ping=MasternodePing(),announced=False)             
                 self.app.masternode_manager.add_masternode(mn, save=False)
 
             self.app.masternode_manager.save()
@@ -766,7 +765,6 @@ class MasternodeScreen(CScreen):
         self.screen.collateral = bitcoin.public_key_to_p2pkh(bfh(obj.collateral))
         self.screen.utxo = obj.txid + '-' + str(obj.index)
         self.screen.delegate = self.app.wallet.get_delegate_private_key(obj.delegate)
-        self.screen.ip = '47.104.25.28:9069'
         if len(obj.ipaddress) > 0:
             self.screen.ip = obj.ipaddress + ":" + str(obj.port)
 

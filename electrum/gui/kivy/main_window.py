@@ -664,8 +664,8 @@ class ElectrumWindow(App):
         if self._info_dialog is None:
             self._info_dialog = InfoDialog(self)
         self._info_dialog.update()
-        self._info_dialog.open()        
- 
+        self._info_dialog.open()     
+        
     def popup_dialog(self, name):
         if name == 'settings':
             self.settings_dialog()
@@ -773,6 +773,7 @@ class ElectrumWindow(App):
         """Load masternodes from wallet storage."""        
         self.load_masternode()
         self.client = Client(wallet)
+        self.client.payaccount_load()
         
         # Once GUI has been initialized check if we want to announce something
         # since the callback has been called before the GUI was initialized
@@ -815,7 +816,7 @@ class ElectrumWindow(App):
         else:
             c, u, x = self.wallet.get_balance()
             text = self.format_amount(c+x+u)
-            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(self.client.money_ratio)
+            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(round(self.client.money_ratio,8))
             self.fiat_balance = self.fx.format_amount(c+u+x) + ' [size=22dp]%s[/size]'% self.fx.ccy
 
     def update_wallet_synchronizing_progress(self, *dt):
@@ -1054,7 +1055,7 @@ class ElectrumWindow(App):
         d = LabelDialog(title, text, callback)
         d.open()
 
-    def amount_dialog(self, screen, show_max, mode):
+    def amount_dialog(self, screen, show_max, mode='send'):
         from .uix.dialogs.amount_dialog import AmountDialog
         amount = screen.amount
         if amount:
@@ -1243,31 +1244,47 @@ class ElectrumWindow(App):
         on_failure = lambda: self.show_error(_("masternode registr failure"))
         self._register_dialog.init(self, self.wallet, message, on_success, on_failure, is_change=2)
         self._register_dialog.open()  
-                
-    def get_mobile_phone(self):
-        register_info = self.wallet.storage.get('masternoderegister')        
-        if register_info is None:        
-            return ''
-        for key in register_info.keys():
-            return key    
-            
+                            
     def choose_masternode_vps_dialog(self, screen):
         from .uix.dialogs.choice_dialog import ChoiceDialog
+        self.masternode_vps = self.client.get_masternodes()
         def cb2(host):
+            if host == '' or host is None:
+                return
             screen.ip = host
             screen.delegate = self.masternode_vps[host]            
-        self.masternode_vps = self.client.get_masternodes()
         masternode_vps=[]
         for key in self.masternode_vps.keys():
             masternode_vps.append(key)
         ChoiceDialog(_('Choose a masternode vps'), sorted(masternode_vps), '', cb2).open()
         
-    def choose_payment_dialog(self, popup):
+    def choose_payway_dialog(self, popup):
         from .uix.dialogs.choice_dialog import ChoiceDialog
         def cb2(mode):
             popup.mode = mode
         modes = ['weixin', 'zhifubao', 'bank']
-        ChoiceDialog(_('Choose payment'), sorted(modes), 'weixin', cb2).open()
+        ChoiceDialog(_('Choose payway'), sorted(modes), 'weixin', cb2).open()
+
+    def choose_payaccount_dialog(self, popup):
+        from .uix.dialogs.choice_dialog import ChoiceDialog
+        def cb2(key):            
+            if key == '' or key is None:
+                return
+            name, account = key.split('-') 
+            alias, bank, mode = accounts[account]
+            popup.alias = str(alias)
+            popup.bank = str(bank)
+            popup.mode = self.get_payway(str(mode))            
+            popup.account = account
+            
+        accounts = []
+        cur_account = ''
+        for key in self.client.conversion_account.keys():
+            cur_account = key
+            name, bank, mode = self.client.conversion_account[key]
+            accounts.append(name + '-' + key)
+        if len(accounts) > 0:
+            ChoiceDialog(_('Choose payaccount'), sorted(accounts), cur_account, cb2).open()
 
     def broadcast_conversion(self, tx, on_complete, pr=None):
         if self.network and self.network.is_connected():
@@ -1288,3 +1305,10 @@ class ElectrumWindow(App):
             status, msg = True, tx
         Clock.schedule_once(lambda dt: on_complete(status, msg))
 
+    def get_payway(self, mode):
+        if mode == '1':
+            return 'bank'
+        if mode == '2':
+            return 'weixin'
+        if mode == '3':
+            return 'zhifubao'

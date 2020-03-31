@@ -14,10 +14,11 @@ class Client:
         self.loop = self.wallet.network.asyncio_loop
         self.money_queue = queue.Queue()    
                 
+        self.conversion_account = {}
         self.conversion_list = []
         self.conversion_total = 0
         self.conversion_cur_page = 1
-        self.conversion_page_size = 3 #20
+        self.conversion_page_size = 20
         
         self.money_ratio = 0
         timer = threading.Timer(2, self.get_money_ratio)
@@ -79,12 +80,11 @@ class Client:
         resp = json.loads(self.money_queue.get())
         if resp['code'] == 200:
             self.money_ratio = resp['data']['fundValue']
-            print(self.money_ratio)
         
         timer = threading.Timer(2,self.get_money_ratio)
         timer.start()        
-        
-    def post_conversion(self, txid, amount, fee, dstAddress, srcAddress):
+                
+    def post_conversion(self, txid, amount, fee, dstAccount, srcAccount, payWay, payName, payAccount, payBank, payBankSub, remark):
         phone = self.get_phone()        
         url = 'cashpool/output/apply'
         data = {}
@@ -92,14 +92,20 @@ class Client:
         data['txid'] = txid
         data['amount'] = amount
         data['fee'] = fee
-        data['dstAccount'] = dstAddress
-        data['srcAccount'] = srcAddress
+        data['dstAccount'] = dstAccount
+        data['srcAccount'] = srcAccount
+        data['payWay'] = payWay
+        data['payName'] = payName
+        data['payAccount'] = payAccount
+        data['payBank'] = payBank
+        data['payBankSub'] = payBankSub
+        data['remark'] = remark
         conversion_queue = queue.Queue()        
         self.post_req(url, data, conversion_queue)
         resp = conversion_queue.get()
         return json.loads(resp)
         
-    def get_maternodes(self):
+    def get_masternodes(self):
         phone = self.get_phone()
         url = 'nodes/getPhoneNode?phone=%s' % phone
         masternode_queue = queue.Queue()        
@@ -180,9 +186,32 @@ class Client:
         for key in register_info.keys():
             return key
         
+    def get_current_time(self):
+        time_stamp = time.time() 
+        local_time = time.localtime(time_stamp)  
+        str_time = time.strftime('%Y-%m-%d %H:%M:%S', local_time)
+        return str_time
         
+    def get_conversion_commit(self):
+        conversion_data = self.wallet.storage.get('conversion_masternode')
+        if (not conversion_data is None) or (conversion_data):
+            if conversion_data.get('txFlag') == '-100':
+                return True, conversion_data
+        return False, {}
+                
+    def payaccount_add(self, name, account, bank, mode, save=True):
+        if self.wallet is None:
+            return
+        if self.conversion_account.get(account) is None:
+            self.conversion_account[account] = (name, bank, mode)        
         
-    
+        if save:
+            self.wallet.storage.put('conversion_account', self.conversion_account )
+           
+    def payaccount_load(self):
+        if not self.wallet is None:
+            self.conversion_account = self.wallet.storage.get('conversion_account', {})
+        
         
         
         

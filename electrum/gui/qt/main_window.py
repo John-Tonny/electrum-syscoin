@@ -101,6 +101,7 @@ import base58
 import copy
 from electrum.crypto import sha256d
 from electrum.transaction import SerializationError
+from electrum.keystore import Xpub
 
 class StatusBarButton(QPushButton):
     def __init__(self, icon, tooltip, func):
@@ -135,7 +136,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
     def __init__(self, gui_object, wallet: Abstract_Wallet):
         QMainWindow.__init__(self)
-
+        
         self.gui_object = gui_object
         self.config = config = gui_object.config  # type: SimpleConfig
         self.gui_thread = gui_object.gui_thread
@@ -145,7 +146,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.client = None
         self.feerounding_text = ''
         self.conversion_retrys = 0
-        self.timer = QTimer()
+        self.conversion_data = {}
+        #self.timer = QTimer()
 
         self.setup_exception_hook()
 
@@ -461,6 +463,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         ###john
         self.masternode_manager.set_wallet(self.wallet)
         self.client = Client(self.wallet)
+        self.client.payaccount_load()
+        self.get_account_combo()
         
         self.update_recently_visited(wallet.storage.path)
         self.need_update.set()
@@ -972,7 +976,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.receive_address_e.setFocusPolicy(Qt.ClickFocus)
         grid.addWidget(self.receive_address_label, 0, 0)
         grid.addWidget(self.receive_address_e, 0, 1, 1, -1)
-
+                
         self.receive_message_e = QLineEdit()
         grid.addWidget(QLabel(_('Description')), 1, 0)
         grid.addWidget(self.receive_message_e, 1, 1, 1, -1)
@@ -1677,10 +1681,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def get_send_fee_estimator(self, mode='send'):
         if mode == 'send':
             fee_e = self.fee_e
-            feereate_e = self.feerate_e        
+            feerate_e = self.feerate_e        
         elif mode == 'conversion':
             fee_e = self.fee_conversion_e
-            feereate_e = self.feerate_conversion_e        
+            feerate_e = self.feerate_conversion_e        
         
         if self.is_send_fee_frozen(mode):
             fee_estimator = fee_e.get_amount()
@@ -3696,7 +3700,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.masternode_monit_button = EnterButton(_("Monit"), self.masternode_monit)
         buttons = QHBoxLayout()
         buttons.addWidget(self.masternode_hide_button)
-        #buttons.addWidget(self.masternode_refresh_button)
+        buttons.addWidget(self.masternode_refresh_button)
         #buttons.addWidget(self.masternode_import_button)
         #buttons.addWidget(self.masternode_generate_button)
         buttons.addStretch(1)
@@ -3749,7 +3753,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 delegate = ''
                 mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(ip='1.2.3.4', port=9069),
                                         collateral_key=collateral, delegate_key=delegate, sig='', sig_time=0,
-                                        protocol_version=170011, last_ping=MasternodePing(),
+                                        last_ping=MasternodePing(),
                                         status='', lastseen=0, activeseconds=0, announced=False)             
                 self.masternode_manager.add_masternode(mn)
             self.masternode_list.update()            
@@ -3823,16 +3827,25 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.masternode_combo.setCurrentIndex(0)
     
     def masternode_refresh(self):
-        self.masternode_combo.clear()
-        self.masternode_combo.addItem('None')
-        masternodes = self.client.get_maternodes()
-        index = 0
-        for key in masternodes.keys():
-            if not self.masternode_manager.is_used_masternode_from_host(key):
-                index += 1
-                self.masternode_combo.addItem(key)
-                self.masternode_combo.setItemData(index, masternodes[key])
-        self.masternode_combo.setCurrentIndex(0)
+        
+        def query_masternode_thread():            
+            return self.client.get_masternodes()
+
+        def on_success(masternodes):
+            self.masternode_combo.clear()
+            self.masternode_combo.addItem('None')
+            index = 0
+            for key in masternodes.keys():
+                if not self.masternode_manager.is_used_masternode_from_host(key):
+                    index += 1
+                    self.masternode_combo.addItem(key)
+                    self.masternode_combo.setItemData(index, masternodes[key])
+            self.masternode_combo.setCurrentIndex(0)
+            
+        def on_error(err):
+            pass
+
+        WaitingDialog(self, _('Query Masternode...'), query_masternode_thread, on_success, on_error)        
     
     def masternode_combo_remove(self,host):
         for index in range(self.masternode_combo.count()):
@@ -3969,13 +3982,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def masternode_do_activate(self):
         '''
         if self.check_status(obj):
-            self.app.show_info('Masternode has already been activated')
+            self.show_message('Masternode has already been activated')
             return
         if len(self.alias_e.text()) == 0:
-            self.app.show_info(_("Please Enter Alias"))
+            self.show_message(_("Please Enter Alias"))
             return
         if self.check_alias(self.screen.alias, obj):
-            self.app.show_info(_('A masternode with alias "%s" already exists' % self.screen.alias))
+            self.show_message(_('A masternode with alias "%s" already exists' % self.screen.alias))
             return
         
         if not self.check_delegate(self.screen.delegate):
@@ -4025,7 +4038,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 index = self.index_e.text()
                 key = txid + "-" + str(index)
                 vin = {'prevout_hash': txid, 'prevout_n': int(index)}    
-                mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(ip="1.2.3.4", port=9069),
+                mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(),
                                         collateral_key=collateral, delegate_key=delegate, sig='', sig_time=0,
                                         protocol_version=31800, last_ping=MasternodePing(),announced=False)             
                 #self.masternode_manager.add_masternode(mn, save=True)            
@@ -4226,11 +4239,19 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         pay_hbox.addWidget(self.btn_zhifubao)
         pay_hbox.addWidget(self.btn_bank)
         pay_hbox.addStretch(1)
-        grid.addWidget(pay_controls, 1, 1, 1, -1)
+        grid.addWidget(pay_controls, 1, 1)
         
         #grid.addWidget(self.btn_weixin, 1, 1, )
         #grid.addWidget(self.btn_zhifubao, 1, 2)
         #grid.addWidget(self.btn_bank, 1, 3)
+
+        self.account_combo_label = QLabel(_('Select Account'))
+        self.account_combo = QComboBox()
+        self.account_combo.currentIndexChanged.connect(
+                                    lambda: self.account_change(self.account_combo.currentIndex()))        
+        grid.addWidget(self.account_combo_label, 1, 2)
+        grid.addWidget(self.account_combo, 1, 3, 1, -1)
+        
 
         self.payment_name_e = MyLineEdit()
         self.payment_name_label = QLabel(_('Payee Name'))
@@ -4251,7 +4272,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         from .paytoedit import PayToEdit
         self.payee_conversion_e = PayToEdit(self)
-        self.payee_conversion_e.setFrozen(True)
+        self.payee_conversion_e.setReadOnly(True)
         self.payee_conversion_label = QLabel(_('Destroy Address'))
         grid.addWidget(self.payee_conversion_label, 4, 0)
         grid.addWidget(self.payee_conversion_e, 4, 1, 1, -1)
@@ -4401,12 +4422,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.fee_conversion_adv_controls.setVisible(False)                
 
         self.conversion_hide_button = EnterButton(_("Hide"), self.conversion_hide)
+        self.conversion_account_button = EnterButton(_("Account"), self.conversion_account_select)
         self.conversion_clear_button = EnterButton(_("Clear"), self.do_conversion_clear)
         self.conversion_preview_button = EnterParamsButton(_("Preview"), self.do_preview, True, 'conversion')
         self.conversion_preview_button.setToolTip(_('Display the details of your transaction before signing it.'))
         self.conversion_button = EnterButton(_("Conversion"), self.do_conversion_send) 
-        self.conversion_retry_button = EnterButton(_("Conversion Retry"), self.do_conversion_send_retry)          
-        self.conversion_retry_button.setEnabled(True)
         self.conversion_search_button = EnterButton(_("Search"), self.do_conversion_search)
         self.conversion_back_button = EnterButton(_("Back Page"), self.do_conversion_back)
         self.conversion_next_button = EnterButton(_("Next Page"), self.do_conversion_next)
@@ -4415,10 +4435,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         
         buttons = QHBoxLayout()
         buttons.addWidget(self.conversion_hide_button)
+        buttons.addWidget(self.conversion_account_button)
         buttons.addWidget(self.conversion_clear_button)
         buttons.addWidget(self.conversion_preview_button)
         buttons.addWidget(self.conversion_button)
-        buttons.addWidget(self.conversion_retry_button)
         buttons.addStretch(1)
         buttons.addWidget(self.conversion_back_button)
         buttons.addWidget(self.conversion_next_button)
@@ -4515,6 +4535,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.estimation_label.hide()
             self.estimation_e.hide()
                        
+            self.fee_conversion_adv_controls.setVisible(False)
+            #self.fee_slider.setVisible(False)
+            
             #self.fee_conversion_slider.hide()
             #self.feerate_conversion_e.hide()
             #self.size_conversion_e.hide()
@@ -4549,6 +4572,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.fee_conversion_e_label.show()
             self.estimation_label.show()
             self.estimation_e.show()
+
+            self.fee_conversion_adv_controls.setVisible(True)
+            self.fee_slider.setVisible(True)
             
     def do_conversion_clear(self):
         self.btn_weixin.setChecked(True)
@@ -4560,7 +4586,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.size_conversion_e.setText('')
         self.estimation_e.setText('')
         self.feerate_conversion_e.setText('')
-
+        
     def do_conversion_search(self):
         self.client.do_search_conversion()
         self.search_state_update()
@@ -4577,26 +4603,42 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.conversion_list.update()
 
     def do_conversion_send(self):
-        is_commit, conversion_data = self.get_conversion_commit()
+        is_commit, self.conversion_data = self.client.get_conversion_commit()
         if is_commit:
-            self.show_message('Please retry to conversion commit')
+            self.conversion_retrys = 0
+            tx = self.wallet.db.get_transaction(self.conversion_data['txId'])    
+            self.conversion_list_update(tx)
             return
+                
+        try:
+            self.check_conversion()
+        except Exception as e:
+            self.show_error(str(e))
+            return
+                
+        self.conversion_data ={}
+        self.conversion_data['createTime'] = self.client.get_current_time() 
+        self.conversion_data['phone'] = self.client.get_phone()
+        self.conversion_data['dstAccount'] = constants.DESTROY_ADDRESS
+        self.conversion_data['payWay'] = self.get_pay_mode()
+        self.conversion_data['payName'] = self.payment_name_e.text()
+        self.conversion_data['payAccount'] = self.payment_account_e.text()
+        self.conversion_data['payBank'] = self.payment_bank_e.text()
+        self.conversion_data['payBankSub'] = ''
+        self.conversion_data['remark'] = ''        
         
-        self.conversion_retrys = 0        
         self.do_send(preview=False, mode='conversion')
     
     def do_conversion_send_retry(self):
         self.conversion_retrys = 0
-        self.conversion_retry_button.setEnabled(False)
         
         self.conversion_retrys += 1
         
-        is_commit, data = self.get_conversion_commit()
+        is_commit, self.conversion_data = self.client.get_conversion_commit()
         if not is_commit:
-            self.conversion_retry_button.setEnabled(False)
             return
         
-        tx = self.wallet.db.get_transaction(data['txId'])    
+        tx = self.wallet.db.get_transaction(self.conversion_data['txId'])    
         self.conversion_list_update(tx)
         
     def search_state_update(self):
@@ -4623,14 +4665,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         pass
     
     def do_get_masternode(self):
-        response = self.client.get_maternodes()
+        response = self.client.get_masternodes()
         pass
     
     def do_get_account(self):
         response = self.client.get_account()
         pass
     
-    def conversion_list_update(self, tx):        
+    def conversion_list_update(self, tx):   
         tx = copy.deepcopy(tx)  # type: Transaction
         try:
             tx.deserialize()
@@ -4646,51 +4688,58 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         is_destroy = False
         amount = 0
         for output in tx.outputs():
-            amount += output.value
             if output.address == destroy_address:
+                amount = output.value
                 is_destroy = True
+                break
         if not is_destroy: 
             return
         
         for item in tx.inputs():
             input_address = item['address']
             break
-                        
-        response = self.client.post_conversion(txid, amount, fee, destroy_address, input_address)
-        if response['code'] == 300:    
-            self.show_info(_('Conversion finish.'))
+                 
+        payWay = self.conversion_data['payWay']
+        payName = self.conversion_data['payName']
+        payAccount = self.conversion_data['payAccount']
+        payBank = self.conversion_data['payBank']
+        payBankSub = ''
+        remark = ''
+                
+        response = self.client.post_conversion(txid, amount, fee, destroy_address, input_address, payWay, payName, payAccount, payBank, payBankSub, remark)
+        if response['code'] == 200:    
+            self.client.payaccount_add(payName, payAccount, payBank, payWay)
+            self.get_account_combo()
+            self.show_message(_('Conversion finish.'))
+        elif response['code'] == 901:
+            self.client.payaccount_add(payName, payAccount, payBank, payWay)
+            self.wallet.storage.put('conversion_masternode', {})        
+            self.get_account_combo()
+            self.show_message(_('Conversion retry finish.'))
         else:
-            conversion_data = {}
-            conversion_data['txFlag'] = '-100'
-            conversion_data['createTime'] = self.get_current_time() 
-            conversion_data['txId'] = txid
-            conversion_data['payWay'] = self.get_pay_mode()
-            conversion_data['payName'] = self.payment_name_e.text()
-            conversion_data['payAccount'] = self.payment_account_e.text()
-            conversion_data['payBank'] = self.payment_bank_e.text()
-            conversion_data['payBankSub'] = ''
-            conversion_data['amount'] = amount
-            conversion_data['fee'] = fee        
+            self.conversion_data['txFlag'] = '-100'
+            self.conversion_data['createTime'] = self.client.get_current_time() 
+            self.conversion_data['txId'] = txid
+            self.conversion_data['amount'] = amount
+            self.conversion_data['fee'] = fee        
             
-            self.wallet.storage.put('conversion', conversion_data)            
-            self.conversion_list.update()
+            self.wallet.storage.put('conversion_masternode', self.conversion_data)            
             
             #self.timer.stop()
             #self.timer.setInterval(10000)    
             #self.timer.start()
             #self.timer.timeout.connect(self.conversion_commit_retry)            
+        self.conversion_list.update()
     
     def conversion_commit_retry(self):
         self.conversion_retrys += 1
         
-        is_commit, data = self.get_conversion_commit()
+        is_commit, self.conversion_data = self.client.get_conversion_commit()
         if not is_commit:
-            self.conversion_retry_button.setEnabled(False)
             return
         
-        tx = self.wallet.db.get_transaction(data['txId'])        
+        tx = self.wallet.db.get_transaction(self.conversion_data['txId'])        
         if self.conversion_retrys > 3:
-            self.conversion_retry_button.setEnabled(True)
             self.timer.stop()
             self.show_error('Conversion fail.')   
             return
@@ -4705,31 +4754,73 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 
     def get_pay_mode(self):
         if self.btn_bank.isChecked():
-            return 1
+            return "1"
         
         if self.btn_weixin.isChecked():
-            return 2
+            return "2"
         
         if self.btn_zhifubao.isChecked():
-            return 3
+            return "3"
     
+    def set_pay_mode(self, text):
+        if text == '1':
+            self.btn_bank.setChecked(True)
+            return 
+
+        if text == '2':
+            self.btn_weixin.setChecked(True)
+            return 
+
+        if text == '3':
+            self.btn_zhifubao.setChecked(True)
+            return 
+        
     def get_conversion_list(self):
         if self.client is None:
             return []
         return self.client.conversion_list
+            
+    def check_conversion(self):
+        if len(self.payment_name_e.text()) == 0:
+            raise Exception("name is present")
+        if len(self.payment_account_e.text()) == 0:            
+            raise Exception("account is present")
+        if self.btn_bank.isChecked():
+            if len(self.payment_bank_e.text()) == 0:            
+                raise Exception("bank is present")
+        if len(self.amount_conversion_e.text()) == 0:
+            raise Exception("amount is unpresent")
 
-    def get_current_time(self):
-        time_stamp = time.time() 
-        local_time = time.localtime(time_stamp)  
-        str_time = time.strftime('%Y-%m-%d %H:%M:%S', local_time)
-        return str_time
+    def conversion_account_select(self):
+        
+        conversion_data = self.wallet.storage.get('conversion_account')
+        if (conversion_data is None) or (not conversion_data):
+            return
+        
+        
+        pass
     
-    def get_conversion_commit(self):
-        conversion_data = self.wallet.storage.get('conversion')
-        if (not conversion_data is None) or (not conversion_data):
-            if conversion_data.get('txFlag') == '-100':
-                return True, conversion_data
-        return False, {}
+    def get_account_combo(self):
+        self.account_combo.clear()
+        index = 0
+        for key in self.client.conversion_account.keys():
+            name, bank, mode = self.client.conversion_account[key]
+            self.account_combo.addItem(name + '-' + key)
+            #self.account_combo.setItemData(index, (bank, mode))
+        self.account_combo.setCurrentIndex(0)
+                           
+    def account_change(self, index):
+        key = self.account_combo.currentText()
+        if key == 'None' or key == '':
+            return
+        name, account = key.split("-")
+        name, bank, mode = self.client.conversion_account[account]
+        self.payment_name_e.setText(name)
+        self.payment_account_e.setText(account)
+        self.payment_bank_e.setText(bank)
+        self.set_pay_mode(str(mode))
+            
+        
         
 
         

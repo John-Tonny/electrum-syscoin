@@ -88,7 +88,7 @@ ReceiveScreen:
                     id: amount_label
                     default_text: _('Amount')
                     text: s.amount if s.amount else _('Amount')
-                    on_release: Clock.schedule_once(lambda dt: app.amount_dialog(s, False))
+                    on_release: Clock.schedule_once(lambda dt: app.amount_dialog(s, False, 'send'))
             CardSeparator:
                 opacity: message_selection.opacity
                 color: blue_bottom.foreground_color

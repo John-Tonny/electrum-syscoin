@@ -127,7 +127,7 @@ class MasternodePing(object):
         vds.write_int32(CLIENT_MASTERNODE_VERSION)
         return bh2u(vds.input)
 
-    def serialize_for_sig(self, vds=None):
+    def serialize_for_sig(self, vds=None, update_time=False):
         if not vds:
             vds = BCDataStream()
         if self.protocol_version <= PROTOCAL_VERSION:
@@ -136,6 +136,9 @@ class MasternodePing(object):
             serialize_outpoint(vds, self.vin)
         
         vds.write(hash_decode(self.block_hash))
+        
+        if update_time:
+            self.sig_time = int(time.time())                
         vds.write_int64(self.sig_time)
         
         ###john        
@@ -157,7 +160,7 @@ class MasternodePing(object):
 
         txin_type, key, is_compressed = bitcoin.deserialize_privkey(wif)
         eckey = ecc.ECPrivkey(key)
-        serialized = self.serialize_for_sig()
+        serialized = self.serialize_for_sig(update_time=update_time)
 
         if not delegate_pubkey:
             delegate_pubkey = bfh(ecc.ECPrivkey(key)
@@ -234,7 +237,7 @@ class MasternodeAnnounce(object):
         self.delegate_key = delegate_key
         self.anonId = delegate_key
         self.sig = sig
-        self.sig_time = int(1584834772)#sig_time)
+        self.sig_time = int(sig_time)
         self.protocol_version = int(protocol_version)
         self.last_ping = last_ping
         self.ping_retries = 0        
@@ -323,7 +326,7 @@ class MasternodeAnnounce(object):
 
         return bh2u(vds.input)
 
-    def serialize_for_sig(self, vds=None):
+    def serialize_for_sig(self, vds=None, update_time=False):
         """Serialize the message for signing."""
         ###john
         if not vds:
@@ -335,6 +338,9 @@ class MasternodeAnnounce(object):
         self.addr.serialize(vds)
         vds.write_string(bfh(self.collateral_key))        
         vds.write_string(bfh(self.delegate_key))
+        
+        if update_time:
+            self.sig_time = int(time.time())
         vds.write_int64(self.sig_time)
         vds.write_uint32(self.protocol_version)
         s = bh2u(vds.input)

@@ -183,11 +183,43 @@ MasternodeScreen:
                 on_release: s.parent.do_save()
                 icon: 'atlas://electrum/gui/kivy/theming/light/save'
             Button:
-                id: hide
-                text: _('Hide')
+                id: clear
+                text: _('Clear')
                 size_hint: 1, 1
                 disabled: root.is_pr
-                on_release: s.parent.do_hide()
+                on_release: s.parent.do_clear()
+            Button:
+                id: paste
+                text: _('Paste')
+                size_hint: 1, 1
+                disabled: root.is_pr
+                on_release: s.parent.do_paste()
+            IconButton:
+                id: qr
+                size_hint: 0.6, 1
+                disabled: root.is_pr
+                on_release: Clock.schedule_once(lambda dt: app.scan_qr(on_complete=s.parent.on_qr_delegate))
+                icon: 'atlas://electrum/gui/kivy/theming/light/camera'
+        BoxLayout:
+            id: column_2
+            size_hint: 1, None
+            height: '48dp'
+            Button:
+                id: test
+                text: _('Show')
+                size_hint: 1, 1
+                on_release: s.parent.do_show()
+            Button:
+                id: generate
+                text: _('Generate')
+                size_hint: 1, 1
+                disabled: root.is_pr
+                on_release: s.parent.do_generate()
+            Button:
+                text: _('Import')
+                size_hint: 1, 1
+                disabled: root.is_pr
+                on_release: s.parent.do_import()
             Button:
                 text: _('Scan')
                 size_hint: 1, 1
