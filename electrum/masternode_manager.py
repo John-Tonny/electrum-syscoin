@@ -287,7 +287,7 @@ class MasternodeManager(object):
                             (MASTERNODE_MIN_CONFIRMATIONS, tx_height.conf))
         # Ensure that the masternode's vin is valid.
         if mn.vin.get('value', 0) != bitcoin.COIN * COLLATERAL_COINS:
-            raise Exception('Masternode requires a collateral 10000 VOLLAR output.')
+            raise Exception('Masternode requires a collateral 1000 VIRCLE output.')
 
         # If the masternode has been announced, it can be announced again if it has been disabled.
         if mn.announced:
@@ -393,7 +393,8 @@ class MasternodeManager(object):
             raise Exception('Announce was rejected: %s' % mn_dict['errorMessage'])
         if mn_dict.get(mn_hash) != 'successful':
             raise Exception('Announce was rejected (no error message specified)')
-
+        
+        mn.status = 'PRE_ENABLED'
         mn.announced = True
 
     def import_masternode_delegate(self, sec):
@@ -786,7 +787,7 @@ class MasternodeManager(object):
             if not (register_info is None):
                 raise Exception("mobilephone is have register")
             address = self.wallet.create_new_address(False)            
-            self.wallet.storage.put('masternoderegister', {mobilephone:(password, address)})
+            self.wallet.storage.put('user_register', {mobilephone:(password, address)})
             return address
             
         if register_info.get(mobilephone) is None:

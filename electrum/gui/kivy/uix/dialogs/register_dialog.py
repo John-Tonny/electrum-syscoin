@@ -87,10 +87,10 @@ class RegisterDialog(Factory.Popup):
         self.mobilephone = None
         self.pw = None
         self.new_password = None
-        self.title = 'Masternode Login' if is_change==0 else 'Masternode Register'
+        self.title = _('Account Login') if is_change==0 else _('Account Register')
         
     def check_login(self):
-        register_info = self.wallet.storage.get('masternoderegister')
+        register_info = self.wallet.storage.get('user_register')
         if register_info is None:
             return False
         password, address = register_info.get(self.mobilephone)
@@ -137,7 +137,7 @@ class RegisterDialog(Factory.Popup):
                     self.app.show_error(_('Wrong mobile and password'))
             elif self.is_change == 3:
                 self.pw = pw
-                self.message = _('Confirm your password')
+                self.message = _('Confirm new password')
                 self.ids.kb.password = ''
                 self.is_change = 4
             elif self.is_change == 4:
@@ -161,12 +161,12 @@ class RegisterDialog(Factory.Popup):
         if len(mobilephone) == 11:
             if self.is_change == 0:
                 self.mobilephone = mobilephone
-                self.message = _('Enter your password')
+                self.message = _('Enter new password')
                 self.ids.kb.password = ''
                 self.mode = False
             elif self.is_change == 2:
                 self.mobilephone = mobilephone 
-                self.message = _('Enter your password')
+                self.message = _('Enter new password')
                 self.ids.kb.password = ''
                 self.mode = False
                 self.is_change = 3

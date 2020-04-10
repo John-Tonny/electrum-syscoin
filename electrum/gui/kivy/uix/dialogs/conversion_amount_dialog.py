@@ -88,14 +88,14 @@ Builder.load_string('''
                     disabled: not root.show_max
                     size_hint: 1, None
                     height: '48dp'
-                    text: 'Max'
+                    text: _('Max')
                     on_release:
                         kb.is_fiat = False
                         kb.amount = app.get_max_amount_conversion()
                 Button:
                     size_hint: 1, None
                     height: '48dp'
-                    text: 'Clear'
+                    text: _('Clear')
                     on_release:
                         kb.amount = ''
                         kb.fiat_amount = ''

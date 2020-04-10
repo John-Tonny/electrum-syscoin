@@ -74,12 +74,12 @@ Builder.load_string('''
 
 <ConversionDialog@Popup>
     id: s
-    title: _('Electrum Conversion')
+    title: _('Conversion')
     amount: ''
     alias: ''
     account: ''
     bank: ''
-    mode: 'weixin'
+    mode: _('weixin')
     is_pr: False    
     disable_pin: False
     use_encryption: False
@@ -100,16 +100,17 @@ Builder.load_string('''
                 height: blue_bottom.item_height
                 spacing: '5dp'
                 Image:
-                    source: 'atlas://electrum/gui/kivy/theming/light/dip3_op'
+                    source: 'atlas://electrum/gui/kivy/theming/light/paymode'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
                 BlueButton:
                     id: mode_e
-                    text: s.mode if s.mode else _('Payment Mode')
+                    text: s.mode if s.mode else _('Payment Modes')
                     shorten: True
                     disabled: False
-                    on_release: app.choose_payway_dialog(root)
+                    on_release: Clock.schedule_once(lambda dt: app.choose_payway_dialog(root))
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color                    
@@ -119,7 +120,8 @@ Builder.load_string('''
                 height: blue_bottom.item_height
                 spacing: '5dp'
                 Image:
-                    source: 'atlas://electrum/gui/kivy/theming/light/star_big_inactive'
+                    source: 'atlas://electrum/gui/kivy/theming/light/contact'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
@@ -128,7 +130,7 @@ Builder.load_string('''
                     text: s.alias if s.alias else _('Name')
                     shorten: True
                     disabled: False
-                    on_release: Clock.schedule_once(lambda dt: app.masternode_dialog(_('Enter Alias'), s))
+                    on_release: Clock.schedule_once(lambda dt: app.masternode_dialog(_('Enter Name'), s))
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color            
@@ -158,7 +160,8 @@ Builder.load_string('''
                 height: blue_bottom.item_height
                 spacing: '5dp'
                 Image:
-                    source: 'atlas://electrum/gui/kivy/theming/light/pen'
+                    source: 'atlas://electrum/gui/kivy/theming/light/bank'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
@@ -166,7 +169,7 @@ Builder.load_string('''
                     id: bank_e
                     text: s.bank if s.bank else _('Bank')
                     shorten: True
-                    disabled: False
+                    disabled: root.disable_pin
                     on_release: Clock.schedule_once(lambda dt: app.masternode_dialog(_('Enter Bank'), s))
             BoxLayout:
                 size_hint: 1, None
@@ -205,18 +208,22 @@ Builder.load_string('''
         BoxLayout:
             size_hint: 1, None
             height: '48dp'
+            IconButton:
+                id: account
+                size_hint: 0.6, 1
+                disabled: root.is_pr
+                icon: 'atlas://electrum/gui/kivy/theming/light/accounts'
+                on_release: Clock.schedule_once(lambda dt: app.choose_payaccount_dialog(root))
             Button:
-                text: _('Account')
+                text: _('Conversion')
                 size_hint: 1, 1
-                on_release: app.choose_payaccount_dialog(root)
-            Button:
-                text: _('Query')
-                size_hint: 1, 1
-                on_release: root.do_search()
-            Button:
-                text: _('Destory')
-                size_hint: 1, 1
-                on_release: root.do_destroy()
+                on_release: Clock.schedule_once(lambda dt: root.do_destroy())
+            IconButton:
+                id: search
+                size_hint: 0.6, 1
+                disabled: root.is_pr
+                icon: 'atlas://electrum/gui/kivy/theming/light/search'
+                on_release: Clock.schedule_once(lambda dt: root.do_search())
         ConversionRecycleView:
             id: conversion_container
             scroll_type: ['bars', 'content']
@@ -245,8 +252,10 @@ class ConversionDialog(Factory.Popup):
         self.payment_request = None
         self.conversion_data ={}
         
+        self.disable_pin = True
+        
     def show_conversion(self):
-        self.app.show_info("show conversion")
+        self.app.show_info("show convert")
         pass
     
     def update(self):
@@ -296,7 +305,7 @@ class ConversionDialog(Factory.Popup):
             amount = str(conversion_data.get('amount')/bitcoin.COIN) if not conversion_data.get('amount') is None else ''
             
             if conversion_data.get('payWay') is None:
-                payWay = 'weixin'
+                payWay = _('weixin')
             else:
                 payWay = conversion_data.get('payWay') if not conversion_data.get('payWay') is None else '1'
                 payWay = self.get_pay_mode_from_num(payWay)
@@ -334,7 +343,7 @@ class ConversionDialog(Factory.Popup):
         #self.context_menu = ContextMenu(obj, self.menu_actions)
         #self.add_widget(self.context_menu)
         #self.show_masternode(obj)
-        self.alias = obj.alias
+        #self.alias = obj.alias
         pass
     
     def do_destroy(self):
@@ -356,11 +365,11 @@ class ConversionDialog(Factory.Popup):
         self.conversion_data['payName'] = self.alias
         self.conversion_data['payAccount'] = self.account
         self.conversion_data['payBank'] = self.bank
-        self.conversion_data['payBankSub'] = ''
+        self.conversion_data['payBankSub'] = 'sub'
         
         address = str(DESTROY_ADDRESS)
         if not address:
-            self.app.show_error(_('Recipient not specified.') + ' ' + _('Please scan a Bitcoin address or a payment request'))
+            self.app.show_error(_('Recipient not specified.'))
             return
         if not bitcoin.is_address(address):
             self.app.show_error(_('Invalid Bitcoin Address') + ':\n' + address)
@@ -422,10 +431,12 @@ class ConversionDialog(Factory.Popup):
                 self.app.wallet.set_label(tx.txid(), message)
             else:
                 self.app.tx_dialog(tx)
+            return
         def on_failure(error):
             self.app.show_error(error)
+            return
         if self.app.wallet.can_sign(tx):
-            self.app.show_info("Signing...")
+            self.app.show_info(_("Signing..."))
             self.app.sign_tx(tx, password, on_success, on_failure)
         else:
             self.app.tx_dialog(tx)
@@ -433,12 +444,11 @@ class ConversionDialog(Factory.Popup):
     def broadcast(self, tx, pr=None):
         def on_complete(ok, tx):
             if ok:
-                #self.app.show_info(_('Payment sent.'))
-                self.app.show_info(_('Conversion commit.'))
+                self.app.show_info(_("broadcast successful!"))
                 self.amount = ''
                 self.destroy_commit(tx)
             else:
-                self.show_error("broadcast fail")
+                self.app.show_error(_("broadcast failed!"))
                 return 
                 
         self.app.broadcast_conversion(tx, on_complete, pr)
@@ -448,11 +458,14 @@ class ConversionDialog(Factory.Popup):
         self.update()
     
     def destroy_commit(self, tx):
+        self.app.show_info(_("Convert..."))
         tx = copy.deepcopy(tx)  # type: Transaction
         try:
             tx.deserialize()
         except BaseException as e:
-            raise SerializationError(e)    
+            self.app.show_error(str(e))
+            return
+            #raise SerializationError(e)    
                 
         format_amount = self.app.format_amount_and_units
         tx_details = self.app.wallet.get_tx_info(tx)
@@ -463,8 +476,8 @@ class ConversionDialog(Factory.Popup):
         is_destroy = False
         amount = 0
         for output in tx.outputs():
-            amount += output.value
             if output.address == destroy_address:
+                amount = output.value 
                 is_destroy = True
         if not is_destroy: 
             return        
@@ -477,16 +490,18 @@ class ConversionDialog(Factory.Popup):
         payName = self.conversion_data['payName']
         payAccount = self.conversion_data['payAccount']
         payBank = self.conversion_data['payBank']
-        payBankSub = ''
+        payBankSub = self.conversion_data['payBankSub']
         remark = ''
                 
         response = self.app.client.post_conversion(txid, amount, fee, destroy_address, input_address, payWay, payName, payAccount, payBank, payBankSub, remark)
         if response['code'] == 200:    
             self.app.client.payaccount_add(payName, payAccount, payBank, payWay)
-            self.app.show_info(_('Conversion finish.'))
+            self.app.client.conversion_commit_send(response['data'])
+            self.update()
+            self.app.show_info(_('Conversion successful!'))
         elif response['code'] == 901:    
             self.app.client.payaccount_add(payName, payAccount, payBank, payWay)
-            self.app.show_info(_('Conversion retry finish.'))
+            self.app.show_info(_('Conversion successful!'))
         else:          
             self.conversion_data['txFlag'] = '-100'
             self.conversion_data['createTime'] = self.app.client.get_current_time()             
@@ -496,36 +511,43 @@ class ConversionDialog(Factory.Popup):
             
             self.app.wallet.storage.put('conversion_masternode', self.conversion_data)            
             self.update()
-            self.app.show_error(_('Conversion fail.'))
+            self.app.show_error(_('Conversion failed!'))
             
+    def set_pay_mode(self, mode):
+        if self.mode == _('bank'):
+            self.bank.setReadOnly(True)
+        else:
+            self.bank.setReadOnly(False)
+    
     def get_pay_mode(self):
-        if self.mode == 'bank':
+        if self.mode == _('bank'):
             return '1'
         
-        if self.mode == 'weixin':
+        if self.mode == _('weixin'):
             return '2'
         
-        if self.mode == 'zhifubao':
+        if self.mode == _('zhifubao'):
             return '3'
     
     def get_pay_mode_from_num(self, num):
         if self.mode == '1':
-            return 'bank'
+            return _('bank')
         
         if self.mode == '2':
-            return 'weixin'
+            return _('weixin')
         
         if self.mode == '3':
-            return 'zhifubao'
+            return _('zhifubao')
+        return _('bank')
 
     def check_conversion(self):
         if len(self.alias) == 0:
-            raise Exception("name is present")
+            raise Exception(_("Name is not specified."))
         if len(self.account) == 0:            
-            raise Exception("account is present")
+            raise Exception(_("Account is not specified."))
         if self.get_pay_mode() == '1' :
             if len(self.bank) == 0:            
-                raise Exception("bank is present")
+                raise Exception(_("Bank is not specified."))
         if len(self.amount) == 0:
-            raise Exception("amount is unpresent")
+            raise Exception(_("Amount is not specified."))
             

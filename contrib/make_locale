@@ -15,6 +15,7 @@ os.chdir('..')
 
 cmd = "find electrum -type f -name '*.py' -o -name '*.kv'"
 
+
 files = subprocess.check_output(cmd, shell=True)
 
 with open("app.fil", "wb") as f:
@@ -57,6 +58,7 @@ if crowdin_api_key:
     response = requests.request('GET', 'https://api.crowdin.com/api/project/' + crowdin_identifier + '/export?key=' + crowdin_api_key)
     print("", "export:", "-" * 20, response.text, "-" * 20, sep="\n")
 
+
 # Download & unzip
 print('Download translations')
 s = requests.request('GET', 'https://crowdin.com/backend/download/project/' + crowdin_identifier + '.zip').content
@@ -85,3 +87,5 @@ for lang in os.listdir('locale'):
     cmd = 'msgfmt --output-file="%s/electrum.mo" "locale/%s/electrum.po"' % (mo_dir,lang)
     print('Installing', lang)
     os.system(cmd)
+
+

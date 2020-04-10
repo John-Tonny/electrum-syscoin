@@ -19,7 +19,7 @@ Builder.load_string('''
 
 <InfoDialog@Popup>
     id: info
-    title: _('Electrum Info')
+    title: _('Account')
     disable_pin: False
     use_encryption: False
     BoxLayout:

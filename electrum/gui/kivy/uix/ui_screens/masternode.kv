@@ -81,6 +81,7 @@ MasternodeScreen:
                 spacing: '5dp'
                 Image:
                     source: 'atlas://electrum/gui/kivy/theming/light/star_big_inactive'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
@@ -100,7 +101,7 @@ MasternodeScreen:
                 height: blue_bottom.item_height
                 spacing: '5dp'
                 Image:
-                    source: 'atlas://electrum/gui/kivy/theming/light/globe'
+                    source: 'atlas://electrum/gui/kivy/theming/light/collateral_addr'
                     opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
@@ -111,7 +112,7 @@ MasternodeScreen:
                     font_size: '13sp'
                     disabled: root.is_pr
                     shorten: True                    
-                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan.')))
+                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan first.')))
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color
@@ -121,7 +122,8 @@ MasternodeScreen:
                 height: blue_bottom.item_height
                 spacing: '5dp'
                 Image:
-                    source: 'atlas://electrum/gui/kivy/theming/light/pen'
+                    source: 'atlas://electrum/gui/kivy/theming/light/collateral_txid'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
@@ -131,7 +133,7 @@ MasternodeScreen:
                     font_size: '13sp'
                     shorten: True
                     disabled: root.is_pr
-                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan.')))
+                    on_release: Clock.schedule_once(lambda dt: app.show_info(_('please scan first.')))
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color                    
@@ -142,6 +144,7 @@ MasternodeScreen:
                 spacing: '5dp'
                 Image:
                     source: 'atlas://electrum/gui/kivy/theming/light/dip3_op'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
@@ -151,7 +154,7 @@ MasternodeScreen:
                     font_size: '13sp'
                     shorten: True
                     disabled: root.is_pr
-                    on_release: app.choose_masternode_vps_dialog(root)
+                    on_release: Clock.schedule_once(lambda dt: app.choose_masternode_vps_dialog(root))                     
             CardSeparator:
                 opacity: int(not root.is_pr)
                 color: blue_bottom.foreground_color                    
@@ -161,7 +164,8 @@ MasternodeScreen:
                 height: blue_bottom.item_height
                 spacing: '5dp'
                 Image:
-                    source: 'atlas://electrum/gui/kivy/theming/light/dip3_op'
+                    source: 'atlas://electrum/gui/kivy/theming/light/vps'
+                    opacity: 0.7
                     size_hint: None, None
                     size: '22dp', '22dp'
                     pos_hint: {'center_y': .5}
@@ -171,7 +175,7 @@ MasternodeScreen:
                     font_size: '13sp'
                     shorten: True
                     disabled: root.is_pr
-                    on_release: app.choose_masternode_vps_dialog(root)
+                    on_release: Clock.schedule_once(lambda dt: app.choose_masternode_vps_dialog(root)) 
         BoxLayout:
             id: column_1
             size_hint: 1, None
@@ -180,19 +184,19 @@ MasternodeScreen:
                 id: save
                 size_hint: 0.6, 1
                 disabled: root.is_pr
-                on_release: s.parent.do_save()
                 icon: 'atlas://electrum/gui/kivy/theming/light/save'
+                on_release: Clock.schedule_once(lambda dt: s.parent.do_save()) 
             Button:
                 id: hide
                 text: _('Hide')
                 size_hint: 1, 1
-                disabled: root.is_pr
+                disabled: True
                 on_release: s.parent.do_hide()
             Button:
                 text: _('Scan')
                 size_hint: 1, 1
                 disabled: root.is_pr
-                on_release: s.parent.do_scan()
+                on_release: Clock.schedule_once(lambda dt: s.parent.do_scan()) 
         MasternodeRecycleView:
             id: masternode_container
             scroll_type: ['bars', 'content']

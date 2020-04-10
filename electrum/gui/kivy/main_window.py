@@ -68,12 +68,18 @@ Factory.register('TabbedCarousel', module='electrum.gui.kivy.uix.screens')
 # Register fonts without this you won't be able to use bold/italic...
 # inside markup.
 from kivy.core.text import Label
+'''
 Label.register('Roboto',
                'electrum/gui/kivy/data/fonts/Roboto.ttf',
                'electrum/gui/kivy/data/fonts/Roboto.ttf',
                'electrum/gui/kivy/data/fonts/Roboto-Bold.ttf',
                'electrum/gui/kivy/data/fonts/Roboto-Bold.ttf')
-
+'''
+Label.register('Roboto',
+               'electrum/gui/kivy/data/fonts/DroidSansFallback.ttf',
+               'electrum/gui/kivy/data/fonts/DroidSansFallback.ttf',
+               'electrum/gui/kivy/data/fonts/DroidSansFallback.ttf',
+               'electrum/gui/kivy/data/fonts/DroidSansFallback.ttf')
 
 from electrum.util import (base_units, NoDynamicFeeEstimates, decimal_point_to_base_unit_name,
                            base_unit_name_to_decimal_point, NotEnoughFunds, UnknownBaseUnit,
@@ -98,6 +104,7 @@ class ElectrumWindow(App):
     balance = StringProperty('')
     fiat_balance = StringProperty('')
     is_fiat = BooleanProperty(False)
+    #money_ratio = StringProperty('')    
     blockchain_forkpoint = NumericProperty(0)
 
     auto_connect = BooleanProperty(False)
@@ -298,7 +305,7 @@ class ElectrumWindow(App):
 
         title = _('Electrum App')
         self.electrum_config = config = kwargs.get('config', None)
-        self.language = config.get('language', 'en')
+        self.language = config.get('language', 'zh_CN')
         self.network = network = kwargs.get('network', None)  # type: Network
         if self.network:
             self.num_blocks = self.network.get_local_height()
@@ -389,7 +396,8 @@ class ElectrumWindow(App):
 
     @profiler
     def update_tabs(self):
-        for tab in ['invoices', 'send', 'history', 'receive', 'address']:
+        ###john
+        for tab in ['invoices', 'send', 'history', 'receive', 'address', 'masternode']:
             self.update_tab(tab)
 
     def switch_to(self, name):
@@ -659,7 +667,9 @@ class ElectrumWindow(App):
         self._conversion_dialog.update()
         self._conversion_dialog.open()        
         
-    def info_dialog(self):
+    def account_dialog(self):
+        if not self.check_register():
+            return        
         from .uix.dialogs.info import InfoDialog
         if self._info_dialog is None:
             self._info_dialog = InfoDialog(self)
@@ -676,8 +686,8 @@ class ElectrumWindow(App):
         ###john
         elif name == 'conversion':
             self.conversion_dialog()
-        elif name == 'info':
-            self.info_dialog()
+        elif name == 'account':
+            self.account_dialog()
         elif name == 'status':
             popup = Builder.load_file('electrum/gui/kivy/uix/ui_screens/'+name+'.kv')
             master_public_keys_layout = popup.ids.master_public_keys
@@ -816,8 +826,11 @@ class ElectrumWindow(App):
         else:
             c, u, x = self.wallet.get_balance()
             text = self.format_amount(c+x+u)
-            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(round(self.client.money_ratio,8))
+            #self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(round(self.client.money_ratio,8))
+            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\n' + '[size=16dp]%s[/size]'% str(round(self.client.money_ratio,8))            
+            #self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '[sub]%s[/sub]'% str(round(self.client.money_ratio,8))            
             self.fiat_balance = self.fx.format_amount(c+u+x) + ' [size=22dp]%s[/size]'% self.fx.ccy
+            #self.money_ratio = str(round(self.client.money_ratio,8))
 
     def update_wallet_synchronizing_progress(self, *dt):
         if not self.wallet:
@@ -1033,7 +1046,7 @@ class ElectrumWindow(App):
     ###john
     def masternode_dialog(self, title, screen):
         from .uix.dialogs.label_dialog import LabelDialog
-        if title == _('Enter Alias'):
+        if title == _('Enter Alias') or title == _('Enter Name'):
             text = screen.alias
         elif title == _('Enter Account'):
             text = screen.account
@@ -1042,7 +1055,7 @@ class ElectrumWindow(App):
         elif title == _('Enter IP Address'):
             text, port = screen.ip.split(':')
         def callback(title, text):
-            if title == _('Enter Alias'):
+            if title == _('Enter Alias') or title == _('Enter Name'):
                 screen.alias = text
             elif title == _('Enter Account'):
                 screen.account = text
@@ -1204,7 +1217,7 @@ class ElectrumWindow(App):
         try:
             mn = self.masternode_manager.sign_announce(key, password)
         except Exception as e:
-            self.show_error("pppp:" + str(e))
+            self.show_error(str(e))
             #Clock.schedule_once(lambda dt: on_failure(_("Error signing MasternodeAnnounce")))
             return
         Clock.schedule_once(lambda dt: on_success(key))
@@ -1221,7 +1234,7 @@ class ElectrumWindow(App):
         Clock.schedule_once(lambda dt: on_success(errmsg, announced))
         
     def check_register(self):  
-        register_info = self.wallet.storage.get('masternoderegister')
+        register_info = self.wallet.storage.get('user_register')
         if register_info is None:
             return self.masternode_register()
         return True
@@ -1237,11 +1250,15 @@ class ElectrumWindow(App):
             response = self.client.post_register(mobilephone, address)                
             if response["code"] != 200 :                        
                 return False
-            self.wallet.storage.put('masternoderegister', {mobilephone:(password, address)})
-            self.show_info(_('Account Register successfully.'))
+            self.wallet.storage.put('user_register', {mobilephone:(password, address)})
+            self.show_info(_('Account Register successful!'))
+            self.masternode_screen.screen.is_pr = False
             return True
             
-        on_failure = lambda: self.show_error(_("masternode registr failure"))
+        def on_failure():
+            self.masternode_screen.screen.is_pr = True
+            self.show_error(_("Account Register failed!"))
+            #= lambda: self.show_error(_("Account Register failed!"))
         self._register_dialog.init(self, self.wallet, message, on_success, on_failure, is_change=2)
         self._register_dialog.open()  
                             
@@ -1254,37 +1271,41 @@ class ElectrumWindow(App):
             screen.ip = host
             screen.delegate = self.masternode_vps[host]            
         masternode_vps=[]
+        cur_select = ''
         for key in self.masternode_vps.keys():
             masternode_vps.append(key)
-        ChoiceDialog(_('Choose a masternode vps'), sorted(masternode_vps), '', cb2).open()
+            cur_select = key
+        ChoiceDialog(_('Choose a masternode vps'), sorted(masternode_vps), cur_select, cb2).open()
         
     def choose_payway_dialog(self, popup):
+        from .uix.dialogs.conversion import ConversionDialog
         from .uix.dialogs.choice_dialog import ChoiceDialog
         def cb2(mode):
             popup.mode = mode
-        modes = ['weixin', 'zhifubao', 'bank']
-        ChoiceDialog(_('Choose payway'), sorted(modes), 'weixin', cb2).open()
+            self.get_payway_from_text(mode, popup)
+        modes = [_('weixin'), _('zhifubao'), _('bank')]
+        ChoiceDialog(_('Choose payway'), sorted(modes), _('weixin'), cb2).open()
 
     def choose_payaccount_dialog(self, popup):
         from .uix.dialogs.choice_dialog import ChoiceDialog
+        accounts = []
+        cur_select = ''
+        for key in self.client.conversion_account.keys():
+            cur_select = name + '-' +key
+            name, bank, mode = self.client.conversion_account[key]
+            accounts.append(name + '-' + key)
         def cb2(key):            
             if key == '' or key is None:
                 return
             name, account = key.split('-') 
-            alias, bank, mode = accounts[account]
+            alias, bank, mode = self.client.conversion_account[account]
             popup.alias = str(alias)
             popup.bank = str(bank)
-            popup.mode = self.get_payway(str(mode))            
-            popup.account = account
+            self.get_payway(str(mode), popup)            
+            popup.account = account            
             
-        accounts = []
-        cur_account = ''
-        for key in self.client.conversion_account.keys():
-            cur_account = key
-            name, bank, mode = self.client.conversion_account[key]
-            accounts.append(name + '-' + key)
         if len(accounts) > 0:
-            ChoiceDialog(_('Choose payaccount'), sorted(accounts), cur_account, cb2).open()
+            ChoiceDialog(_('Choose payaccount'), sorted(accounts), cur_select, cb2).open()
 
     def broadcast_conversion(self, tx, on_complete, pr=None):
         if self.network and self.network.is_connected():
@@ -1305,10 +1326,25 @@ class ElectrumWindow(App):
             status, msg = True, tx
         Clock.schedule_once(lambda dt: on_complete(status, msg))
 
-    def get_payway(self, mode):
+    def get_payway(self, mode, popup):
+        popup.disable_pin = True
         if mode == '1':
-            return 'bank'
+            popup.mode = _('bank')
+            popup.disable_pin = False
+            return
+        popup.bank = ''
         if mode == '2':
-            return 'weixin'
+            popup.mode= _('weixin')
+            return
         if mode == '3':
-            return 'zhifubao'
+            popup.mode = _('zhifubao')
+            return
+        popup.mode = _('weixin')            
+
+    def get_payway_from_text(self, mode, popup):
+        popup.mode = mode
+        popup.disable_pin = True
+        if mode == _('bank'):
+            popup.disable_pin = False
+            return
+        popup.bank = ''

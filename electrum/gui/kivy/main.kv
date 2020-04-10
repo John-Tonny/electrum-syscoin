@@ -460,15 +460,15 @@ BoxLayout:
                     name: 'conversion'
                     text: _('Conversion')
                 ActionOvrButton:
+                    name: 'account'
+                    text: _('Account')
+                ActionOvrButton:
                     name: 'settings'
                     text: _('Settings')
                     on_parent:
                         # when widget overflow drop down is shown, adjust the width
                         parent = args[1]
                         if parent: ao._dropdown.width = sp(200)
-                ActionOvrButton:
-                    name: 'info'
-                    text: _('Info')
     ScreenManager:
         id: manager
         ScreenTabs:

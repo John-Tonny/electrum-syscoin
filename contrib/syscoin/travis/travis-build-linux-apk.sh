@@ -1,0 +1,40 @@
+#!/bin/bash
+set -ev
+
+:<<COMMIT
+if [[ -z $TRAVIS_TAG ]]; then
+  echo TRAVIS_TAG unset, exiting
+  exit 1
+fi
+
+BUILD_REPO_URL=https://github.com/John-Tonny/electrum-vds.git
+
+cd build
+
+git clone --branch $TRAVIS_TAG $BUILD_REPO_URL electrum-vds
+
+COMMIT
+
+pushd electrum-vds
+./contrib/make_locale
+find . -name '*.po' -delete
+find . -name '*.pot' -delete
+popd
+
+sudo chown -R 1000 electrum-vds
+
+DOCKER_CMD="rm -rf packages"
+DOCKER_CMD="$DOCKER_CMD && ./contrib/make_packages"
+DOCKER_CMD="$DOCKER_CMD && rm -rf packages/bls_py"
+DOCKER_CMD="$DOCKER_CMD && rm -rf packages/python_bls*"
+DOCKER_CMD="$DOCKER_CMD && ./contrib/make_apk"
+if [ $ELECTRUM_MAINNET = false ] ; then
+    DOCKER_CMD="$DOCKER_CMD release-testnet"
+fi
+
+sudo docker run --rm  \
+    -v $(pwd)/electrum-vds:/home/buildozer/build \
+    -t zebralucky/electrum-dash-winebuild:Kivy33x bash -c \
+    "$DOCKER_CMD"
+
+

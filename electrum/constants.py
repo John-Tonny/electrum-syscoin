@@ -40,7 +40,7 @@ def read_json(filename, default):
 
 COLLATERAL_COINS = 1000
 MASTERNODE_PORTS = 9069
-DESTROY_ADDRESS = 'SQTButK5GKw6o1KsSyC6ARtbPPtWbiHXat'
+DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
 
 class AbstractNet:
 
@@ -148,10 +148,10 @@ class SyscoinMainnet(AbstractNet):
     POW_TARGET_SPACING = 60  # 60 seconds
     POW_BLOCK_ADJUST = int(POW_TARGET_TIMESPAN / POW_TARGET_SPACING)
 
-    GENESIS = "00000051cfa34a5a574fbf4f3aec9a919b217e38ad23ed131288842181c786c2"    
+    GENESIS = "0000066e6810ff0642cc34fe5fc3c66c3f39c9a0c713c079df427524994fc06a"    
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
     DEFAULT_SERVERS = read_json('servers.json', {
-        "192.168.246.186": {
+        "52.82.3.60": {
             "pruning": "-",
             "t": "50001",
             "s": "50002",

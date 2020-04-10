@@ -55,12 +55,12 @@ Builder.load_string('''
             orientation: 'horizontal'
             size_hint: 1, 0.5
             Button:
-                text: 'Cancel'
+                text: _('Cancel')
                 size_hint: 0.5, None
                 height: '48dp'
                 on_release: popup.dismiss()
             Button:
-                text: 'OK'
+                text: _('OK')
                 size_hint: 0.5, None
                 height: '48dp'
                 on_release:
@@ -87,15 +87,15 @@ class FeeDialog(Factory.Popup):
         if self.method == 2:
             fee_rate = self.config.depth_to_fee(pos)
             target, estimate = self.config.get_fee_text(pos, dynfees, mempool, fee_rate)
-            msg = 'In the current network conditions, in order to be positioned %s, a transaction will require a fee of %s.' % (target, estimate)
+            msg = _('In the current network conditions, in order to be positioned %s, a transaction will require a fee of %s.') % (target, estimate)
         elif self.method == 1:
             fee_rate = self.config.eta_to_fee(pos)
             target, estimate = self.config.get_fee_text(pos, dynfees, mempool, fee_rate)
-            msg = 'In the last few days, transactions that confirmed %s usually paid a fee of at least %s.' % (target.lower(), estimate)
+            msg = _('In the last few days, transactions that confirmed %s usually paid a fee of at least %s.') % (target.lower(), estimate)
         else:
             fee_rate = self.config.static_fee(pos)
             target, estimate = self.config.get_fee_text(pos, dynfees, True, fee_rate)
-            msg = 'In the current network conditions, a transaction paying %s would be positioned %s.' % (target, estimate)
+            msg = _('In the current network conditions, a transaction paying %s would be positioned %s.') % (target, estimate)
 
         self.ids.fee_target.text = target
         self.ids.fee_estimate.text = msg

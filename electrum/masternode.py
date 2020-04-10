@@ -1,4 +1,4 @@
-"""VOLLAR masternode support."""
+"""VIRCLE masternode support."""
 import time
 import base64
 

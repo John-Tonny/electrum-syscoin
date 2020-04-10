@@ -855,7 +855,6 @@ def export_meta_gui(electrum_window, title, exporter):
         electrum_window.show_message(_("Your {0} were exported to '{1}'")
                                      .format(title, str(filename)))
 
-
 def get_parent_main_window(widget):
     """Returns a reference to the ElectrumWindow this widget belongs to."""
     from .main_window import ElectrumWindow
@@ -868,15 +867,12 @@ def get_parent_main_window(widget):
             return widget
     return None
 
-
 def icon_path(icon_basename):
     return resource_path('gui', 'icons', icon_basename)
-
 
 @lru_cache(maxsize=1000)
 def read_QIcon(icon_basename):
     return QIcon(icon_path(icon_basename))
-
 
 def get_default_language():
     name = QLocale.system().name()

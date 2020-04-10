@@ -172,6 +172,6 @@ class MasternodeList(MyTreeView):
             self.parent.masternode_combo.setDisabled(True)
         else:
             self.parent.masternode_combo.setDisabled(False)
-            self.parent.masternode_refresh()
+            #self.parent.masternode_refresh()
             
         

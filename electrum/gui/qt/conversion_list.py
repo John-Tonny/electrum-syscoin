@@ -174,6 +174,5 @@ class ConversionList(MyTreeView):
         run_hook('update_conversion_tab', self)
 
     def on_clicked(self, idx):
-        #alias = self.model().index(idx.row(),0).data()
         pass
         

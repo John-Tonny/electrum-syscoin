@@ -6,6 +6,10 @@ import queue
 import json
 import time
 import threading
+from electrum.constants import MASTERNODE_PORTS
+
+POST_TIMEOUT = 500
+GET_TIMEOUT = 1000
 
 class Client:
 
@@ -21,8 +25,8 @@ class Client:
         self.conversion_page_size = 20
         
         self.money_ratio = 0
-        timer = threading.Timer(2, self.get_money_ratio)
-        timer.start()                
+        timer = threading.Timer(0.5, self.get_money_ratio)
+        timer.start()    
 
     def get_header_auth(self):
         m = hashlib.md5()
@@ -37,9 +41,15 @@ class Client:
             async with aiohttp.ClientSession() as session:
                 headers = {'Auth': self.get_header_auth()}                
                 method = 'http://52.82.33.173:8080/' + url
-                async with session.post(method, headers=headers, data=data) as resp:
-                    resp = await resp.text(encoding='utf-8')
+                try:
+                    async with session.post(method, headers=headers, data=data) as resp:
+                        resp = await resp.text(encoding='utf-8')
+                        rqueue.put(resp)
+                except Exception as e:
+                    resp = {}
+                    resp['code'] = '-1000'
                     rqueue.put(resp)
+                    print(str(e))
                     
         asyncio.run_coroutine_threadsafe(_post_req(url, data, rqueue), self.loop)
         
@@ -48,6 +58,7 @@ class Client:
             async with aiohttp.ClientSession() as session:
                 headers = {'Auth': self.get_header_auth()}                
                 method = 'http://52.82.33.173:8080/' + url
+                #with aiohttp.Timeout(POST_TIMEOUT):
                 async with session.post(method, headers=headers, data=data) as resp:
                     resp = await resp.text(encoding='utf-8')
                     queue.put(resp)
@@ -59,10 +70,16 @@ class Client:
             async with aiohttp.ClientSession() as session:
                 headers = {'Auth': self.get_header_auth()}                
                 method = 'http://52.82.33.173:8080/' + url
-                async with session.get(method, headers=headers, data=data) as resp:
-                    resp = await resp.text(encoding='utf-8')
+                try:
+                    async with session.get(method, headers=headers, data=data) as resp:
+                        resp = await resp.text(encoding='utf-8')
+                        rqueue.put(resp)
+                except Exception as e:
+                    resp = {}
+                    resp['code'] = '-1000'
                     rqueue.put(resp)
-                    
+                    print(str(e))
+                
         asyncio.run_coroutine_threadsafe(_get_req(url, data, rqueue), self.loop)
 
 
@@ -77,7 +94,7 @@ class Client:
     def get_money_ratio(self):
         url = 'fundValue/latest'
         self.get_req(url, None, self.money_queue)
-        resp = json.loads(self.money_queue.get())
+        resp = json.loads(self.money_queue.get())        
         if resp['code'] == 200:
             self.money_ratio = resp['data']['fundValue']
         
@@ -112,16 +129,32 @@ class Client:
         self.get_req(url, None, masternode_queue)
         resp = masternode_queue.get()
         resp = json.loads(resp)
-        #if resp['code'] == 200:
-        resp = {}
-        data = [{'ip':'52.82.14.25:9069', 'genkey': '5KTbFcwYns3QmTuzFMEoSbqxoF3u1a2DneNKbsuRAJoAJoLMhAw'},
-                {'ip':'47.104.25.28:9069', 'genkey': '5JcP6XZBngpgXkUAYXb3i9B2X3cYymANr7o1danBthigsnGp5Qc'},
-                {'ip':'1.2.3.6:9069', 'genkey': '5KMmZ1jWDntnYdunmJDRze2xuBRRZxTeoTbf37eJt8ZrP6NVGMV'}]
-        for mn in data:
-            key = mn['ip']
-            resp[key] = mn['genkey']
-        return resp
-        #    return {}
+        if resp['code'] == 200:
+            '''
+            resp = {}
+            data = [{'ip':'52.82.14.25:9069', 'genkey': '5KTbFcwYns3QmTuzFMEoSbqxoF3u1a2DneNKbsuRAJoAJoLMhAw'},
+                    {'ip':'47.104.25.28:9069', 'genkey': '5JcP6XZBngpgXkUAYXb3i9B2X3cYymANr7o1danBthigsnGp5Qc'},
+                    {'ip':'1.2.3.6:9069', 'genkey': '5KMmZ1jWDntnYdunmJDRze2xuBRRZxTeoTbf37eJt8ZrP6NVGMV'}]
+            
+            for mn in data:
+                key = mn['ip']
+                resp[key] = mn['genkey']
+            return resp
+            '''
+            try:
+                data = resp['data']
+                ret = {}
+                if isinstance(data, dict):
+                    ip = data['ip'] + ":" + str(MASTERNODE_PORTS)
+                    ret[ip] = data['genkey']
+                elif isinstance(data, list):                
+                    for mn in data:
+                        ip = mn['ip'] + ":" + str(MASTERNODE_PORTS)
+                        ret[ip] = mn['genkey']
+            finally:
+                pass
+            return ret
+        return {}
         
     def get_account(self):
         phone = self.get_phone()
@@ -149,7 +182,7 @@ class Client:
         self.conversion_cur_page = 1
         self.conversion_list = []
         
-        self.get_conversion(self.conversion_cur_page, self.conversion_page_size)
+        return self.get_conversion(self.conversion_cur_page, self.conversion_page_size)
         
     def do_back_conversion(self):                
         if self.conversion_cur_page ==1:
@@ -159,7 +192,7 @@ class Client:
         cur_total_page = (len(self.conversion_list) + (self.conversion_page_size -1))//self.conversion_page_size
         total_page = (self.conversion_total + (self.conversion_page_size -1))//self.conversion_page_size        
         if total_page > cur_total_page:
-            self.get_conversion(self.conversion_cur_page, self.conversion_page_size)
+            return self.get_conversion(self.conversion_cur_page, self.conversion_page_size)
 
     def do_next_conversion(self):
         total_page = (self.conversion_total + (self.conversion_page_size-1))//self.conversion_page_size
@@ -169,10 +202,10 @@ class Client:
         
         cur_total_page = (len(self.conversion_list) + (self.conversion_page_size -1))//self.conversion_page_size
         if total_page > cur_total_page:
-            self.get_conversion(self.conversion_cur_page, self.conversion_page_size)
+            return self.get_conversion(self.conversion_cur_page, self.conversion_page_size)
 
     def get_profit_address(self):
-        register_info = self.wallet.storage.get('masternoderegister')        
+        register_info = self.wallet.storage.get('user_register')        
         if register_info is None:        
             return ''
         for key in register_info.keys():
@@ -180,7 +213,7 @@ class Client:
             return profit_address
     
     def get_phone(self):
-        register_info = self.wallet.storage.get('masternoderegister')        
+        register_info = self.wallet.storage.get('user_register')        
         if register_info is None:        
             return ''
         for key in register_info.keys():
@@ -213,6 +246,21 @@ class Client:
             self.conversion_account = self.wallet.storage.get('conversion_account', {})
         
         
+    def conversion_commit_send(self, data):
+        if not isinstance(data, dict):
+            return
+        
+        ll = {}
+        txId = data['txId']
+        for l in self.conversion_list:
+            if l['txId'] == txId:
+                return
+        
+        self.conversion_list.append(data)
+        
+        
+        
+            
         
         
         

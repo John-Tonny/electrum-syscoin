@@ -532,9 +532,8 @@ class MasternodeScreen(CScreen):
         self.masternode_container_pos = 0
         self.x = 0
                 
-        #self.register_status()        
         self.test = True
-                     
+        
     def do_clear(self):
         self.screen.alias =''
         self.screen.collateral = ''
@@ -583,11 +582,13 @@ class MasternodeScreen(CScreen):
     
     def do_remove(self, obj):        
         from .dialogs.question import Question
-        d = Question(_('Are you sure you want to delete it?'), lambda b: self._do_remove(obj))
+        d = Question(_('Are you sure you want to remove it?'), lambda b: self._do_remove(obj, b))
         d.open()
     
-    def _do_remove(self, obj):
+    def _do_remove(self, obj, b):
         try:
+            if not b:
+                return
             key = obj.txid + '-' + str(obj.index)
             self.app.masternode_manager.remove_masternode(key)
             self.do_clear()
@@ -598,18 +599,20 @@ class MasternodeScreen(CScreen):
 
     def do_removeall(self, obj):        
         from .dialogs.question import Question
-        d = Question(_('Are you sure you want to delete all of them?'), lambda b: self._do_removeall())
+        def _do_removeall(ok):
+            try:
+                if not ok:
+                    return
+                self.app.masternode_manager.masternodes = {}
+                self.app.masternode_manager.save()
+                self.do_clear()
+                self.update()
+                return
+            except Exception as e:
+                self.app.show_error(str(e))
+                
+        d = Question(_('Are you sure you want to remove all of them?'), _do_removeall)
         d.open()
-    
-    def _do_removeall(self):
-        try:
-            self.app.masternode_manager.masternodes = {}
-            self.app.masternode_manager.save()
-            self.do_clear()
-            self.update()
-            return
-        except Exception as e:
-            self.app.show_error(str(e))
                 
     def do_save(self):
         key = self.screen.utxo
@@ -620,13 +623,13 @@ class MasternodeScreen(CScreen):
         try:
             self.check_save(key)
         except Exception as e:
-            self.app.show_error("pp1:" + str(e))
+            self.app.show_error(str(e))
             return
         
         try:
             delegate_pub = self.app.masternode_manager.import_masternode_delegate(self.screen.delegate)
         except Exception as e:
-            self.app.show_error("pp2:" + str(e))
+            self.app.show_error(str(e))
             pass
                 
         try:
@@ -650,13 +653,13 @@ class MasternodeScreen(CScreen):
             mn.delegate_key = delegate_pub
             mn.collateral_key = collateral_pub
             ipaddress , port = self.screen.ip.split(":")
-            self.app.show_info(self.screen.ip)
             mn.addr.ip = ipaddress
             mn.addr.port = int(port)
             self.app.masternode_manager.save()
-            self.update()        
+            self.update()
+            self.app.show_info(_('Masternode saved'))
         except Exception as e:
-            self.app.show_error("pp3:" + str(e))
+            self.app.show_error(str(e))
         
     def do_scan(self):
         try:
@@ -670,7 +673,7 @@ class MasternodeScreen(CScreen):
                 try:
                     collateral = self.app.wallet.get_public_keys(coin['address'])[0]       
                 except Exception as e:
-                    self.app.show_error("bbb:" + str(e))
+                    self.app.show_error(str(e))
                 
                 alias = self.app.masternode_manager.get_default_alias()      
                 mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(),
@@ -681,12 +684,12 @@ class MasternodeScreen(CScreen):
             self.app.masternode_manager.save()
             self.update()            
         except Exception as e:
-            self.app.show_error("kkk:" + str(e))
+            self.app.show_error(str(e))
             return 
         
     def do_activate(self, obj):
         if self.check_status(obj):
-            self.app.show_info('Masternode has already been activated')
+            self.app.show_info(_('Masternode has already been activated'))
             return
         msg=[]
         msg.append(_("Enter your PIN code to proceed"))
@@ -701,20 +704,20 @@ class MasternodeScreen(CScreen):
             self.send_announce(key)
             
         def on_failure(error):
-            self.app.show_error('Error signing MasternodeAnnounce:')
+            self.app.show_error(_('Error signing MasternodeAnnounce:'))
         
         self.app.sign_announce(key, password, on_success, on_failure)
             
     def send_announce(self, key):
         def on_success(errmsg, was_announced):
             if len(errmsg) > 0 :
-                self.app.show_error("k2:" + errmsg)
+                self.app.show_error(errmsg)
             elif was_announced:
-                self.app.show_info('Masternode activated successfully.')
+                self.app.show_info(_('Masternode was activated successfully.'))
             self.update()
             
         def on_failure(error):
-            self.app.show_error("k3:" + error)
+            self.app.show_error(error)
             self.update()
         
         self.app.send_announce(key, on_success, on_failure)
@@ -740,9 +743,14 @@ class MasternodeScreen(CScreen):
     def update(self, see_all=False):
         if self.app.wallet is None:
             return
+        
+        self.register_status()
         try:
             masternode_card = self.screen.ids.masternode_container
             cards = []
+            if len(self.app.masternode_manager.masternodes) == 0:
+                self.hide_menu()
+            
             for key in self.app.masternode_manager.masternodes.keys():                
                 try:
                     mn = self.app.masternode_manager.masternodes[key]
@@ -753,12 +761,12 @@ class MasternodeScreen(CScreen):
                     ci = self.get_card(utxo, str(mn.collateral_key), mn.delegate_key, str(status), mn.announced, mn.alias, ip)
                     cards.append(ci)
                 except Exception as e:
-                    self.app.show_error("k1:" + str(e))
+                    #self.app.show_error(str(e))
                     continue
             
             masternode_card.data = cards
         except Exception as e:
-            self.app.show_error("k3:" + str(e))
+            self.app.show_error(str(e))
          
     def show_masternode(self, obj):
         self.screen.alias = obj.alias
@@ -767,6 +775,8 @@ class MasternodeScreen(CScreen):
         self.screen.delegate = self.app.wallet.get_delegate_private_key(obj.delegate)
         if len(obj.ipaddress) > 0:
             self.screen.ip = obj.ipaddress + ":" + str(obj.port)
+        else:
+            self.screen.ip = ''
 
     def show_menu(self, obj):
         self.hide_menu()
@@ -785,7 +795,7 @@ class MasternodeScreen(CScreen):
             pubkey = ecc.ECPrivkey(key).get_public_key_hex(compressed=is_compressed)
             self.screen.delegate = data
         except Exception as e:
-            self.app.show_error("Invalid Delegate Key")
+            self.app.show_error(_("Invalid Delegate Key"))
         
     def do_generate(self):
         private_key = b'\x80' + os.urandom(32)
@@ -808,13 +818,13 @@ class MasternodeScreen(CScreen):
     
     def check_save(self, collateral=None):
         if (self.screen.alias is None) or len(self.screen.alias) == 0:                
-            raise Exception('Alias is not specified')        
+            raise Exception(_('Alias is not specified'))        
         if (self.screen.collateral is None) or len(self.screen.collateral) == 0:
-            raise Exception('Collateral payment is not specified')
+            raise Exception(_('Collateral payment is not specified'))
         if (self.screen.delegate is None) or len(self.screen.delegate) == 0:
-            raise Exception('Masternode delegate key is not specified')
+            raise Exception(_('Masternode delegate key is not specified'))
         if (self.screen.ip is None) or len(self.screen.ip) == 0:
-            raise Exception('Masternode has no IP address')
+            raise Exception(_('Masternode has no IP address'))
                 
         for key in self.app.masternode_manager.masternodes.keys():
             if not (collateral is None):
@@ -844,9 +854,14 @@ class MasternodeScreen(CScreen):
         loop.run_until_complete(asyncio.wait(tasks))
         
     def register_status(self):
-        self.screen.is_pr = False
-        if self.app.wallet.storage.get('masternoderegister') is None:
-            self.screen.is_pr = True
+        self.screen.is_pr = True
+        
+        address = self.app.wallet.get_unused_address()
+        if address[0] != 'S':
+            return
+        
+        if not (self.app.wallet.storage.get('user_register') is None):
+            self.screen.is_pr = False
          
     def do_import(self):
         from jnius import autoclass  # SDcard Android        

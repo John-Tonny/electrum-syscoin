@@ -26,7 +26,7 @@ Builder.load_string('''
             filter: '*.*'
             path: root.path
             rootpath: root.path
-            size_hint_y: 0.6
+            size_hint_y: 0.5
         Widget
             size_hint_y: 0.1
         GridLayout:
@@ -36,7 +36,7 @@ Builder.load_string('''
                 id: open_button
                 size_hint: 0.1, None
                 height: '48dp'
-                text: _('New')
+                text: _('New Wallet')
                 on_release:
                     popup.dismiss()
                     root.new_wallet(app, wallet_selector.path)
@@ -44,7 +44,7 @@ Builder.load_string('''
                 id: open_button
                 size_hint: 0.1, None
                 height: '48dp'
-                text: _('Open')
+                text: _('Open Wallet')
                 disabled: not wallet_selector.selection
                 on_release:
                     popup.dismiss()
