@@ -39,8 +39,25 @@ def read_json(filename, default):
     return r
 
 COLLATERAL_COINS = 1000
-MASTERNODE_PORTS = 9069
-DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
+#COIN_NAME = 'vircle'
+COIN_NAME = 'wenchuang'
+
+if COIN_NAME == 'wenchuang':
+    MASTERNODE_PORTS = 9069
+    DESTROY_ADDRESS = '38yCRGL3F7RHNdoJXdFRorYRfaitD5p75o'
+    API_NAME = 'wenchuang'
+    API_PASSWORD = '123456'
+    API_PRIVKEY = 'fef44d643edd4973b0aa3536be508025'
+    API_URL = 'http://120.76.199.16:8081/'
+else:
+    MASTERNODE_PORTS = 9069
+    DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
+    API_NAME = 'admin'
+    API_PASSWORD = '999000'
+    API_PRIVKEY = 'jlw999000'
+    API_URL = 'http://52.82.33.173:8080/'
+
+
 
 class AbstractNet:
 
@@ -148,16 +165,30 @@ class SyscoinMainnet(AbstractNet):
     POW_TARGET_SPACING = 60  # 60 seconds
     POW_BLOCK_ADJUST = int(POW_TARGET_TIMESPAN / POW_TARGET_SPACING)
 
-    GENESIS = "0000066e6810ff0642cc34fe5fc3c66c3f39c9a0c713c079df427524994fc06a"    
+    if COIN_NAME == 'wenchuang':
+        GENESIS = "00000cefeafaa3e78cf25dbbfa02ecf8b78861a08f3bff0e45e6ebc90a127f7e"    
+    else:
+        GENESIS = "0000066e6810ff0642cc34fe5fc3c66c3f39c9a0c713c079df427524994fc06a"    
+    
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
-    DEFAULT_SERVERS = read_json('servers.json', {
-        "52.82.3.60": {
-            "pruning": "-",
-            "t": "50001",
-            "s": "50002",
-            "version": "1.4"
-        }
-    })
+    if COIN_NAME == 'wenchuang':
+        DEFAULT_SERVERS = read_json('servers.json', {
+            "120.24.96.245": {
+                "pruning": "-",
+                "t": "50001",
+                "s": "50002",
+                "version": "1.4"
+            }
+        })        
+    else:
+        DEFAULT_SERVERS = read_json('servers.json', {
+            "52.82.3.60": {
+                "pruning": "-",
+                "t": "50001",
+                "s": "50002",
+                "version": "1.4"
+            }
+        })
     CHECKPOINTS = read_json('checkpoints.json', [])
 
     XPRV_HEADERS = {

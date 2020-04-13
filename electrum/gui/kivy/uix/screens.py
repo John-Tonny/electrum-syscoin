@@ -832,15 +832,16 @@ class MasternodeScreen(CScreen):
                     continue
             mn = self.app.masternode_manager.masternodes[key]
             if mn.alias == self.screen.alias:
-                raise Exception(_('A masternode with alias "%s" already exists' % self.screen.alias))
+                raise Exception(_('A masternode with alias "%s" already exists') % self.screen.alias)
             delegate = self.app.wallet.get_delegate_private_key(mn.delegate_key)            
             if delegate == self.screen.delegate:
-                raise Exception(_('A masternode with private key "%s" already exists' % self.screen.delegate))
+                raise Exception(_('A masternode with private key "%s" already exists') % self.screen.delegate)
             ipaddress, port = self.screen.ip.split(":")
             if mn.addr.ip == ipaddress:
-                raise Exception(_('A masternode with ip address "%s" already exists' % self.screen.ip))
+                raise Exception(_('A masternode with ip address "%s" already exists') % self.screen.ip)
         return True
-                                                                
+    
+    '''                                                            
     def account_register(self, mobilephone, address):
         async def _account_register(mobilephone, address):
             async with aiohttp.ClientSession() as session:
@@ -852,7 +853,8 @@ class MasternodeScreen(CScreen):
         loop = self.network.asyncio_loop
         tasks = [_account_register(mobilephone, address)]
         loop.run_until_complete(asyncio.wait(tasks))
-        
+    '''
+    
     def register_status(self):
         self.screen.is_pr = True
         

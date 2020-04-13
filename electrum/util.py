@@ -64,10 +64,15 @@ def inv_dict(d):
 
 ca_path = certifi.where()
 
-
-base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
-base_units_inverse = inv_dict(base_units)
-base_units_list = ['VCL', 'mVCL', 'bits', 'sat']  # list(dict) does not guarantee order
+COIN_NAME = 'wenchuang'
+if COIN_NAME == 'wenchuang':
+    base_units = {'WCL':8, 'mWCL':5, 'bits':2, 'sat':0}
+    base_units_inverse = inv_dict(base_units)
+    base_units_list = ['WCL', 'mWCL', 'bits', 'sat']  # list(dict) does not guarantee order
+else:
+    base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
+    base_units_inverse = inv_dict(base_units)
+    base_units_list = ['VCL', 'mVCL', 'bits', 'sat']  # list(dict) does not guarantee order
 
 base_asset_units = {'-': 8, 'millis': 5, 'bits': 2, 'toshi': 0}
 base_asset_units_inverse = inv_dict(base_asset_units)
@@ -547,11 +552,20 @@ def user_dir():
     if 'ANDROID_DATA' in os.environ:
         return android_data_dir()
     elif os.name == 'posix':
-        return os.path.join(os.environ["HOME"], ".electrum")
+        if COIN_NAME == 'wenchuang':
+            return os.path.join(os.environ["HOME"], ".electrum-wcl")
+        else:
+            return os.path.join(os.environ["HOME"], ".electrum")
     elif "APPDATA" in os.environ:
-        return os.path.join(os.environ["APPDATA"], "Electrum")
+        if COIN_NAME == 'wenchuang':
+            return os.path.join(os.environ["APPDATA"], "Electrum-wcl")            
+        else:
+            return os.path.join(os.environ["APPDATA"], "Electrum")
     elif "LOCALAPPDATA" in os.environ:
-        return os.path.join(os.environ["LOCALAPPDATA"], "Electrum")
+        if COIN_NAME == 'wenchuang':
+            return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-wcl")
+        else:
+            return os.path.join(os.environ["LOCALAPPDATA"], "Electrum")
     else:
         #raise Exception("No home directory found in environment variables.")
         return
@@ -723,6 +737,7 @@ def time_difference(distance_in_time, include_seconds):
         return "over %d years" % (round(distance_in_minutes / 525600))
 
 mainnet_block_explorers = {
+    '''
     'Bitupper Explorer': ('https://bitupper.com/en/explorer/bitcoin/',
                         {'tx': 'transactions/', 'addr': 'addresses/'}),
     'Bitflyer.jp': ('https://chainflyer.bitflyer.jp/',
@@ -755,9 +770,11 @@ mainnet_block_explorers = {
                         {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain:/',
                         {'tx': 'tx/', 'addr': 'address/'}),
+    '''
 }
 
 testnet_block_explorers = {
+    '''
     'Bitaps.com': ('https://tbtc.bitaps.com/',
                        {'tx': '', 'addr': ''}),
     'BlockCypher.com': ('https://live.blockcypher.com/btc-testnet/',
@@ -772,6 +789,7 @@ testnet_block_explorers = {
                        {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
                        {'tx': 'tx/', 'addr': 'address/'}),
+    '''
 }
 
 def block_explorer_info():

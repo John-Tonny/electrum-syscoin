@@ -214,7 +214,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         add_optional_tab(tabs, self.console_tab, read_QIcon("tab_console.png"), _("Con&sole"), "console")
         ###john
         add_optional_tab(tabs, self.masternode_tab, read_QIcon("tab_console.png"), _("&Masternode"), "masternode")
-        add_optional_tab(tabs, self.conversion_tab, read_QIcon("tab_console.png"), _("&Conversion"), "conversion")
+        add_optional_tab(tabs, self.conversion_tab, read_QIcon("tab_console.png"), _("Con&version"), "conversion")
 
         tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setCentralWidget(tabs)
@@ -687,13 +687,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         help_menu = menubar.addMenu(_("&Help"))
         help_menu.addAction(_("&About"), self.show_about)
-        help_menu.addAction(_("&Check for updates"), self.show_update_check)
-        help_menu.addAction(_("&Official website"), lambda: webbrowser.open("https://electrum.org"))
-        help_menu.addSeparator()
-        help_menu.addAction(_("&Documentation"), lambda: webbrowser.open("http://docs.electrum.org/")).setShortcut(QKeySequence.HelpContents)
-        help_menu.addAction(_("&Report Bug"), self.show_report_bug)
-        help_menu.addSeparator()
-        help_menu.addAction(_("&Donate to server"), self.donate_to_server)
+        #help_menu.addAction(_("&Check for updates"), self.show_update_check)
+        help_menu.addAction(_("&Official website"), lambda: webbrowser.open("http://www.90qkl.cn"))
+        #help_menu.addSeparator()
+        #help_menu.addAction(_("&Documentation"), lambda: webbrowser.open("http://docs.electrum.org/")).setShortcut(QKeySequence.HelpContents)
+        #help_menu.addAction(_("&Report Bug"), self.show_report_bug)
+        #help_menu.addSeparator()
+        #help_menu.addAction(_("&Donate to server"), self.donate_to_server)
 
         self.setMenuBar(menubar)
 
@@ -4204,8 +4204,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         def on_success(response):
             if response["code"] != 200 :                        
                 self.show_message(_('Account Register failed!'), title=_('Error'))
-            self.show_message(_('Account Register successful!'),
-                                  title=_('Success'))
+            else:
+                self.show_message(_('Account Register successful!'),
+                                      title=_('Success'))
             
         def on_error(msg):
             self.show_message(_('Account Register failure'), title=_('Error'))

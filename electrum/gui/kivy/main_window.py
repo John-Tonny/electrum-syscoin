@@ -1249,14 +1249,16 @@ class ElectrumWindow(App):
                         
             response = self.client.post_register(mobilephone, address)                
             if response["code"] != 200 :                        
+                self.show_error(_("Account Register failed!"))
                 return False
             self.wallet.storage.put('user_register', {mobilephone:(password, address)})
             self.show_info(_('Account Register successful!'))
-            self.masternode_screen.screen.is_pr = False
+            self.show_info(mobilephone)
+            #self.masternode_screen.screen.is_pr = False
             return True
             
         def on_failure():
-            self.masternode_screen.screen.is_pr = True
+            #self.masternode_screen.screen.is_pr = True
             self.show_error(_("Account Register failed!"))
             #= lambda: self.show_error(_("Account Register failed!"))
         self._register_dialog.init(self, self.wallet, message, on_success, on_failure, is_change=2)

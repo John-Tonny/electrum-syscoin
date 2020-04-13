@@ -7,6 +7,7 @@ import json
 import time
 import threading
 from electrum.constants import MASTERNODE_PORTS
+from electrum import constants
 
 POST_TIMEOUT = 500
 GET_TIMEOUT = 1000
@@ -30,9 +31,9 @@ class Client:
 
     def get_header_auth(self):
         m = hashlib.md5()
-        name = 'admin'
-        password = '999000'
-        privkey = 'jlw999000'
+        name = constants.API_NAME
+        password = constants.API_PASSWORD
+        privkey = constants.API_PRIVKEY
         m.update(str.encode(name + password + privkey))
         return m.hexdigest()
 
@@ -40,7 +41,7 @@ class Client:
         async def _post_req(url, data, rqueue):
             async with aiohttp.ClientSession() as session:
                 headers = {'Auth': self.get_header_auth()}                
-                method = 'http://52.82.33.173:8080/' + url
+                method = constants.API_URL + url
                 try:
                     async with session.post(method, headers=headers, data=data) as resp:
                         resp = await resp.text(encoding='utf-8')
@@ -57,7 +58,7 @@ class Client:
         async def _post_req(url, data, queue):
             async with aiohttp.ClientSession() as session:
                 headers = {'Auth': self.get_header_auth()}                
-                method = 'http://52.82.33.173:8080/' + url
+                method = constants.API_URL + url
                 #with aiohttp.Timeout(POST_TIMEOUT):
                 async with session.post(method, headers=headers, data=data) as resp:
                     resp = await resp.text(encoding='utf-8')
@@ -69,7 +70,7 @@ class Client:
         async def _get_req(url, data, rqueue):
             async with aiohttp.ClientSession() as session:
                 headers = {'Auth': self.get_header_auth()}                
-                method = 'http://52.82.33.173:8080/' + url
+                method = constants.API_URL + url
                 try:
                     async with session.get(method, headers=headers, data=data) as resp:
                         resp = await resp.text(encoding='utf-8')
@@ -94,9 +95,13 @@ class Client:
     def get_money_ratio(self):
         url = 'fundValue/latest'
         self.get_req(url, None, self.money_queue)
-        resp = json.loads(self.money_queue.get())        
-        if resp['code'] == 200:
-            self.money_ratio = resp['data']['fundValue']
+        try:
+            resp = json.loads(self.money_queue.get())
+            if resp['code'] == 200:
+                self.money_ratio = resp['data']['fundValue']
+        except Exception as e:
+            pass
+        
         
         timer = threading.Timer(2,self.get_money_ratio)
         timer.start()        
