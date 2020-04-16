@@ -44,7 +44,6 @@ from .crypto import sha256d
 from .keystore import xpubkey_to_address, xpubkey_to_pubkey
 from .logging import get_logger
 
-
 _logger = get_logger(__name__)
 
 
@@ -1223,7 +1222,7 @@ class Transaction:
                 sec, compressed = keypairs.get(_pubkey)
                 sig = self.sign_txin(i, sec)
                 self.add_signature_to_txin(i, j, sig)
-
+        
         _logger.info(f"is_complete {self.is_complete()}")
         self.raw = self.serialize()
 

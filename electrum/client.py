@@ -134,18 +134,18 @@ class Client:
         self.get_req(url, None, masternode_queue)
         resp = masternode_queue.get()
         resp = json.loads(resp)
-        if resp['code'] == 200:
-            '''
+        if False:
             resp = {}
             data = [{'ip':'52.82.14.25:9069', 'genkey': '5KTbFcwYns3QmTuzFMEoSbqxoF3u1a2DneNKbsuRAJoAJoLMhAw'},
                     {'ip':'47.104.25.28:9069', 'genkey': '5JcP6XZBngpgXkUAYXb3i9B2X3cYymANr7o1danBthigsnGp5Qc'},
+                    {'ip':'120.24.96.245:9080', 'genkey': '5JcP6XZBngpgXkUAYXb3i9B2X3cYymANr7o1danBthigsnGp5Qc'},
                     {'ip':'1.2.3.6:9069', 'genkey': '5KMmZ1jWDntnYdunmJDRze2xuBRRZxTeoTbf37eJt8ZrP6NVGMV'}]
             
             for mn in data:
                 key = mn['ip']
                 resp[key] = mn['genkey']
             return resp
-            '''
+        if resp['code'] == 200:
             try:
                 data = resp['data']
                 ret = {}

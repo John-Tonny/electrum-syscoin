@@ -4452,7 +4452,7 @@ msgstr "请用虚拟键盘输入你的密语种子。"
 
 #: electrum/gui/qt/util.py:305
 msgid "Please wait"
-msgstr "请稍后"
+msgstr "请稍候"
 
 #: electrum/gui/qt/update_checker.py:93
 msgid "Please wait while Electrum checks for available updates."

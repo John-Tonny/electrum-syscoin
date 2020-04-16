@@ -43,7 +43,14 @@ def set_language(x):
 
 languages = {
     '': _('Default'),
-    '''     
+    'en_UK': _('English'),
+    'zh_CN': _('Chinese Simplified'),
+}
+
+'''
+languages = {
+    '': _('Default'),
+         
     'ar_SA': _('Arabic'),
     'bg_BG': _('Bulgarian'),
     'cs_CZ': _('Czech'),
@@ -51,9 +58,9 @@ languages = {
     'de_DE': _('German'),
     'el_GR': _('Greek'),
     'eo_UY': _('Esperanto'),
-    '''
+    
     'en_UK': _('English'),
-    '''
+    
     'es_ES': _('Spanish'),
     'fa_IR': _('Persian'),
     'fr_FR': _('French'),
@@ -79,7 +86,8 @@ languages = {
     'tr_TR': _('Turkish'),
     'uk_UA': _('Ukrainian'),
     'vi_VN': _('Vietnamese'),
-    '''
+    
     'zh_CN': _('Chinese Simplified'),
-    #'zh_TW': _('Chinese Traditional')
+    'zh_TW': _('Chinese Traditional')
 }
+'''

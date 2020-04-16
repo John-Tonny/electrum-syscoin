@@ -39,16 +39,25 @@ def read_json(filename, default):
     return r
 
 COLLATERAL_COINS = 1000
-#COIN_NAME = 'vircle'
-COIN_NAME = 'wenchuang'
+
+COIN_NAME = 'vircle'
+#COIN_NAME = 'wenchuang'
+#COIN_NAME = 'sdd'
 
 if COIN_NAME == 'wenchuang':
-    MASTERNODE_PORTS = 9069
+    MASTERNODE_PORTS = 9080
     DESTROY_ADDRESS = '38yCRGL3F7RHNdoJXdFRorYRfaitD5p75o'
     API_NAME = 'wenchuang'
     API_PASSWORD = '123456'
     API_PRIVKEY = 'fef44d643edd4973b0aa3536be508025'
     API_URL = 'http://120.76.199.16:8081/'
+elif COIN_NAME == 'sdd':
+    MASTERNODE_PORTS = 9069
+    DESTROY_ADDRESS = ''
+    API_NAME = 'admin'
+    API_PASSWORD = '123456'
+    API_PRIVKEY = '9039b0ff0b6245babb8034e1ad94579e'
+    API_URL = 'http://47.113.108.104:8081/'
 else:
     MASTERNODE_PORTS = 9069
     DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
@@ -56,7 +65,6 @@ else:
     API_PASSWORD = '999000'
     API_PRIVKEY = 'jlw999000'
     API_URL = 'http://52.82.33.173:8080/'
-
 
 
 class AbstractNet:
@@ -167,6 +175,8 @@ class SyscoinMainnet(AbstractNet):
 
     if COIN_NAME == 'wenchuang':
         GENESIS = "00000cefeafaa3e78cf25dbbfa02ecf8b78861a08f3bff0e45e6ebc90a127f7e"    
+    elif COIN_NAME == 'sdd':
+        GENESIS = "00000cefeafaa3e78cf25dbbfa02ecf8b78861a08f3bff0e45e6ebc90a127f7e"    
     else:
         GENESIS = "0000066e6810ff0642cc34fe5fc3c66c3f39c9a0c713c079df427524994fc06a"    
     
@@ -174,6 +184,15 @@ class SyscoinMainnet(AbstractNet):
     if COIN_NAME == 'wenchuang':
         DEFAULT_SERVERS = read_json('servers.json', {
             "120.24.96.245": {
+                "pruning": "-",
+                "t": "50001",
+                "s": "50002",
+                "version": "1.4"
+            }
+        })        
+    elif COIN_NAME == 'sdd':
+        DEFAULT_SERVERS = read_json('servers.json', {
+            "47.115.17.234": {
                 "pruning": "-",
                 "t": "50001",
                 "s": "50002",

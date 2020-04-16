@@ -690,8 +690,22 @@ class MasternodeScreen(CScreen):
     def do_activate(self, obj):
         if self.check_status(obj):
             self.app.show_info(_('Masternode has already been activated'))
+            return        
+
+        if len(obj.alias) == 0:                
+            self.app.show_error(_('Alias is not specified'))        
             return
-        msg=[]
+        if len(obj.collateral) == 0:
+            self.app.show_error(_('Collateral payment is not specified'))
+            return
+        if len(obj.delegate) == 0:
+            self.app.show_error(_('Masternode delegate key is not specified'))
+            return
+        if len(obj.ipaddress) == 0:
+            self.app.show_error(_('Masternode has no IP address'))
+            return        
+        
+        msg=[]        
         msg.append(_("Enter your PIN code to proceed"))
         key = obj.txid + '-' + str(obj.index)
         self.app.protected('\n'.join(msg), self.sign_announce, (key,))   

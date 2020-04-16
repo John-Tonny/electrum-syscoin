@@ -575,7 +575,7 @@ class MasternodeDialog(QDialog, util.MessageBoxMixin, Logger):
         """Sign an announce for alias. This is called by SignAnnounceWidget."""
         pw = None
         if self.manager.wallet.has_password():
-            pw = self.gui.password_dialog(msg=_('Please enter your password to activate masternode "%s".' % alias))
+            pw = self.gui.password_dialog(msg=_('Please enter your password to activate masternode "%s".') % alias)
             if pw is None:
                 return
 

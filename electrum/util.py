@@ -64,7 +64,9 @@ def inv_dict(d):
 
 ca_path = certifi.where()
 
-COIN_NAME = 'wenchuang'
+COIN_NAME = 'vircle'
+#COIN_NAME = 'wenchuang'
+#COIN_NAME = 'sdd'
 if COIN_NAME == 'wenchuang':
     base_units = {'WCL':8, 'mWCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
@@ -554,16 +556,22 @@ def user_dir():
     elif os.name == 'posix':
         if COIN_NAME == 'wenchuang':
             return os.path.join(os.environ["HOME"], ".electrum-wcl")
+        elif COIN_NAME == 'sdd':
+            return os.path.join(os.environ["HOME"], ".electrum-sdd")
         else:
             return os.path.join(os.environ["HOME"], ".electrum")
     elif "APPDATA" in os.environ:
         if COIN_NAME == 'wenchuang':
             return os.path.join(os.environ["APPDATA"], "Electrum-wcl")            
+        elif COIN_NAME == 'sdd':
+            return os.path.join(os.environ["APPDATA"], "Electrum-sdd")            
         else:
             return os.path.join(os.environ["APPDATA"], "Electrum")
     elif "LOCALAPPDATA" in os.environ:
         if COIN_NAME == 'wenchuang':
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-wcl")
+        elif COIN_NAME == 'sdd':
+            return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-sdd")
         else:
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum")
     else:
@@ -737,40 +745,8 @@ def time_difference(distance_in_time, include_seconds):
         return "over %d years" % (round(distance_in_minutes / 525600))
 
 mainnet_block_explorers = {
-    '''
-    'Bitupper Explorer': ('https://bitupper.com/en/explorer/bitcoin/',
-                        {'tx': 'transactions/', 'addr': 'addresses/'}),
-    'Bitflyer.jp': ('https://chainflyer.bitflyer.jp/',
-                        {'tx': 'Transaction/', 'addr': 'Address/'}),
-    'Blockchain.info': ('https://blockchain.com/btc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'blockchainbdgpzk.onion': ('https://blockchainbdgpzk.onion/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockstream.info': ('https://blockstream.info/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Bitaps.com': ('https://btc.bitaps.com/',
-                        {'tx': '', 'addr': ''}),
-    'BTC.com': ('https://chain.btc.com/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Chain.so': ('https://www.chain.so/',
-                        {'tx': 'tx/BTC/', 'addr': 'address/BTC/'}),
-    'Insight.is': ('https://insight.bitpay.com/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'TradeBlock.com': ('https://tradeblock.com/blockchain/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'BlockCypher.com': ('https://live.blockcypher.com/btc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockchair.com': ('https://blockchair.com/bitcoin/',
-                        {'tx': 'transaction/', 'addr': 'address/'}),
-    'blockonomics.co': ('https://www.blockonomics.co/',
-                        {'tx': 'api/tx?txid=', 'addr': '#/search?q='}),
-    'OXT.me': ('https://oxt.me/',
-                        {'tx': 'transaction/', 'addr': 'address/'}),
-    'smartbit.com.au': ('https://www.smartbit.com.au/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'system default': ('blockchain:/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    '''
+    'Vircle Explorer': ('http://pl2.zjchain.co/api/getrawtransactin/',
+                        {'tx': 'transactions/', 'addr': 'addresses/'}),    
 }
 
 testnet_block_explorers = {

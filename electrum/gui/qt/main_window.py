@@ -612,7 +612,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.recently_visited_menu = file_menu.addMenu(_("&Recently open"))
         file_menu.addAction(_("&Open"), self.open_wallet).setShortcut(QKeySequence.Open)
         file_menu.addAction(_("&New/Restore"), self.new_wallet).setShortcut(QKeySequence.New)
-        file_menu.addAction(_("&Save Copy"), self.backup_wallet).setShortcut(QKeySequence.SaveAs)
+        file_menu.addAction(_("&Save backup"), self.backup_wallet).setShortcut(QKeySequence.SaveAs)
         file_menu.addAction(_("Delete"), self.remove_wallet)
         file_menu.addSeparator()
         file_menu.addAction(_("&Quit"), self.close)
@@ -687,7 +687,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         help_menu = menubar.addMenu(_("&Help"))
         help_menu.addAction(_("&About"), self.show_about)
-        #help_menu.addAction(_("&Check for updates"), self.show_update_check)
+        help_menu.addAction(_("&Check for updates"), self.show_update_check)
         help_menu.addAction(_("&Official website"), lambda: webbrowser.open("http://www.90qkl.cn"))
         #help_menu.addSeparator()
         #help_menu.addAction(_("&Documentation"), lambda: webbrowser.open("http://docs.electrum.org/")).setShortcut(QKeySequence.HelpContents)
@@ -1853,7 +1853,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         '''Sign the transaction in a separate thread.  When done, calls
         the callback with a success code of True or False.
         '''
+        aaa = time.time()
         def on_success(result):
+            bbb = time.time() - aaa
+            self.show_message(str(bbb), title='sign time')
             callback(True)
         def on_failure(exc_info):
             self.on_error(exc_info)
@@ -3673,7 +3676,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         self.address_e = MyLineEdit()
         self.address_e.setReadOnly(True)
-        self.address_label = QLabel(_('Collateral Address'))
+        self.address_label = QLabel(_('Collateral Key'))
         grid.addWidget(self.address_label, 3, 2)
         grid.addWidget(self.address_e, 3, 3, 1, -1)
 
@@ -3757,7 +3760,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     collateral = ''
                 
                 delegate = ''
-                mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(ip='1.2.3.4', port=9069),
+                mn = MasternodeAnnounce(alias=alias, vin=vin, addr=NetworkAddress(),
                                         collateral_key=collateral, delegate_key=delegate, sig='', sig_time=0,
                                         last_ping=MasternodePing(),
                                         status='', lastseen=0, activeseconds=0, announced=False)             
@@ -4056,8 +4059,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 #self.app.masternode_manager.rename_masternode(mn)
                     
         pw = None
-        if self.manager.wallet.has_password():
-            pw = self.gui.password_dialog(msg=_('Please enter your password to activate masternode "%s".' % alias))
+        if self.masternode_manager.wallet.has_password():
+            pw = self.password_dialog(msg=_('Please enter your password to activate masternode "%s".') % alias)
             if pw is None:
                 return
         
@@ -4181,6 +4184,19 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 mobilephone, pw, pw1 = self.register_dialog('')
                 if (pw is None) or (pw1 is None) or (mobilephone is None) :
                     # User cancelled password input
+                    return False
+                if len(mobilephone) != 11:
+                    self.show_message(_('Mobile must be 11 digits!'),
+                                          title=_('Error'))                    
+                    return False
+                if pw != pw1:  
+                    self.show_message(_('Password mismatch!'),
+                                          title=_('Error'))                    
+                    return False
+                
+                if len(pw) <= 6:
+                    self.show_message(_('Password length not less than 6 digits!'),
+                                          title=_('Error'))                    
                     return False
                 
                 bregister = True
@@ -4659,7 +4675,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.conversion_next_button.setEnabled(False)
         else:
             total_page = (self.client.conversion_total + (self.client.conversion_page_size -1))//self.client.conversion_page_size
-            if total_page == 1:
+            if total_page <= 1 :
                 self.conversion_back_button.setEnabled(False)
                 self.conversion_next_button.setEnabled(False)
             elif self.client.conversion_cur_page == 1:
@@ -4832,4 +4848,3 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         else:
             self.fee_conversion_label1.hide()                
             self.fee_conversion_slider.hide()
-        

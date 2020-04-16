@@ -3,7 +3,8 @@ from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 
-from electrum.util import base_units_list
+from electrum.util import base_units_list, NotEnoughFunds
+
 from electrum.i18n import languages
 from electrum.gui.kivy.i18n import _
 from electrum.plugin import run_hook
@@ -20,6 +21,8 @@ from electrum.transaction import TxOutput, Transaction, tx_from_str
 from electrum import simple_config
 
 import copy
+import traceback
+import sys
 
 Builder.load_string('''
 #:import partial functools.partial
@@ -80,7 +83,9 @@ Builder.load_string('''
     account: ''
     bank: ''
     mode: _('weixin')
-    is_pr: False    
+    is_pr: False
+    next_pr: True
+    back_pr: True
     disable_pin: False
     use_encryption: False
     BoxLayout
@@ -210,7 +215,7 @@ Builder.load_string('''
             height: '48dp'
             IconButton:
                 id: account
-                size_hint: 0.6, 1
+                size_hint: 0.5, 1
                 disabled: root.is_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/accounts'
                 on_release: Clock.schedule_once(lambda dt: app.choose_payaccount_dialog(root))
@@ -219,11 +224,23 @@ Builder.load_string('''
                 size_hint: 1, 1
                 on_release: Clock.schedule_once(lambda dt: root.do_destroy())
             IconButton:
+                id: back_page
+                size_hint: 0.5, 1
+                disabled: root.is_pr or root.back_pr
+                icon: 'atlas://electrum/gui/kivy/theming/light/back_page'
+                on_release: Clock.schedule_once(lambda dt: root.do_back_page())
+            IconButton:
                 id: search
-                size_hint: 0.6, 1
+                size_hint: 0.5, 1
                 disabled: root.is_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/search'
                 on_release: Clock.schedule_once(lambda dt: root.do_search())
+            IconButton:
+                id: next_page
+                size_hint: 0.5, 1
+                disabled: root.is_pr or root.next_pr
+                icon: 'atlas://electrum/gui/kivy/theming/light/next_page'
+                on_release: Clock.schedule_once(lambda dt: root.do_next_page())
         ConversionRecycleView:
             id: conversion_container
             scroll_type: ['bars', 'content']
@@ -266,6 +283,8 @@ class ConversionDialog(Factory.Popup):
             conversion_card = cards
             return
 
+        self.search_state_update()
+        
         conversion_txid = ''
         is_commit, conversion_data = self.app.client.get_conversion_commit()        
         if is_commit:
@@ -276,12 +295,8 @@ class ConversionDialog(Factory.Popup):
             start = (self.app.client.conversion_cur_page-1) * self.app.client.conversion_page_size 
             stop = start + self.app.client.conversion_page_size
             conversion_list = conversion_list[start:stop]
-        index = 0
         for data in conversion_list:
             status = data.get('txFlag') if not data.get('txFlag') is None else ''
-            if index == 0:
-                index +=1
-                status = '1'
             sdate = data.get('createTime') if not data.get('createTime') is None else ''
             amount = str(data.get('amount')/bitcoin.COIN) if not data.get('amount') is None else ''
             payWay = data.get('payWay') if not data.get('payWay') is None else '1'
@@ -327,12 +342,22 @@ class ConversionDialog(Factory.Popup):
         else:
             ri['icon'] = icon 
         ri['amount'] = str(amount)
+        if status == '0':
+            status = _('Verifing')
+        elif status == '1':
+            status = _('Verified')
+        elif status == '-1':
+            status = _('Verify failed')
+        elif status == '-100':
+            status = _('Submit failed')
+        else:
+            status = _('unknown')
         ri['status'] = status
         ri['alias'] = alias
         ri['account'] = account
         ri['bank'] = bank
         ri['mode'] = mode
-        ri['conversion_time'] = conversion_time
+        ri['conversion_time'] = conversion_time.replace('T', ' ')
         return ri
 
     def hide_menu(self):
@@ -457,6 +482,14 @@ class ConversionDialog(Factory.Popup):
         self.app.client.do_search_conversion()
         self.update()
     
+    def do_back_page(self):
+        self.app.client.do_back_conversion()
+        self.update()
+    
+    def do_next_page(self):
+        self.app.client.do_next_conversion()
+        self.update()
+    
     def destroy_commit(self, tx):
         self.app.show_info(_("Convert..."))
         tx = copy.deepcopy(tx)  # type: Transaction
@@ -471,7 +504,6 @@ class ConversionDialog(Factory.Popup):
         tx_details = self.app.wallet.get_tx_info(tx)
         amount, fee = tx_details.amount, tx_details.fee
         txid = tx.txid()
-        
         destroy_address = DESTROY_ADDRESS        
         is_destroy = False
         amount = 0
@@ -496,7 +528,7 @@ class ConversionDialog(Factory.Popup):
         response = self.app.client.post_conversion(txid, amount, fee, destroy_address, input_address, payWay, payName, payAccount, payBank, payBankSub, remark)
         if response['code'] == 200:    
             self.app.client.payaccount_add(payName, payAccount, payBank, payWay)
-            self.app.client.conversion_commit_send(response['data'])
+            #self.app.client.conversion_commit_send(response['data'])
             self.update()
             self.app.show_info(_('Conversion successful!'))
         elif response['code'] == 901:    
@@ -551,3 +583,22 @@ class ConversionDialog(Factory.Popup):
         if len(self.amount) == 0:
             raise Exception(_("Amount is not specified."))
             
+
+    def search_state_update(self):
+        if self.app.client is None:
+            self.next_pr = True
+            self.back_pr = True
+        else:
+            total_page = (self.app.client.conversion_total + (self.app.client.conversion_page_size -1))//self.app.client.conversion_page_size
+            if total_page <= 1 :
+                self.next_pr = True
+                self.back_pr = True   
+            elif self.app.client.conversion_cur_page == 1:
+                self.next_pr = False
+                self.back_pr = True
+            elif self.app.client.conversion_cur_page == total_page:
+                self.next_pr = True
+                self.back_pr = False
+            elif self.app.client.conversion_cur_page < total_page:
+                self.next_pr = False
+                self.back_pr = False

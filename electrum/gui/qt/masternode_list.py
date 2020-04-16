@@ -68,7 +68,7 @@ class MasternodeList(MyTreeView):
     headers = {
         Columns.NAME: _('Name'),
         Columns.STATUS: _('Status'),
-        Columns.COLLATERAL: _('Collateral Address'),
+        Columns.COLLATERAL: _('Collateral Key'),
         Columns.UTXO: _('Collateral Utxo'),
         Columns.LASTSEEN: _('Lastseen'),
         Columns.ACTIVESECONDS: _('Activeseconds'),

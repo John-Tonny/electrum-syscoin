@@ -1253,14 +1253,10 @@ class ElectrumWindow(App):
                 return False
             self.wallet.storage.put('user_register', {mobilephone:(password, address)})
             self.show_info(_('Account Register successful!'))
-            self.show_info(mobilephone)
-            #self.masternode_screen.screen.is_pr = False
             return True
             
         def on_failure():
-            #self.masternode_screen.screen.is_pr = True
             self.show_error(_("Account Register failed!"))
-            #= lambda: self.show_error(_("Account Register failed!"))
         self._register_dialog.init(self, self.wallet, message, on_success, on_failure, is_change=2)
         self._register_dialog.open()  
                             
@@ -1293,8 +1289,8 @@ class ElectrumWindow(App):
         accounts = []
         cur_select = ''
         for key in self.client.conversion_account.keys():
-            cur_select = name + '-' +key
             name, bank, mode = self.client.conversion_account[key]
+            cur_select = name + '-' +key
             accounts.append(name + '-' + key)
         def cb2(key):            
             if key == '' or key is None:
