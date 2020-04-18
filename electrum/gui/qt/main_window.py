@@ -94,7 +94,7 @@ from .masternode_list import MasternodeList
 from .conversion_list import ConversionList
 
 ###john
-from electrum.masternode_manager import MasternodeManager, parse_masternode_conf
+from electrum.masternode_manager import MasternodeManager, parse_masternode_conf, MASTERNODE_MIN_CONFIRMATIONS
 from electrum.masternode import MasternodeAnnounce, NetworkAddress, MasternodePing
 from electrum.client import Client
 import base58
@@ -1808,7 +1808,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if not self.network:
             self.show_error(_("You can't broadcast a transaction without a live network connection."))
             return
-
+        
+        for in1 in tx.inputs():
+            if in1['value'] == constants.COLLATERAL_COINS * bitcoin.COIN:
+                reply = QMessageBox.question(self, _('Message'), _("Are you sure to spend the collateral coins of masternode?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                if reply == QMessageBox.Yes:
+                    break
+                else:
+                    return
+            
         # confirmation dialog
         msg = [
             _("Amount to be sent") + ": " + self.format_amount_and_units(amount),
@@ -4057,7 +4065,17 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             except Exception as e:
                 self.show_error(str(e))
                 #self.app.masternode_manager.rename_masternode(mn)
-                    
+                
+            tx_height = self.wallet.get_tx_height(txid)
+            if tx_height.conf < MASTERNODE_MIN_CONFIRMATIONS:
+                self.show_error(_('Collateral payment must have at least %d confirmations (current: %d)' %(MASTERNODE_MIN_CONFIRMATIONS, tx_height.conf))) 
+                return                    
+        mn1 = self.masternode_manager.get_masternode(key)
+        if not (mn1 is None):
+            if mn1.status == 'PRE_ENABLED' or mn1.status == 'ENABLED':
+                self.show_message(_('Masternode has already been activated')) 
+                return
+        
         pw = None
         if self.masternode_manager.wallet.has_password():
             pw = self.password_dialog(msg=_('Please enter your password to activate masternode "%s".') % alias)
@@ -4643,6 +4661,12 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         WaitingDialog(self, _('Conversion search...'), search_thread, on_success, on_error)        
 
     def do_conversion_send(self):
+        if self.client is None:
+            return
+        if self.client.money_ratio == 0:
+            self.show_message(_('Value not yet determined, please wait!'))
+            return
+        
         is_commit, self.conversion_data = self.client.get_conversion_commit()
         if is_commit:
             self.conversion_retrys = 0

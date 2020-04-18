@@ -64,13 +64,17 @@ def inv_dict(d):
 
 ca_path = certifi.where()
 
-COIN_NAME = 'vircle'
+#COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
-#COIN_NAME = 'sdd'
+COIN_NAME = 'sdd'
 if COIN_NAME == 'wenchuang':
     base_units = {'WCL':8, 'mWCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
     base_units_list = ['WCL', 'mWCL', 'bits', 'sat']  # list(dict) does not guarantee order
+elif COIN_NAME == 'sdd':
+        base_units = {'SDD':8, 'mSDD':5, 'bits':2, 'sat':0}
+        base_units_inverse = inv_dict(base_units)
+        base_units_list = ['SDD', 'mSDD', 'bits', 'sat']  # list(dict) does not guarantee order
 else:
     base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)

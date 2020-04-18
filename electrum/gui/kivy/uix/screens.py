@@ -40,6 +40,8 @@ from electrum.masternode import MasternodeAnnounce, NetworkAddress, MasternodePi
 from electrum.util import AlreadyHaveAddress, bfh, bh2u
 from electrum.crypto import sha256d
 from jnius import autoclass
+from electrum.masternode_manager import MASTERNODE_MIN_CONFIRMATIONS
+
 
 class HistoryRecycleView(RecycleView):
     pass
@@ -265,7 +267,7 @@ class SendScreen(CScreen):
         # try to decode as URI/address
         self.set_URI(data)
 
-    def do_send(self):
+    def do_send(self):        
         if self.screen.is_pr:
             if self.payment_request.has_expired():
                 self.app.show_error(_('Payment request has expired'))
@@ -307,8 +309,26 @@ class SendScreen(CScreen):
             traceback.print_exc(file=sys.stdout)
             self.app.show_error(str(e))
             return
+        
+        bmasternode = False
+        for in1 in tx.inputs():
+            if in1['value'] == COLLATERAL_COINS * bitcoin.COIN:
+                bmasternode = True
+                break
+        
+        if bmasternode:
+            from .dialogs.question import Question
+            d = Question(_('Are you sure to spend the collateral coins of masternode?'), lambda b: self.__do_send(tx, amount, message, outputs, rbf, b))
+            d.open()
+        else:
+            self.__do_send(tx, amount, message, outputs, rbf, True)
+                    
+    def __do_send(self, tx, amount, message, outputs, rbf, b):
+        if not b:
+            return
         if rbf:
             tx.set_rbf(True)
+            
         fee = tx.get_fee()
         msg = [
             _("Amount to be sent") + ": " + self.app.format_amount_and_units(amount),
@@ -705,6 +725,11 @@ class MasternodeScreen(CScreen):
             self.app.show_error(_('Masternode has no IP address'))
             return        
         
+        tx_height = self.app.wallet.get_tx_height(obj.txid)
+        if tx_height.conf < MASTERNODE_MIN_CONFIRMATIONS:
+            self.app.show_error(_('Collateral payment must have at least %d confirmations (current: %d)') %(MASTERNODE_MIN_CONFIRMATIONS, tx_height.conf)) 
+            return                    
+                    
         msg=[]        
         msg.append(_("Enter your PIN code to proceed"))
         key = obj.txid + '-' + str(obj.index)

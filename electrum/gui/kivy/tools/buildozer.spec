@@ -1,13 +1,17 @@
 [app]
 
 # (str) Title of your application
-title = Electrum
+#title = 久零Electrum
+#title = 文创Electrum
+title = 送多多Electrum
 
 # (str) Package name
 package.name = Electrum
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.vircle
+#package.domain = org.vircle
+#package.domain = org.wchuang
+package.domain = org.sdduo
 
 # (str) Source code where the main.py live
 source.dir = .

@@ -371,7 +371,13 @@ class ConversionDialog(Factory.Popup):
         #self.alias = obj.alias
         pass
     
-    def do_destroy(self):
+    def do_destroy(self):     
+        if self.app.client is None:
+            return
+        if self.app.client.money_ratio == 0:
+            self.app.show_info(_('Value not yet determined, please wait!'))
+            return
+        
         is_commit, data = self.app.client.get_conversion_commit()        
         if is_commit: 
             tx = self.app.wallet.db.get_transaction(data['txId'])                
@@ -490,7 +496,7 @@ class ConversionDialog(Factory.Popup):
         self.app.client.do_next_conversion()
         self.update()
     
-    def destroy_commit(self, tx):
+    def destroy_commit(self, tx):        
         self.app.show_info(_("Convert..."))
         tx = copy.deepcopy(tx)  # type: Transaction
         try:
