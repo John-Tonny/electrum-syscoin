@@ -88,7 +88,7 @@ def strip_unneeded(bkts, sufficient_funds):
     bucket_value_sum = 0
     for i in range(len(bkts)):
         bucket_value_sum += (bkts[i]).value
-        if sufficient_funds(bkts[:i+1], bucket_value_sum=bucket_value_sum):
+        if sufficient_funds(bkts[:i+1], bucket_value_sum=bucket_value_sum):           
             return bkts[:i+1]
     raise Exception("keeping all buckets is still not enough")
 
@@ -264,7 +264,24 @@ class CoinChooserBase(Logger):
         buckets = self.bucketize_coins(coins)
         buckets = self.choose_buckets(buckets, sufficient_funds,
                                       self.penalty_func(tx, fee_for_buckets=fee_for_buckets))
-
+        
+        ###john
+        def remove_redundant(bkts):
+            last_bkts = bak_bkts = bkts[-1]
+            if len(last_bkts.coins) > 1: 
+                for j in range(len(last_bkts.coins)):
+                    bkts.pop(-1)
+                    bak_bkts = self.bucketize_coins(last_bkts.coins[:j+1])
+                    bkts.append(bak_bkts[0])
+                    bucket_value_sum = 0
+                    for i in range(len(bkts)):
+                        bucket_value_sum += (bkts[i]).value            
+                    if sufficient_funds(bkts, bucket_value_sum=bucket_value_sum):           
+                        return bkts
+            return bkts                
+        
+        remove_redundant(buckets)        
+        
         tx.add_inputs([coin for b in buckets for coin in b.coins])
         tx_weight = get_tx_weight(buckets)
 

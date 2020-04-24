@@ -54,4 +54,17 @@ Popup:
                     fork_description: (_('You are following branch') if app.auto_connect else _("Your server is on branch")) + ' ' + app.blockchain_name
                     description: self.fork_description if app.num_chains>1 else _('Connected nodes are on the same chain')
                     action: app.choose_blockchain_dialog
-                    disabled: app.num_chains == 1
+                    disabled: app.num_chains == 1                    
+        Widget:
+            size_hint: None, 0.5
+        BoxLayout:
+            size_hint: 1, None
+            height: '48dp'
+            Widget:
+                size_hint: 0.5, None
+                height: '48dp'
+            Button:
+                size_hint: 0.5, None
+                height: '48dp'
+                text: _('Close')
+                on_release: nd.dismiss()

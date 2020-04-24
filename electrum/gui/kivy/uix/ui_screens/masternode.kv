@@ -187,12 +187,24 @@ MasternodeScreen:
                 disabled: root.is_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/save'
                 on_release: Clock.schedule_once(lambda dt: s.parent.do_save()) 
+            #Button:
+            #    id: hide
+            #    text: _('Hide')
+            #    size_hint: 1, 1
+            #    disabled: True
+            #    on_release: s.parent.do_hide()
             Button:
-                id: hide
-                text: _('Hide')
+                id: removeall
+                text: _('Remove All')
                 size_hint: 1, 1
-                disabled: True
-                on_release: s.parent.do_hide()
+                disabled: root.is_pr
+                on_release: s.parent.do_removeall()
+            Button:
+                id: unfreezenall
+                text: _('Unfreeze All')
+                size_hint: 1, 1
+                disabled: root.is_pr
+                on_release: s.parent.do_unfreezeall()
             Button:
                 text: _('Scan')
                 size_hint: 1, 1

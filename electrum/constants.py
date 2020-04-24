@@ -40,9 +40,10 @@ def read_json(filename, default):
 
 COLLATERAL_COINS = 1000
 
-#COIN_NAME = 'vircle'
+COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
-COIN_NAME = 'sdd'
+#COIN_NAME = 'sdd'
+#COIN_NAME = 'liuwei'
 
 if COIN_NAME == 'wenchuang':
     MASTERNODE_PORTS = 9080
@@ -58,6 +59,13 @@ elif COIN_NAME == 'sdd':
     API_PASSWORD = '123456'
     API_PRIVKEY = '9039b0ff0b6245babb8034e1ad94579e'
     API_URL = 'http://47.113.108.104:8081/'
+elif COIN_NAME == 'liuwei':
+    MASTERNODE_PORTS = 6060
+    DESTROY_ADDRESS = '3EQCkq3wLejLmvDqiQHrHRHirCgqeMh8jz'
+    API_NAME = 'liuwei'
+    API_PASSWORD = '123456'
+    API_PRIVKEY = 'df2ac5504fbd4f38a3782fecbcd669b6'
+    API_URL = 'http://39.100.9.56:8081/'
 else:
     MASTERNODE_PORTS = 9069
     DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
@@ -177,6 +185,8 @@ class SyscoinMainnet(AbstractNet):
         GENESIS = "00000cefeafaa3e78cf25dbbfa02ecf8b78861a08f3bff0e45e6ebc90a127f7e"    
     elif COIN_NAME == 'sdd':
         GENESIS = "00000aa6da9dba0230be4408902ca5c88ded8bae562b41d7a926d362f2fecd42"    
+    elif COIN_NAME == 'liuwei':
+        GENESIS = "0000017c4a7e6f6f7884d7081065ae2717f2ab0a675e0bb9d5eb9507e3befcbb"    
     else:
         GENESIS = "0000066e6810ff0642cc34fe5fc3c66c3f39c9a0c713c079df427524994fc06a"    
     
@@ -193,6 +203,15 @@ class SyscoinMainnet(AbstractNet):
     elif COIN_NAME == 'sdd':
         DEFAULT_SERVERS = read_json('servers.json', {
             "47.115.17.234": {
+                "pruning": "-",
+                "t": "50001",
+                "s": "50002",
+                "version": "1.4"
+            }
+        })        
+    elif COIN_NAME == 'liuwei':
+        DEFAULT_SERVERS = read_json('servers.json', {
+            "39.98.37.206": {
                 "pruning": "-",
                 "t": "50001",
                 "s": "50002",

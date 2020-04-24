@@ -777,11 +777,11 @@ class MasternodeManager(object):
             if password != password1:
                 raise Exception("password is not equal")
             
-        if len(password) < 3:
-            raise Exception("password length >=8")
+        if len(password) < 6:
+            raise Exception("password length >=6")
         
         if len(mobilephone) < 11:
-            raise Exception("mobilephone length >=8")
+            raise Exception("mobilephone length >=11")
 
         if bregister:
             if not (register_info is None):
@@ -798,3 +798,10 @@ class MasternodeManager(object):
             raise Exception("password incorrect")
         
         return address
+    
+    def is_used_collateral_from_coin(self, coin):
+        key = coin.get('prevout_hash') + '-' + str(coin.get('prevout_n'))
+        mn = self.masternodes.get(key)
+        if not (mn is None) and coin['value'] == COLLATERAL_COINS * bitcoin.COIN and (mn.status == 'PRE_ENABLED' or mn.status == 'ENABLED'):
+            return True    
+        return False

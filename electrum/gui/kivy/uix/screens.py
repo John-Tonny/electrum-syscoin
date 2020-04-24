@@ -18,7 +18,7 @@ from kivy.lang import Builder
 from kivy.factory import Factory
 from kivy.utils import platform
 
-from electrum.util import profiler, parse_URI, format_time, InvalidPassword, NotEnoughFunds, Fiat
+from electrum.util import profiler, parse_URI, format_time, InvalidPassword, NotEnoughFunds, Fiat, USE_COLLATERAL_DEFAULT, use_collateral_list
 from electrum import bitcoin
 from electrum.transaction import TxOutput, Transaction, tx_from_str
 from electrum.util import send_exception_to_crash_reporter, parse_URI, InvalidBitcoinURI
@@ -299,7 +299,8 @@ class SendScreen(CScreen):
     def _do_send(self, amount, message, outputs, rbf):
         # make unsigned transaction
         config = self.app.electrum_config
-        coins = self.app.wallet.get_spendable_coins(None, config)
+        coins = self.app.wallet.get_spendable_coins(None, config)   
+        
         try:
             tx = self.app.wallet.make_unsigned_transaction(coins, outputs, config, None)
         except NotEnoughFunds:
@@ -310,6 +311,7 @@ class SendScreen(CScreen):
             self.app.show_error(str(e))
             return
         
+        ###john
         bmasternode = False
         for in1 in tx.inputs():
             if in1['value'] == COLLATERAL_COINS * bitcoin.COIN:
@@ -322,6 +324,9 @@ class SendScreen(CScreen):
             d.open()
         else:
             self.__do_send(tx, amount, message, outputs, rbf, True)
+        
+        
+        self.__do_send(tx, amount, message, outputs, rbf, True)
                     
     def __do_send(self, tx, amount, message, outputs, rbf, b):
         if not b:
@@ -357,7 +362,7 @@ class SendScreen(CScreen):
         def on_failure(error):
             self.app.show_error(error)
         if self.app.wallet.can_sign(tx):
-            self.app.show_info("Signing...")
+            self.app.show_info(_("Signing transaction...") + "-" + str(len(tx.inputs())))
             self.app.sign_tx(tx, password, on_success, on_failure)
         else:
             self.app.tx_dialog(tx)
@@ -544,7 +549,7 @@ class MasternodeScreen(CScreen):
 
     def __init__(self, **kwargs):
         super(MasternodeScreen, self).__init__(**kwargs)
-        self.menu_actions = [ ('Remove', self.do_remove), ('Remove All', self.do_removeall), ('Activate', self.do_activate)]
+        self.menu_actions = [ ('Remove', self.do_remove), ('Freeze', self.do_freeze), ('Unfreeze', self.do_unfreeze), ('Activate', self.do_activate)]
                 
         self.blue_bottom_pos = 0
         self.column_1_pos = 0
@@ -561,7 +566,6 @@ class MasternodeScreen(CScreen):
         self.screen.delegate = ''
         self.screen.ip = ''
         self.screen.is_pr = False
-        self.screen.info = ''
             
     
     def do_hide(self):
@@ -601,28 +605,30 @@ class MasternodeScreen(CScreen):
             self.screen.ids.masternode_container.y = self.masternode_container_pos        
     
     def do_remove(self, obj):        
-        from .dialogs.question import Question
-        d = Question(_('Are you sure you want to remove it?'), lambda b: self._do_remove(obj, b))
+        from .dialogs.question import Question        
+        def _do_remove(obj, b):
+            try:
+                if not b:
+                    return
+                key = obj.txid + '-' + str(obj.index)
+                self.set_frozen_masternode(obj.txid, str(obj.index), False)                
+                self.app.masternode_manager.remove_masternode(key)
+                self.do_clear()
+                self.update()
+                return
+            except Exception as e:
+                self.app.show_error(str(e))
+        
+        d = Question(_('Are you sure you want to remove it?'), lambda b: _do_remove(obj, b))
         d.open()
     
-    def _do_remove(self, obj, b):
-        try:
-            if not b:
-                return
-            key = obj.txid + '-' + str(obj.index)
-            self.app.masternode_manager.remove_masternode(key)
-            self.do_clear()
-            self.update()
-            return
-        except Exception as e:
-            self.app.show_error(str(e))
-
-    def do_removeall(self, obj):        
+    def do_removeall(self):        
         from .dialogs.question import Question
         def _do_removeall(ok):
             try:
                 if not ok:
                     return
+                self.do_unfreezeall(info=False)
                 self.app.masternode_manager.masternodes = {}
                 self.app.masternode_manager.save()
                 self.do_clear()
@@ -632,6 +638,56 @@ class MasternodeScreen(CScreen):
                 self.app.show_error(str(e))
                 
         d = Question(_('Are you sure you want to remove all of them?'), _do_removeall)
+        d.open()
+
+    def do_unfreeze(self, obj):        
+        from .dialogs.question import Question        
+        def _do_unfreeze(obj, b):
+            try:
+                if not b:
+                    return
+                self.set_frozen_masternode(obj.txid, str(obj.index), False)                
+                self.update()
+                return
+            except Exception as e:
+                self.app.show_error(str(e))
+        
+        d = Question(_('Are you sure you want to unfreeze it?'), lambda b: _do_unfreeze(obj, b))
+        d.open()
+
+    def do_unfreezeall(self, info=True):        
+        from .dialogs.question import Question
+        def _do_unfreezeall(ok):
+            try:
+                if not ok:
+                    return
+                
+                for key in self.app.masternode_manager.masternodes.keys():                
+                    mn = self.app.masternode_manager.masternodes[key]
+                    self.set_frozen_masternode(mn.vin['prevout_hash'], str(mn.vin['prevout_n']), False)                
+                self.update()
+                return
+            except Exception as e:
+                self.app.show_error(str(e))
+        if info:
+            d = Question(_('Are you sure you want to unfreeze all of them?'), _do_unfreezeall)
+            d.open()
+        else:
+            _do_unfreezeall(True)
+                
+    def do_freeze(self, obj):        
+        from .dialogs.question import Question        
+        def _do_freeze(obj, b):
+            try:
+                if not b:
+                    return
+                self.set_frozen_masternode(obj.txid, str(obj.index), True)                
+                self.update()
+                return
+            except Exception as e:
+                self.app.show_error(str(e))
+        
+        d = Question(_('Are you sure you want to freeze it?'), lambda b: _do_freeze(obj, b))
         d.open()
                 
     def do_save(self):
@@ -700,7 +756,12 @@ class MasternodeScreen(CScreen):
                                         collateral_key=collateral, delegate_key='', sig='', sig_time=0,
                                         last_ping=MasternodePing(),announced=False)             
                 self.app.masternode_manager.add_masternode(mn, save=False)
-
+                
+                try:
+                    self.set_frozen_masternode(coin['prevout_hash'], coin['prevout_n'], True)
+                except Exception as e:
+                    self.app.show_error("pppp:" + str(e))
+                
             self.app.masternode_manager.save()
             self.update()            
         except Exception as e:
@@ -777,6 +838,10 @@ class MasternodeScreen(CScreen):
         ri['announced'] = announced
         ri['alias'] = alias
         ri['ipaddress'], ri['port'] = ip.split(":")
+        
+        uxtos = {'prevout_hash': ri['txid'], 'prevout_n': int(ri['index'])}
+        if self.app.wallet.is_frozen_coin(uxtos):        
+            ri['icon'] = ri['icon'] + "_dis"        
         return ri
 
     def update(self, see_all=False):
@@ -799,6 +864,7 @@ class MasternodeScreen(CScreen):
                     ip = mn.addr.ip + ":" + str(mn.addr.port)
                     ci = self.get_card(utxo, str(mn.collateral_key), mn.delegate_key, str(status), mn.announced, mn.alias, ip)
                     cards.append(ci)
+                        
                 except Exception as e:
                     #self.app.show_error(str(e))
                     continue
@@ -816,7 +882,7 @@ class MasternodeScreen(CScreen):
             self.screen.ip = obj.ipaddress + ":" + str(obj.port)
         else:
             self.screen.ip = ''
-
+                    
     def show_menu(self, obj):
         self.hide_menu()
         self.context_menu = ContextMenu(obj, self.menu_actions)
@@ -880,20 +946,6 @@ class MasternodeScreen(CScreen):
                 raise Exception(_('A masternode with ip address "%s" already exists') % self.screen.ip)
         return True
     
-    '''                                                            
-    def account_register(self, mobilephone, address):
-        async def _account_register(mobilephone, address):
-            async with aiohttp.ClientSession() as session:
-                url = 'http://52.82.33.173:8080/useracocunt/accpet'
-                payload = {'phone': mobilephone, 'userAccount': address}
-                async with session.post(url, data=payload) as resp:
-                    print(await resp.text())
-    
-        loop = self.network.asyncio_loop
-        tasks = [_account_register(mobilephone, address)]
-        loop.run_until_complete(asyncio.wait(tasks))
-    '''
-    
     def register_status(self):
         self.screen.is_pr = True
         
@@ -916,3 +968,8 @@ class MasternodeScreen(CScreen):
             self.app.show_error(str(e))
             return
             
+    def set_frozen_masternode(self, txid , index, frozen=True):         
+        utxos = {'prevout_hash': txid, 'prevout_n': int(index)}
+        self.app.wallet.set_frozen_state_of_coins([utxos], frozen)  
+            
+        

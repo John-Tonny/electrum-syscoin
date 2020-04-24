@@ -45,7 +45,7 @@ from .util import (NotEnoughFunds, PrintError, UserCancelled, profiler,
                    format_satoshis, format_fee_satoshis, NoDynamicFeeEstimates,
                    WalletFileException, BitcoinException, AlreadyHaveAddress,
                    InvalidPassword, format_time, timestamp_to_datetime, Satoshis,
-                   Fiat, bfh, bh2u, TxMinedInfo, print_error)
+                   Fiat, bfh, bh2u, TxMinedInfo, print_error, use_collateral_list)
 from .bitcoin import (COIN, TYPE_ADDRESS, is_address, address_to_script, public_key_to_p2pkh,
                       is_minikey, relayfee, dust_threshold)
 from .crypto import sha256d
@@ -445,7 +445,7 @@ class Abstract_Wallet(AddressSynchronizer):
                                mature_only=True,
                                confirmed_only=confirmed_only,
                                nonlocal_only=nonlocal_only)
-        utxos = [utxo for utxo in utxos if not self.is_frozen_coin(utxo)]
+        utxos = [utxo for utxo in utxos if not self.is_frozen_coin(utxo)]        
         return utxos
 
     def dummy_address(self):
@@ -777,7 +777,7 @@ class Abstract_Wallet(AddressSynchronizer):
                 raise NotEnoughFunds()
             outputs[i_max] = outputs[i_max]._replace(value=amount)
             tx = Transaction.from_io(coins, outputs[:])
-
+                            
         # Timelock tx to current height.
         tx.locktime = get_locktime_for_new_transaction(self.network)
         run_hook('make_unsigned_transaction', self, tx)

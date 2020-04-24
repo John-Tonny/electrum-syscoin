@@ -12,7 +12,7 @@ from electrum.bitcoin import TYPE_ADDRESS
 from electrum.storage import WalletStorage
 from electrum.wallet import Wallet, InternalAddressCorruption
 from electrum.paymentrequest import InvoiceStore
-from electrum.util import profiler, InvalidPassword, send_exception_to_crash_reporter
+from electrum.util import profiler, InvalidPassword, send_exception_to_crash_reporter, USE_RBF_DEFAULT
 from electrum.plugin import run_hook
 from electrum.util import format_satoshis, format_satoshis_plain
 from electrum.paymentrequest import PR_UNPAID, PR_PAID, PR_UNKNOWN, PR_EXPIRED
@@ -83,7 +83,7 @@ Label.register('Roboto',
 
 from electrum.util import (base_units, NoDynamicFeeEstimates, decimal_point_to_base_unit_name,
                            base_unit_name_to_decimal_point, NotEnoughFunds, UnknownBaseUnit,
-                           DECIMAL_POINT_DEFAULT)
+                           DECIMAL_POINT_DEFAULT, USE_COLLATERAL_DEFAULT, use_collateral_list)
 
 from electrum.constants import MASTERNODE_PORTS
 from electrum.client import Client
@@ -91,7 +91,7 @@ from electrum.client import Client
 class ElectrumWindow(App):
 
     electrum_config = ObjectProperty(None)
-    language = StringProperty('en')
+    language = StringProperty('zh_CN')
 
     # properties might be updated by the network
     num_blocks = NumericProperty(0)
@@ -159,16 +159,32 @@ class ElectrumWindow(App):
 
     use_rbf = BooleanProperty(False)
     def on_use_rbf(self, instance, x):
-        self.electrum_config.set_key('use_rbf', self.use_rbf, True)
+        self.electrum_config.set_key('use_rbf', self.use_rbf, USE_RBF_DEFAULT)
 
     use_change = BooleanProperty(False)
     def on_use_change(self, instance, x):
-        self.electrum_config.set_key('use_change', self.use_change, True)
+        self.electrum_config.set_key('use_change', self.use_change, USE_RBF_DEFAULT)
 
     use_unconfirmed = BooleanProperty(False)
     def on_use_unconfirmed(self, instance, x):
         self.electrum_config.set_key('confirmed_only', not self.use_unconfirmed, True)
-
+    '''
+    try:    
+        use_collateral = AliasProperty(_get_use_collateral, _set_use_collateral)    
+    except Exception as e:
+        self.show_error(str(e))
+        
+    def _get_use_collateral(self):
+        try:
+            return self.electrum_config.get('use_collateral', USE_COLLATERAL_DEFAULT)
+        except Exception as e:
+            self.show_error(str(e))
+    '''
+    def _set_use_collateral(self,status):
+        assert status in use_collateral_list
+        self.electrum_config.set_key('use_collateral', status, True)
+        self.use_collateral = self.electrum_config.get('use_collateral', USE_COLLATERAL_DEFAULT)
+        
     def set_URI(self, uri):
         self.switch_to('send')
         self.send_screen.set_URI(uri)
@@ -323,9 +339,10 @@ class ElectrumWindow(App):
         self.daemon = self.gui_object.daemon
         self.fx = self.daemon.fx
 
-        self.use_rbf = config.get('use_rbf', True)
+        self.use_rbf = config.get('use_rbf', USE_RBF_DEFAULT)
         self.use_change = config.get('use_change', True)
         self.use_unconfirmed = not config.get('confirmed_only', False)
+        self.use_collateral = config.get('use_collateral', USE_COLLATERAL_DEFAULT)
 
         # create triggers so as to minimize updating a max of 2 times a sec
         self._trigger_update_wallet = Clock.create_trigger(self.update_wallet, .5)
@@ -646,6 +663,9 @@ class ElectrumWindow(App):
             self.is_exit = True
             self.show_info(_('Press again to exit'))
             return True
+        if key == 27 and self.is_exit:
+            self.on_stop()
+            os._exit(5)
         # override settings button
         if key in (319, 282): #f1/settings button on android
             #self.gui.main_gui.toggle_settings(self)
@@ -845,6 +865,7 @@ class ElectrumWindow(App):
         inputs = self.wallet.get_spendable_coins(None, self.electrum_config)
         if not inputs:
             return ''
+        
         if mode == 'send':
             addr = str(self.send_screen.screen.address) or self.wallet.dummy_address()
         else:
@@ -1247,7 +1268,7 @@ class ElectrumWindow(App):
         def on_success(mobilephone, password):
             address = self.wallet.create_new_address(False)
                         
-            response = self.client.post_register(mobilephone, address)                
+            response = self.client.post_register(mobilephone, address, password)                
             if response["code"] != 200 :                        
                 self.show_error(_("Account Register failed!"))
                 return False

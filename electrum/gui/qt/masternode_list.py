@@ -128,7 +128,7 @@ class MasternodeList(MyTreeView):
         
         for key in self.parent.masternode_manager.masternodes.keys():
             mn = self.parent.masternode_manager.masternodes[key]
-            utxo = mn.vin['prevout_hash'] + '-' + str(mn.vin['prevout_n'])
+            utxo = mn.vin['prevout_hash'] + '-' + str(mn.vin['prevout_n'])  
             if mn.collateral_key == '':
                 collateral = ''
             else:
@@ -146,6 +146,8 @@ class MasternodeList(MyTreeView):
             row_count = self.model().rowCount()
             self.model().insertRow(row_count, items)
             self.disable_editability()            
+            
+            self.set_frozen_masternode(mn.vin['prevout_hash'], str(mn.vin['prevout_n']), True)
         
         self.set_current_idx(set_current)
         # FIXME refresh loses sort order; so set "default" here:
@@ -172,6 +174,14 @@ class MasternodeList(MyTreeView):
             self.parent.masternode_combo.setDisabled(True)
         else:
             self.parent.masternode_combo.setDisabled(False)
-            #self.parent.masternode_refresh()
+            #self.parent.masternode_reset_frozen_masternodefresh()
             
-        
+    def set_frozen_masternode(self, txid , index, frozen=True):
+        '''
+        key = txid + ":" + index        
+        coin = self.parent.utxo_list.utxo_dict.get(key)
+        if not coin is None:
+            self.parent.set_frozen_state_of_coins([coin], frozen)
+        '''
+        utxos = {'prevout_hash': txid, 'prevout_n': int(index)}
+        self.parent.set_frozen_state_of_coins([utxos], frozen)

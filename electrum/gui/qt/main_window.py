@@ -63,7 +63,7 @@ from electrum.util import (format_time, format_satoshis, format_fee_satoshis,
                            decimal_point_to_base_unit_name, quantize_feerate,
                            UnknownBaseUnit, DECIMAL_POINT_DEFAULT, UserFacingException,
                            get_new_wallet_name, send_exception_to_crash_reporter,
-                           InvalidBitcoinURI, AlreadyHaveAddress)
+                           InvalidBitcoinURI, AlreadyHaveAddress, USE_COLLATERAL_DEFAULT, use_collateral_list, USE_RBF_DEFAULT)
 from electrum.transaction import Transaction, TxOutput
 from electrum.address_synchronizer import AddTransactionException
 from electrum.wallet import (Multisig_Wallet, CannotBumpFee, Abstract_Wallet,
@@ -1711,7 +1711,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             outputs = self.payee_conversion_e.get_outputs(max_button.isChecked())
             
         fee_estimator = self.get_send_fee_estimator(mode)
-        coins = self.get_coins()
+        coins = self.get_coins()                
         return outputs, fee_estimator, label, coins
 
     def check_send_tab_outputs_and_show_errors(self, outputs) -> bool:
@@ -1769,6 +1769,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             max_button = self.max_conversion_button
         
         outputs, fee_estimator, tx_desc, coins = self.read_send_tab(mode)
+                    
         if self.check_send_tab_outputs_and_show_errors(outputs):
             return
         try:
@@ -1790,7 +1791,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         amount = tx.output_value() if max_button.isChecked() else sum(map(lambda x:x[2], outputs))
         fee = tx.get_fee()
 
-        use_rbf = self.config.get('use_rbf', True)
+        use_rbf = self.config.get('use_rbf', USE_RBF_DEFAULT)
         if use_rbf:
             tx.set_rbf(True)
 
@@ -1808,7 +1809,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if not self.network:
             self.show_error(_("You can't broadcast a transaction without a live network connection."))
             return
-        
+                
+        ###john
         for in1 in tx.inputs():
             if in1['value'] == constants.COLLATERAL_COINS * bitcoin.COIN:
                 reply = QMessageBox.question(self, _('Message'), _("Are you sure to spend the collateral coins of masternode?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
@@ -1816,7 +1818,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     break
                 else:
                     return
-            
+         
         # confirmation dialog
         msg = [
             _("Amount to be sent") + ": " + self.format_amount_and_units(amount),
@@ -1875,7 +1877,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             task = partial(Transaction.sign, tx, self.tx_external_keypairs)
         else:
             task = partial(self.wallet.sign_transaction, tx, password)
-        msg = _('Signing transaction...')
+        msg = _('Signing transaction...') + '-' + str(len(tx.inputs()))
+        
         WaitingDialog(self, msg, task, on_success, on_failure)
 
     def broadcast_transaction(self, tx, tx_desc, mode='send'):
@@ -2381,6 +2384,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         vbox.addLayout(grid)
         if self.wallet.is_deterministic():
             mpk_text = ShowQRTextEdit()
+            ###john
             mpk_text.setMaximumHeight(150)
             mpk_text.addCopyButton(self.app)
             def show_mpk(index):
@@ -3044,7 +3048,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         feebox_cb.stateChanged.connect(on_feebox)
         fee_widgets.append((feebox_cb, None))
 
-        use_rbf = self.config.get('use_rbf', True)
+        use_rbf = self.config.get('use_rbf', USE_RBF_DEFAULT)
         use_rbf_cb = QCheckBox(_('Use Replace-By-Fee'))
         use_rbf_cb.setChecked(use_rbf)
         use_rbf_cb.setToolTip(
@@ -3270,6 +3274,22 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         outrounding_cb.setChecked(enable_outrounding)
         outrounding_cb.stateChanged.connect(on_outrounding)
         tx_widgets.append((outrounding_cb, None))
+
+        '''
+        use_collateral_label = QLabel(_('Use collateral coins') + ":")
+        use_collateral_combo = QComboBox()
+        use_collateral_combo.addItems(use_collateral_list)
+        if self.config.get('use_collateral') == use_collateral_list[0]:
+            use_collateral_combo.setCurrentIndex(0)
+        elif self.config.get('use_collateral') == use_collateral_list[1]:
+            use_collateral_combo.setCurrentIndex(1)
+        else:
+            use_collateral_combo.setCurrentIndex(2)        
+        def on_use_collateral(x):
+            self.config.set_key('use_collateral', x)
+        use_collateral_combo.currentTextChanged.connect(on_use_collateral)
+        tx_widgets.append((use_collateral_label, use_collateral_combo))
+        '''
 
         # Fiat Currency
         hist_checkbox = QCheckBox()
@@ -3809,6 +3829,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def masternode_remove_all(self):
         reply = QMessageBox.question(self, _('Message'), _("Are you sure you want to remove all of them?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if reply == QMessageBox.Yes:
+            
+            for key in self.masternode_manager.masternodes.keys():
+                mn = self.masternode_manager.masternodes[key]            
+                self.masternode_list.set_frozen_masternode(mn.vin['prevout_hash'], str(mn.vin['prevout_n']), False)                
+            
             self.masternode_manager.masternodes = {}
             self.masternode_manager.save()
             self.masternode_list.update()
@@ -3817,11 +3842,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         pass
 
     def masternode_remove(self, collateral):
-        reply = QMessageBox.question(self, _('Message'), _("Are you sure you want to remove all of it?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        reply = QMessageBox.question(self, _('Message'), _("Are you sure you want to remove it?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if reply == QMessageBox.Yes:
             try:
                 self.masternode_manager.remove_masternode(collateral[0])
                 self.masternode_list.update()
+                txid, index = collateral[0].split('-')
+                self.masternode_list.set_frozen_masternode(txid, index, False)
             except Exception as e:
                 self.show_error(str(e))
                 
@@ -4212,7 +4239,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                                           title=_('Error'))                    
                     return False
                 
-                if len(pw) <= 6:
+                if len(pw) < 6:
                     self.show_message(_('Password length not less than 6 digits!'),
                                           title=_('Error'))                    
                     return False
@@ -4233,7 +4260,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             
         def register_thread():
             address = self.masternode_manager.check_register(register_info, mobilephone, pw, pw1, bregister)                    
-            return self.client.post_register(mobilephone, address)
+            return self.client.post_register(mobilephone, address, pw)
                         
         def on_success(response):
             if response["code"] != 200 :                        

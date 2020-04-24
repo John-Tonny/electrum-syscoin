@@ -64,9 +64,11 @@ def inv_dict(d):
 
 ca_path = certifi.where()
 
-#COIN_NAME = 'vircle'
+COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
-COIN_NAME = 'sdd'
+#COIN_NAME = 'sdd'
+#COIN_NAME = 'liuwei'
+
 if COIN_NAME == 'wenchuang':
     base_units = {'WCL':8, 'mWCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
@@ -75,6 +77,10 @@ elif COIN_NAME == 'sdd':
         base_units = {'SDD':8, 'mSDD':5, 'bits':2, 'sat':0}
         base_units_inverse = inv_dict(base_units)
         base_units_list = ['SDD', 'mSDD', 'bits', 'sat']  # list(dict) does not guarantee order
+elif COIN_NAME == 'liuwei':
+        base_units = {'VEG':8, 'mVEG':5, 'bits':2, 'sat':0}
+        base_units_inverse = inv_dict(base_units)
+        base_units_list = ['VEG', 'mVEG', 'bits', 'sat']  # list(dict) does not guarantee order
 else:
     base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
@@ -84,7 +90,11 @@ base_asset_units = {'-': 8, 'millis': 5, 'bits': 2, 'toshi': 0}
 base_asset_units_inverse = inv_dict(base_asset_units)
 
 DECIMAL_POINT_DEFAULT = 8  # mBTC
-
+USE_RBF_DEFAULT = False
+#USE_COLLATERAL_DEFAULT = _('Forbid use activated')
+#use_collateral_list = [_('Forbid use activated'), _('Forbid use collateral coins'), _('Allow')]
+USE_COLLATERAL_DEFAULT = u'禁止使用已激活的'
+use_collateral_list = [u'禁止使用已激活的', u'禁止使用已质押的', u'允许']
 
 class UnknownBaseUnit(Exception): pass
 
@@ -562,6 +572,8 @@ def user_dir():
             return os.path.join(os.environ["HOME"], ".electrum-wcl")
         elif COIN_NAME == 'sdd':
             return os.path.join(os.environ["HOME"], ".electrum-sdd")
+        elif COIN_NAME == 'liuwei':
+            return os.path.join(os.environ["HOME"], ".electrum-veg")
         else:
             return os.path.join(os.environ["HOME"], ".electrum")
     elif "APPDATA" in os.environ:
@@ -569,6 +581,8 @@ def user_dir():
             return os.path.join(os.environ["APPDATA"], "Electrum-wcl")            
         elif COIN_NAME == 'sdd':
             return os.path.join(os.environ["APPDATA"], "Electrum-sdd")            
+        elif COIN_NAME == 'liuwei':
+            return os.path.join(os.environ["APPDATA"], "Electrum-veg")            
         else:
             return os.path.join(os.environ["APPDATA"], "Electrum")
     elif "LOCALAPPDATA" in os.environ:
@@ -576,6 +590,8 @@ def user_dir():
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-wcl")
         elif COIN_NAME == 'sdd':
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-sdd")
+        elif COIN_NAME == 'veg':
+            return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-veg")
         else:
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum")
     else:

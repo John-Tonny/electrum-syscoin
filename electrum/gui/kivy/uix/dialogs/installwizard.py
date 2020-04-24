@@ -123,7 +123,8 @@ Builder.load_string('''
         size_hint: 1, None
         text_size: self.width, None
         height: self.texture_size[1]
-        text: _("Choose the number of signatures needed to unlock funds in your wallet")
+        #text: _("Choose the number of signatures needed to unlock funds in your wallet")
+        text: u'选择解锁钱包资金所需要的签名数目'
     Widget
         size_hint: 1, 1
     GridLayout:
@@ -134,7 +135,8 @@ Builder.load_string('''
         height: self.minimum_height
         Label:
             color: root.text_color
-            text: _('From {} cosigners').format(n.value)
+            #text: _('From {} cosigners').format(n.value)
+            text: (u'共 {} 联署人').format(n.value)
         Slider:
             id: n
             range: 2, 5
@@ -142,7 +144,8 @@ Builder.load_string('''
             value: 2
         Label:
             color: root.text_color
-            text: _('Require {} signatures').format(m.value)
+            #text: _('Require {} signatures').format(m.value)
+            text: (u'需要 {} 联署人').format(m.value)
         Slider:
             id: m
             range: 1, n.value
@@ -319,7 +322,7 @@ Builder.load_string('''
     message: ''
     word: ''
     BigLabel:
-        text: "ENTER YOUR SEED PHRASE"
+        text: _("ENTER YOUR SEED PHRASE")
     GridLayout
         cols: 1
         padding: 0, '12dp'
@@ -460,7 +463,7 @@ Builder.load_string('''
     xpub: ''
     message: _('Here is your master public key. Share it with your cosigners.')
     BigLabel:
-        text: "MASTER PUBLIC KEY"
+        text: _("MASTER PUBLIC KEY")
     GridLayout
         cols: 1
         padding: 0, '12dp'
@@ -493,7 +496,7 @@ Builder.load_string('''
     spacing: '12dp'
     value: 'next'
     BigLabel:
-        text: "PLEASE WRITE DOWN YOUR SEED PHRASE"
+        text: _("PLEASE WRITE DOWN YOUR SEED PHRASE")
     GridLayout:
         id: grid
         cols: 1
@@ -693,7 +696,7 @@ class WizardChoiceDialog(WizardDialog):
         layout = self.ids.choices
         layout.bind(minimum_height=layout.setter('height'))
         for action, text in choices:
-            l = WizardButton(text=text)
+            l = WizardButton(text=text, font_name='electrum/gui/kivy/data/fonts/DroidSansFallback.ttf')
             l.action = action
             l.height = '48dp'
             l.root = self

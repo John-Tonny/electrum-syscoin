@@ -3,7 +3,7 @@ from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 
-from electrum.util import base_units_list
+from electrum.util import base_units_list, use_collateral_list, USE_COLLATERAL_DEFAULT
 from electrum.i18n import languages
 from electrum.gui.kivy.i18n import _
 from electrum.plugin import run_hook
@@ -29,12 +29,12 @@ Builder.load_string('''
                 size_hint: 1, None
                 height: self.minimum_height
                 padding: '10dp'
-                SettingsItem:
-                    lang: settings.get_language_name()
-                    title: 'Language' + ': ' + str(self.lang)
-                    description: _('Language')
-                    action: partial(root.language_dialog, self)
-                CardSeparator
+                #SettingsItem:
+                #    lang: settings.get_language_name()
+                #    title: 'Language' + ': ' + str(self.lang)
+                #    description: _('Language')
+                #    action: partial(root.language_dialog, self)
+                #CardSeparator
                 SettingsItem:
                     disabled: root.disable_pin
                     title: _('PIN code')
@@ -69,6 +69,12 @@ Builder.load_string('''
                     description: _("Use unconfirmed coins in transactions.")
                     message: _('Spend unconfirmed coins')
                     action: partial(root.boolean_dialog, 'use_unconfirmed', _('Use unconfirmed'), self.message)
+                #CardSeparator
+                #SettingsItem:
+                #    status: app.use_collateral
+                #    title: _('Use collateral coins') + ': ' + self.status
+                #    description: _("Use collateral coins in transactions.")
+                #    action: partial(root.collateral_dialog, self)
                 CardSeparator
                 SettingsItem:
                     status: _('Yes') if app.use_change else _('No')
@@ -84,6 +90,19 @@ Builder.load_string('''
                 #    title: _('Coin selection') + ': ' + self.status
                 #    description: "Coin selection method"
                 #    action: partial(root.coinselect_dialog, self)
+        Widget:
+            size_hint: None, 0.5
+        BoxLayout:
+            size_hint: 1, None
+            height: '48dp'
+            Widget:
+                size_hint: 0.5, None
+                height: '48dp'
+            Button:
+                size_hint: 0.5, None
+                height: '48dp'
+                text: _('Close')
+                on_release: settings.dismiss()
 ''')
 
 
@@ -103,6 +122,7 @@ class SettingsDialog(Factory.Popup):
         self._language_dialog = None
         self._unit_dialog = None
         self._coinselect_dialog = None
+        self._collateral_dialog = None
 
     def update(self):
         self.wallet = self.app.wallet
@@ -133,6 +153,20 @@ class SettingsDialog(Factory.Popup):
             self._unit_dialog = ChoiceDialog(_('Denomination'), base_units_list,
                                              self.app.base_unit, cb, keep_choice_order=True)
         self._unit_dialog.open()
+
+    def collateral_dialog(self, item, dt):
+        if self._collateral_dialog is None:
+            def cb(text):
+                if text == '' or text is None:
+                    return
+                self.app._set_use_collateral(text)
+                item.status = self.app.use_collateral
+            
+            use_collateral = USE_COLLATERAL_DEFAULT                                                                
+            self._collateral_dialog = ChoiceDialog(_('Use collateral coins'), use_collateral_list,
+                                             use_collateral, cb, keep_choice_order=True)
+        self._collateral_dialog.open()
+
 
     def coinselect_status(self):
         return coinchooser.get_name(self.app.electrum_config)

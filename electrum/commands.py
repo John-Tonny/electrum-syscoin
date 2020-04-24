@@ -35,7 +35,7 @@ from decimal import Decimal
 from typing import Optional, TYPE_CHECKING
 
 from .import util, ecc
-from .util import bfh, bh2u, format_satoshis, json_decode, print_error, json_encode, is_hash256_str
+from .util import bfh, bh2u, format_satoshis, json_decode, print_error, json_encode, is_hash256_str, USE_RBF_DEFAULT
 from . import bitcoin
 from .bitcoin import is_address,  hash_160, COIN, TYPE_ADDRESS
 from . import bip32
@@ -471,8 +471,9 @@ class Commands:
         tx = self.wallet.make_unsigned_transaction(coins, final_outputs, self.config, fee, change_addr)
         if locktime != None:
             tx.locktime = locktime
+        ###john
         if rbf is None:
-            rbf = self.config.get('use_rbf', True)
+            rbf = self.config.get('use_rbf', USE_RBF_DEFAULT)
         if rbf:
             tx.set_rbf(True)
         if not unsigned:

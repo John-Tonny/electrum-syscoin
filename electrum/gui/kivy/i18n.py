@@ -8,7 +8,7 @@ class _(str):
 
     def __new__(cls, s):
         if _.lang is None:
-            _.switch_lang('en')
+            _.switch_lang('zh_CN')
         t = _.translate(s)
         o = super(_, cls).__new__(cls, t)
         o.source_text = s

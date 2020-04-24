@@ -124,6 +124,7 @@ class BaseWizard(Logger):
 
     def new(self):
         title = _("Create new wallet")
+        '''
         message = '\n'.join([
             _("What kind of wallet do you want to create?")
         ])
@@ -132,6 +133,16 @@ class BaseWizard(Logger):
             ('2fa', _("Wallet with two-factor authentication")),
             ('multisig',  _("Multi-signature wallet")),
             ('imported',  _("Import Bitcoin addresses or private keys")),
+        ]
+        '''
+        message = '\n'.join([
+            (u"你想创建什么样的钱包？")
+        ])
+        wallet_kinds = [
+            ('standard',  (u"标准钱包")),
+            #('2fa', _("Wallet with two-factor authentication")),
+            ('multisig',  (u"多重签名钱包")),
+            ('imported',  (u"导入链分地址或私钥")),
         ]
         choices = [pair for pair in wallet_kinds if pair[0] in wallet_types]
         self.choice_dialog(title=title, message=message, choices=choices, run_next=self.on_wallet_type)
@@ -182,20 +193,35 @@ class BaseWizard(Logger):
         i = len(self.keystores)
         title = _('Add cosigner') + ' (%d of %d)'%(i+1, self.n) if self.wallet_type=='multisig' else _('Keystore')
         if self.wallet_type =='standard' or i==0:
+            '''
             message = _('Do you want to create a new seed, or to restore a wallet using an existing seed?')
             choices = [
                 ('choose_seed_type', _('Create a new seed')),
                 ('restore_from_seed', _('I already have a seed')),
                 ('restore_from_key', _('Use a master key')),
             ]
+            '''
+            message = _(u'您是要创建一个新的助记词，还是要用之前已有的助记词来恢复某个钱包')
+            choices = [
+                ('choose_seed_type', (u'创建一个新的助记词')),
+                ('restore_from_seed', ('我已经有一个助记词')),
+                ('restore_from_key', ('使用主密钥(主公钥或主私钥)')),
+            ]
             if not self.is_kivy:
                 choices.append(('choose_hw_device',  _('Use a hardware device')))
         else:
+            '''
             message = _('Add a cosigner to your multi-sig wallet')
             choices = [
                 ('restore_from_key', _('Enter cosigner key')),
                 ('restore_from_seed', _('Enter cosigner seed')),
             ]
+            '''
+            message = ('向您的多重签名钱包添加一个联署人')
+            choices = [
+                ('restore_from_key', (u'输入联署人的密钥')),
+                ('restore_from_seed', (u'输入联署人的助记词')),
+            ]            
             if not self.is_kivy:
                 choices.append(('choose_hw_device',  _('Cosign with hardware device')))
 
@@ -203,8 +229,12 @@ class BaseWizard(Logger):
 
     def import_addresses_or_keys(self):
         v = lambda x: keystore.is_address_list(x) or keystore.is_private_key_list(x, raise_on_error=True)
+        '''
         title = _("Import Bitcoin Addresses")
         message = _("Enter a list of Bitcoin addresses (this will create a watching-only wallet), or a list of private keys.")
+        '''
+        title = u"导入链分地址"
+        message = u"在列表中输入链分地址（这将创建一个仅供监视的钱包），或者私钥。"
         self.add_xpub_dialog(title=title, message=message, run_next=self.on_import,
                              is_valid=v, allow_multi=True, show_wif_help=True)
 
@@ -232,10 +262,17 @@ class BaseWizard(Logger):
     def restore_from_key(self):
         if self.wallet_type == 'standard':
             v = keystore.is_master_key
+            '''
             title = _("Create keystore from a master key")
             message = ' '.join([
                 _("To create a watching-only wallet, please enter your master public key (xpub/ypub/zpub)."),
                 _("To create a spending wallet, please enter a master private key (xprv/yprv/zprv).")
+            ])
+            '''
+            title = (u"从一个主密钥创建密钥库")
+            message = ' '.join([
+                (u"要创建仅供监视的钱包，请输入您的主公钥（xpub / ypub / zpub）。"),
+                (u"要创建可直接动用资金的钱包，请输入主私钥（xprv / yprv / zprv）。")
             ])
             self.add_xpub_dialog(title=title, message=message, run_next=self.on_restore_from_key, is_valid=v)
         else:

@@ -50,6 +50,20 @@ Builder.load_string('''
                     title: _('Page_size') 
                     description: '20'
                     action: partial(root.do_action)                    
+        Widget:
+            size_hint: None, 0.5
+        BoxLayout:
+            size_hint: 1, None
+            height: '48dp'
+            Widget:
+                size_hint: 0.5, None
+                height: '48dp'
+            Button:
+                size_hint: 0.5, None
+                height: '48dp'
+                text: _('Close')
+                on_release: info.dismiss()
+                    
                 
 ''')
 

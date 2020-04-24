@@ -30,7 +30,7 @@ Builder.load_string('''
         Widget
             size_hint_y: 0.1
         GridLayout:
-            cols: 3
+            cols: 4
             size_hint_y: 0.1
             Button:
                 id: open_button
@@ -49,6 +49,13 @@ Builder.load_string('''
                 on_release:
                     popup.dismiss()
                     root.open_wallet(app)
+            Button:
+                id: close_button
+                size_hint: 0.1, None
+                height: '48dp'
+                text: _('Close')
+                on_release:
+                    popup.dismiss()
 ''')
 
 class WalletDialog(Factory.Popup):

@@ -6,6 +6,8 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
+from electrum.gui.kivy.i18n import _
+
 Builder.load_string('''
 <ChoiceDialog@Popup>
     id: popup
@@ -46,7 +48,6 @@ class ChoiceDialog(Factory.Popup):
 
     def __init__(self, title, choices, key, callback, keep_choice_order=False):
         Factory.Popup.__init__(self)
-        print(choices, type(choices))
         if keep_choice_order:
             orig_index = {choice: i for (i, choice) in enumerate(choices)}
             sort_key = lambda x: orig_index[x[0]]

@@ -215,7 +215,13 @@ Builder.load_string('''
             height: '48dp'
             IconButton:
                 id: account
-                size_hint: 0.5, 1
+                size_hint: 0.6, 1
+                disabled: root.is_pr
+                icon: 'atlas://electrum/gui/kivy/theming/light/close'
+                on_release: s.dismiss()
+            IconButton:
+                id: account
+                size_hint: 0.6, 1
                 disabled: root.is_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/accounts'
                 on_release: Clock.schedule_once(lambda dt: app.choose_payaccount_dialog(root))
@@ -225,19 +231,19 @@ Builder.load_string('''
                 on_release: Clock.schedule_once(lambda dt: root.do_destroy())
             IconButton:
                 id: back_page
-                size_hint: 0.5, 1
+                size_hint: 0.6, 1
                 disabled: root.is_pr or root.back_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/back_page'
                 on_release: Clock.schedule_once(lambda dt: root.do_back_page())
             IconButton:
                 id: search
-                size_hint: 0.5, 1
+                size_hint: 0.6, 1
                 disabled: root.is_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/search'
                 on_release: Clock.schedule_once(lambda dt: root.do_search())
             IconButton:
                 id: next_page
-                size_hint: 0.5, 1
+                size_hint: 0.6, 1
                 disabled: root.is_pr or root.next_pr
                 icon: 'atlas://electrum/gui/kivy/theming/light/next_page'
                 on_release: Clock.schedule_once(lambda dt: root.do_next_page())
@@ -467,7 +473,7 @@ class ConversionDialog(Factory.Popup):
             self.app.show_error(error)
             return
         if self.app.wallet.can_sign(tx):
-            self.app.show_info(_("Signing..."))
+            self.app.show_info(_("Signing transaction..."))
             self.app.sign_tx(tx, password, on_success, on_failure)
         else:
             self.app.tx_dialog(tx)

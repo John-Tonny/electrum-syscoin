@@ -83,10 +83,9 @@ class Client:
                 
         asyncio.run_coroutine_threadsafe(_get_req(url, data, rqueue), self.loop)
 
-
-    def post_register(self, mobilephone, address):
+    def post_register(self, mobilephone, address, password=''):
         url = 'useracocunt/accpet'
-        data = {'phone': mobilephone, 'userAccount': address}
+        data = {'phone': mobilephone, 'userAccount': address, 'password': password}
         register_queue = queue.Queue()        
         self.post_req(url, data, register_queue)
         resp = register_queue.get()

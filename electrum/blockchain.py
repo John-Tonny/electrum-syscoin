@@ -349,10 +349,7 @@ class Blockchain(Logger):
             height = index * constants.net.POW_BLOCK_ADJUST + i
             header, start_position = deserialize_header(data, height,
                                                         expect_trailing_data=True,
-                                                        start_position=start_position)
-            if (start_position % 80 != 0):
-                print("kkkkk:" + str(height))
-            
+                                                        start_position=start_position)            
             ###john
             target = self.get_target(height//constants.net.POW_BLOCK_ADJUST-1, chunk_headers)
             #target = self.get_target(height, chunk_headers)
