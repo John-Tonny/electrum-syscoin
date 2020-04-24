@@ -12,21 +12,21 @@ from .label_dialog import LabelDialog
 
 Builder.load_string('''
 #:import os os
-<WalletDialog@Popup>:
-    title: _('Wallets')
+<LoadTransactionDialog@Popup>:
+    title: _('Load transaction')
     id: popup
     path: os.path.dirname(app.get_wallet_path())
     BoxLayout:
         orientation: 'vertical'
         padding: '10dp'
         FileChooserListView:
-            id: wallet_selector
+            id: transaction_selector
             dirselect: False
             filter_dirs: True
             filter: '*.*'
             path: root.path
             rootpath: root.path
-            size_hint_y: 0.7
+            size_hint_y: 0.5
         Widget
             size_hint_y: 0.1
         GridLayout:
@@ -36,19 +36,11 @@ Builder.load_string('''
                 id: open_button
                 size_hint: 0.1, None
                 height: '48dp'
-                text: _('New Wallet')
+                text: _('Load transaction')
+                disabled: not transaction_selector.selection
                 on_release:
                     popup.dismiss()
-                    root.new_wallet(app, wallet_selector.path)
-            Button:
-                id: open_button
-                size_hint: 0.1, None
-                height: '48dp'
-                text: _('Open Wallet')
-                disabled: not wallet_selector.selection
-                on_release:
-                    popup.dismiss()
-                    root.open_wallet(app)
+                    root.open_transaction(app)
             Button:
                 id: close_button
                 size_hint: 0.1, None
@@ -58,15 +50,9 @@ Builder.load_string('''
                     popup.dismiss()
 ''')
 
-class WalletDialog(Factory.Popup):
+class LoadTransactionDialog(Factory.Popup):
 
-    def new_wallet(self, app, dirname):
-        def cb(title, text):
-            if text:
-                app.load_wallet_by_name(os.path.join(dirname, text))
-        d = LabelDialog(_('Enter wallet name'), '', cb)
-        d.open()
-
-    def open_wallet(self, app):
-        app.load_wallet_by_name(self.ids.wallet_selector.selection[0])
+    def open_transaction(self, app):
+        pass
+        #app.load_wallet_by_name(self.ids.wallet_selector.selection[0])
 

@@ -69,8 +69,8 @@ elif COIN_NAME == 'liuwei':
 else:
     MASTERNODE_PORTS = 9069
     DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
-    API_NAME = 'admin'
-    API_PASSWORD = '999000'
+    API_NAME = 'ceshi'
+    API_PASSWORD = '123456'
     API_PRIVKEY = 'jlw999000'
     API_URL = 'http://52.82.33.173:8080/'
 

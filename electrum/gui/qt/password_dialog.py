@@ -350,7 +350,7 @@ class LoginDialog(WindowModalDialog):
         vbox.addWidget(QLabel(msg))
         grid = QGridLayout()        
         grid.setSpacing(8)
-        grid.addWidget(QLabel(_('MobilePhone:')), 1, 0)
+        grid.addWidget(QLabel(_('Mobile:')), 1, 0)
         grid.addWidget(self.mobilephone, 1, 1)
         grid.addWidget(QLabel(_('Password:')), 2, 0)
         grid.addWidget(pw, 2, 1)

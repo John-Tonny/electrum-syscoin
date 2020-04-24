@@ -55,8 +55,7 @@ Builder.load_string('''
             font_size: '13sp'
             halign: 'right'
             color: .699, .699, .699, 1
-        Widget
-
+        Widget                
 
 <InvoicesDialog@Popup>
     id: popup
@@ -72,7 +71,27 @@ Builder.load_string('''
                 size_hint: 1, None
                 height: self.minimum_height
                 spacing: '2dp'
-                padding: '12dp'
+                padding: '12dp'                
+        Widget:
+            size_hint: None, 0.5
+        BoxLayout:
+            size_hint: 1, None
+            height: '40dp'                        
+            Widget:
+                size_hint: 0.67, None
+                height: '40dp'
+            AddressFilter:
+                opacity: 1
+                size_hint: 0.33, None
+                height: self.minimum_height
+                spacing: '5dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                AddressButton:
+                    id: close
+                    text: _('Close')
+                    on_release: popup.dismiss()                
 ''')
 
 from kivy.properties import BooleanProperty

@@ -115,8 +115,11 @@ SendScreen:
             Button:
                 text: _('Clear')
                 on_release: s.parent.do_clear()
-            Widget:
-                size_hint: 1, 1
+            Button:
+                text: _('Load transaction')
+                on_release: s.parent.do_load_transaction()
+            #Widget:
+            #    size_hint: 1, 1
             Button:
                 text: _('Pay')
                 size_hint: 1, 1

@@ -367,6 +367,8 @@ class SendScreen(CScreen):
         else:
             self.app.tx_dialog(tx)
 
+    def do_load_transaction(self):
+        self.app.load_transaction()
 
 class ReceiveScreen(CScreen):
 

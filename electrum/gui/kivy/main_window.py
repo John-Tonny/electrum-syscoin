@@ -355,7 +355,7 @@ class ElectrumWindow(App):
         # cached dialogs
         self._settings_dialog = None
         self._password_dialog = None
-        self._register_dialog = None
+        self._login_dialog = None
         self._conversion_dialog = None
         self._info_dialog = None
         self.fee_status = self.electrum_config.get_fee_status()
@@ -1261,25 +1261,19 @@ class ElectrumWindow(App):
         return True
         
     def masternode_register(self):
-        from .uix.dialogs.register_dialog import RegisterDialog
-        if self._register_dialog is None:
-            self._register_dialog = RegisterDialog()
-        message = _("Enter your mobile phone:")
-        def on_success(mobilephone, password):
+        from .uix.dialogs.login_dialog import LoginDialog
+        ###john
+        def callback(mobilephone, password):
             address = self.wallet.create_new_address(False)
-                        
-            response = self.client.post_register(mobilephone, address, password)                
-            if response["code"] != 200 :                        
-                self.show_error(_("Account Register failed!"))
+            status = self.client.post_register(mobilephone, address, password)                
+            if not status :                        
+                self.show_error(_("Account Login failed!"))
                 return False
             self.wallet.storage.put('user_register', {mobilephone:(password, address)})
-            self.show_info(_('Account Register successful!'))
-            return True
-            
-        def on_failure():
-            self.show_error(_("Account Register failed!"))
-        self._register_dialog.init(self, self.wallet, message, on_success, on_failure, is_change=2)
-        self._register_dialog.open()  
+            self.show_info(_('Account Login successful!'))
+            return True            
+        d = LabelDialog(_('Account Login'), callback)
+        d.open()        
                             
     def choose_masternode_vps_dialog(self, screen):
         from .uix.dialogs.choice_dialog import ChoiceDialog
@@ -1367,3 +1361,8 @@ class ElectrumWindow(App):
             popup.disable_pin = False
             return
         popup.bank = ''
+
+    def load_transaction(self):
+        from .uix.dialogs.load_transaction import LoadTransactionDialog
+        d = LoadTransactionDialog()
+        d.open()

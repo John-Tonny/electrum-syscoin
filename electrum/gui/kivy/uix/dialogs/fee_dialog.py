@@ -18,7 +18,7 @@ Builder.load_string('''
             orientation: 'horizontal'
             size_hint: 1, 0.5
             Label:
-                text: _('Method') + ':'
+                text: _('Method:')
             Button:
                 text: _('Mempool') if root.method == 2 else _('ETA') if root.method == 1 else _('Static')
                 background_color: (0,0,0,0)

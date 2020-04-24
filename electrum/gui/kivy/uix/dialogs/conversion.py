@@ -270,7 +270,7 @@ class ConversionDialog(Factory.Popup):
         self._conversion_payaccount_dialog = None
         
         self.context_menu = None
-        self.menu_actions = [('Details', self.show_conversion)]
+        self.menu_actions = [(_('Details'), self.show_conversion)]
         
         self.payment_request = None
         self.conversion_data ={}

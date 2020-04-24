@@ -2644,19 +2644,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         d = PasswordDialog(parent, msg)
         return d.run()
     
-    def register_dialog(self, msg=None, parent=None):
-        from .password_dialog import RegisterDialog
-        parent = parent or self
-        d = RegisterDialog(parent, msg)
-        return d.run()
-    
-    def login_dialog(self, msg=None, parent=None):
-        from .password_dialog import LoginDialog
-        parent = parent or self
-        d = LoginDialog(parent, msg)
-        return d.run()
-
-
     def tx_from_text(self, txt):
         from electrum.transaction import tx_from_str
         try:
@@ -4226,18 +4213,20 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         register_info = self.wallet.storage.get('user_register')
         try:
             if register_info is None:
-                mobilephone, pw, pw1 = self.register_dialog('')
-                if (pw is None) or (pw1 is None) or (mobilephone is None) :
+                mobilephone, pw = self.login_dialog('')
+                pw1 = pw
+                if (pw is None) or (mobilephone is None) :
                     # User cancelled password input
                     return False
                 if len(mobilephone) != 11:
                     self.show_message(_('Mobile must be 11 digits!'),
                                           title=_('Error'))                    
                     return False
+                
                 if pw != pw1:  
                     self.show_message(_('Password mismatch!'),
                                           title=_('Error'))                    
-                    return False
+                    return False                
                 
                 if len(pw) < 6:
                     self.show_message(_('Password length not less than 6 digits!'),
@@ -4262,18 +4251,18 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             address = self.masternode_manager.check_register(register_info, mobilephone, pw, pw1, bregister)                    
             return self.client.post_register(mobilephone, address, pw)
                         
-        def on_success(response):
-            if response["code"] != 200 :                        
-                self.show_message(_('Account Register failed!'), title=_('Error'))
+        def on_success(status):
+            if not status :                        
+                self.show_message(_('Account Login failed!'), title=_('Error'))
             else:
-                self.show_message(_('Account Register successful!'),
+                self.show_message(_('Account Login successful!'),
                                       title=_('Success'))
             
         def on_error(msg):
-            self.show_message(_('Account Register failure'), title=_('Error'))
+            self.show_message(_('Account Login failure'), title=_('Error'))
             
         if bregister:        
-            WaitingDialog(self, _('Register...'), register_thread, on_success, on_error)  
+            WaitingDialog(self, _('Login...'), register_thread, on_success, on_error)  
         else:
             return True
                         

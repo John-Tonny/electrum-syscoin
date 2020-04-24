@@ -84,6 +84,18 @@ Builder.load_string('''
                     id: change
                     text: root.message if root.message else _('Search')
                     on_release: Clock.schedule_once(lambda dt: app.description_dialog(popup))
+            AddressFilter:
+                opacity: 1
+                size_hint: 1, None
+                height: self.minimum_height
+                spacing: '5dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                AddressButton:
+                    id: close
+                    text: _('Close')
+                    on_release: popup.dismiss()
         RecycleView:
             scroll_type: ['bars', 'content']
             bar_width: '15dp'

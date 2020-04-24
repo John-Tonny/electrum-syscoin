@@ -318,12 +318,12 @@ msgid "Account"
 msgstr "账户"
 
 #: electrum/gui/qt/main_window.py:4205 electrum/gui/qt/main_window.py:4209
-msgid "Account Register failed!"
-msgstr "账户注册失败!"
+msgid "Account Login failed!"
+msgstr "账户登录失败!"
 
 #: electrum/gui/qt/main_window.py:4206
-msgid "Account Register successful!"
-msgstr "账户注册成功!"
+msgid "Account Login successful!"
+msgstr "账户登录成功!"
 
 #: electrum/gui/kivy/uix/dialogs/conversion.py:536
 msgid "Account is not specified."
@@ -484,44 +484,44 @@ msgstr "始终检查备份"
 #: electrum/gui/kivy/uix/ui_screens/receive.kv:89
 #: electrum/gui/kivy/uix/ui_screens/receive.kv:90 electrum/gui/stdio.py:110
 msgid "Amount"
-msgstr "金额"
+msgstr "数量"
 
 #: electrum/plugins/hw_wallet/plugin.py:276
 msgid "Amount for OP_RETURN output must be zero."
-msgstr "OP_RETURN输出的金额必须为零。"
+msgstr "OP_RETURN输出的数量必须为零。"
 
-#: electrum/gui/qt/transaction_dialog.py:489
+#: electrum/gui/qt/tranfasaction_dialog.py:489
 msgid "Amount received in channels"
-msgstr "从通道内收入的金额"
+msgstr "从通道内收入的数量"
 
 #: electrum/gui/kivy/uix/dialogs/conversion.py:541
 msgid "Amount is not specified."
-msgstr "金额未指定"
+msgstr "数量未指定"
 
 #: electrum/gui/kivy/uix/ui_screens/invoice.kv:34
 msgid "Amount received"
-msgstr "收到的金额"
+msgstr "收到的数量"
 
 #: electrum/gui/qt/transaction_dialog.py:465
 msgid "Amount received:"
-msgstr "收到的金额:"
+msgstr "收到的数量:"
 
 #: electrum/gui/qt/transaction_dialog.py:467
 msgid "Amount sent:"
-msgstr "发送的金额:"
+msgstr "发送的数量:"
 
 #: electrum/gui/kivy/uix/screens.py:366
 #: electrum/gui/qt/confirm_tx_dialog.py:123
 msgid "Amount to be sent"
-msgstr "将要发送的金额。"
+msgstr "将要发送的数量。"
 
 #: electrum/gui/qt/main_window.py:1288
 msgid "Amount to be sent."
-msgstr "需要发送的金额。"
+msgstr "需要发送的数量。"
 
 #: electrum/gui/qt/transaction_dialog.py:491
 msgid "Amount withdrawn from channels"
-msgstr "从通道内取出的金额"
+msgstr "从通道内取出的数量"
 
 #: electrum/gui/qt/exception_window.py:47
 msgid "An Error Occurred"
@@ -609,7 +609,7 @@ msgstr "这种取整操作最多可能消耗100 satoshis。"
 
 #: electrum/util.py:169
 msgid "At most one output can be set to spend max"
-msgstr "花出最大金额时只能花到最多一个输出上"
+msgstr "花出最大数量时只能花到最多一个输出上"
 
 #: electrum/plugins/audio_modem/__init__.py:3
 msgid "Audio MODEM"
@@ -637,15 +637,15 @@ msgstr "自动检查软件更新"
 
 #: electrum/gui/qt/seed_dialog.py:82
 msgid "BIP39 seed"
-msgstr "BIP39 种子"
+msgstr "BIP39助记词"
 
 #: electrum/gui/qt/seed_dialog.py:74
 msgid "BIP39 seeds can be imported in Electrum, so that users can access funds locked in other wallets."
-msgstr "Electrum可以导入BIP39种子，以便用户找回在其他钱包中被锁死的资金。"
+msgstr "Electrum可以导入BIP39助记词，以便用户找回在其他钱包中被锁死的资金。"
 
 #: electrum/gui/qt/seed_dialog.py:76
 msgid "BIP39 seeds do not include a version number, which compromises compatibility with future software."
-msgstr "BIP39种子不包含版本号，这会影响与未来软件的兼容性。"
+msgstr "BIP39助记词不包含版本号，这会影响与未来软件的兼容性。"
 
 #: electrum/gui/qt/main_window.py:1942
 msgid "BIP70 Invoice"
@@ -692,7 +692,7 @@ msgstr "使用RBF整合多笔交易"
 
 #: electrum/gui/qt/invoice_list.py:148
 msgid "Batch pay invoices"
-msgstr "批量给发票付款"
+msgstr "批量给发票支付"
 
 #: electrum/gui/qt/main_window.py:725
 msgid "Before reporting a bug, upgrade to the most recent version of Electrum (latest release or git HEAD), and include the version number in your report."
@@ -812,7 +812,7 @@ msgstr "无法用CPFP追加手续费：父级交易的手续费不明"
 #: electrum/gui/kivy/uix/dialogs/tx_dialog.py:234
 #: electrum/gui/qt/main_window.py:3015
 msgid "Can't bump fee: unknown fee for original transaction."
-msgstr "无法追加手续费：原始交易的手续费金额不明。"
+msgstr "无法追加手续费：原始交易的手续费数量不明。"
 
 #: electrum/gui/qt/history_list.py:517
 msgid "Can't plot history."
@@ -1001,7 +1001,7 @@ msgstr "输入密码"
 
 #: electrum/base_wizard.py:598
 msgid "Choose Seed type"
-msgstr "选择种子类型"
+msgstr "选择助记词类型"
 
 #: electrum/plugins/digitalbitbox/digitalbitbox.py:336
 msgid "Choose a backup file:"
@@ -1311,7 +1311,7 @@ msgstr "确认您的 {} 设备上的新标签"
 #: electrum/plugins/safe_t/clientbase.py:21
 #: electrum/plugins/keepkey/clientbase.py:20
 msgid "Confirm the total amount spent and the transaction fee on your {} device"
-msgstr "在您的 {} 设备上确认总支出金额和交易手续费"
+msgstr "在您的 {} 设备上确认总支出数量和交易手续费"
 
 #: electrum/plugins/trezor/clientbase.py:19
 #: electrum/plugins/safe_t/clientbase.py:16
@@ -1635,7 +1635,7 @@ msgstr "删除{n}个请求?"
 
 #: electrum/gui/kivy/uix/dialogs/settings.py:157
 msgid "Denomination"
-msgstr "金额单位"
+msgstr "数量单位"
 
 #: electrum/gui/qt/address_dialog.py:103
 msgid "Derivation path"
@@ -1853,7 +1853,7 @@ msgid ""
 msgstr ""
 "Electrum无法和您的 {} 配对\n"
 "\n"
-"。在您使用钱包请求付款之前，请确认您可以和您的硬件钱包配对，以及助记词种子已经被妥善保管（以及附加密码，如果有附加密码的话）。否则，您收到的所有链分将无法使用。"
+"。在您使用钱包请求支付之前，请确认您可以和您的硬件钱包配对，以及助记词已经被妥善保管（以及附加密码，如果有附加密码的话）。否则，您收到的所有链分将无法使用。"
 
 #: electrum/gui/qt/installwizard.py:595
 msgid "Electrum communicates with remote servers to get information about your transactions and addresses. The servers all fulfill the same purpose only differing in hardware. In most cases you simply want to let Electrum pick one at random.  However if you prefer feel free to select a server manually."
@@ -1943,7 +1943,7 @@ msgstr "启用附加密码(Passphrase)"
 
 #: electrum/gui/qt/main_window.py:3254
 msgid "Enable output value rounding"
-msgstr "启用输出金额取整"
+msgstr "启用输出数量取整"
 
 #: electrum/plugins/trezor/qt.py:250 electrum/plugins/safe_t/qt.py:157
 #: electrum/plugins/keepkey/qt.py:283
@@ -2181,7 +2181,7 @@ msgstr ""
 
 #: electrum/plugins/trustedcoin/trustedcoin.py:100
 msgid "Enter the seed for your 2-factor wallet:"
-msgstr "输入您双因素认证钱包里的种子"
+msgstr "输入您双因素认证钱包里的助记词"
 
 #: electrum/gui/qt/installwizard.py:410
 msgid "Enter their master private key (xprv) if you want to be able to sign for them."
@@ -2215,7 +2215,7 @@ msgstr "输入您的密码以解密您的私钥"
 
 #: electrum/gui/kivy/main_window.py:1146
 msgid "Enter your PIN code in order to decrypt your seed"
-msgstr "输入您的密码，以解密您的种子"
+msgstr "输入您的密码，以解密您的助记词"
 
 #: electrum/gui/kivy/uix/dialogs/tx_dialog.py:224
 msgid "Enter your PIN code in order to sign this transaction"
@@ -2390,7 +2390,7 @@ msgstr "过期时间"
 
 #: electrum/gui/qt/main_window.py:1000
 msgid "Expiration date of your request."
-msgstr "付款请求的截止日期。"
+msgstr "请求的截止日期。"
 
 #: electrum/util.py:104
 msgid "Expired"
@@ -2436,7 +2436,7 @@ msgstr "单个私钥泄漏就可能会危及您的整个钱包！"
 
 #: electrum/gui/qt/seed_dialog.py:63
 msgid "Extend this seed with custom words"
-msgstr "用自定义单词扩展这个种子"
+msgstr "用自定义单词扩展这个助记词"
 
 #: electrum/util.py:106
 msgid "Failed"
@@ -2513,7 +2513,7 @@ msgstr "子交易的手续费"
 
 #: electrum/gui/qt/main_window.py:1358 electrum/gui/qt/main_window.py:4391
 msgid "Fee rounding"
-msgstr "手续费金额取整"
+msgstr "手续费数量取整"
 
 #: electrum/gui/qt/main_window.py:3362
 msgid "Fees"
@@ -2628,11 +2628,11 @@ msgstr "冻结"
 
 #: electrum/gui/qt/channels_list.py:154
 msgid "Freeze (for receiving)"
-msgstr "冻结（收款功能）"
+msgstr "冻结（接收功能）"
 
 #: electrum/gui/qt/channels_list.py:150
 msgid "Freeze (for sending)"
-msgstr "冻结（付款功能）"
+msgstr "冻结（发送功能）"
 
 #: electrum/gui/qt/utxo_list.py:198
 msgid "Freeze Address"
@@ -2767,7 +2767,7 @@ msgstr "隐藏私钥"
 
 #: electrum/gui/kivy/uix/ui_screens/status.kv:74
 msgid "Hide seed"
-msgstr "隐藏种子"
+msgstr "隐藏助记词"
 
 #: electrum/gui/qt/main_window.py:324
 msgid "Hide {}"
@@ -2813,7 +2813,7 @@ msgstr "然而，硬件钱包不支持消息解密，这使得它们与当前的
 
 #: electrum/gui/qt/seed_dialog.py:75
 msgid "However, we do not generate BIP39 seeds, because they do not meet our safety standard."
-msgstr "然而，我们不生成BIP39种子，因为它不符合我们的安全标准。"
+msgstr "然而，我们不生成BIP39助记词，因为它不符合我们的安全标准。"
 
 #: electrum/i18n.py:57
 msgid "Hungarian"
@@ -3004,7 +3004,7 @@ msgid ""
 "There is no backup, and the user has a proof of this.\n"
 "This is an advanced feature, only suggested to be used in redundant multisig setups."
 msgstr ""
-"在无助记词模式下，种子助记词永远不会显示给用户。\n"
+"在无助记词模式下，助记词永远不会显示给用户。\n"
 "助记词没有备份，而且用户可以证明这一点。\n"
 "这是一项高级特性，仅建议用于冗余多重签名设置。"
 
@@ -3044,7 +3044,7 @@ msgstr "收入"
 
 #: electrum/gui/qt/main_window.py:1085
 msgid "Incoming payments"
-msgstr "收到付款"
+msgstr "收到链分"
 
 #: electrum/util.py:174
 msgid "Incorrect password"
@@ -3081,7 +3081,7 @@ msgstr "消息"
 
 #: electrum/gui/qt/history_list.py:490
 msgid "Initial balance"
-msgstr "初始金额"
+msgstr "初始数量"
 
 #: electrum/plugins/ledger/qt.py:85
 msgid "Initialization of Ledger HW devices is currently disabled."
@@ -3103,7 +3103,7 @@ msgstr "发起方:"
 
 #: electrum/gui/qt/main_window.py:3521
 msgid "Input amount"
-msgstr "输入金额"
+msgstr "输入数量"
 
 #: electrum/gui/qt/transaction_dialog.py:359
 #: electrum/gui/qt/transaction_dialog.py:377
@@ -3138,7 +3138,7 @@ msgstr "地址无效"
 #: electrum/gui/text.py:388 electrum/gui/qt/main_window.py:1753
 #: electrum/gui/stdio.py:178
 msgid "Invalid Amount"
-msgstr "金额无效"
+msgstr "数量无效"
 
 #: electrum/plugins/hw_wallet/plugin.py:75 electrum/gui/qt/main_window.py:1750
 #: electrum/gui/kivy/uix/dialogs/conversion.py:370
@@ -3187,7 +3187,7 @@ msgstr "公钥无效"
 #: electrum/gui/kivy/uix/dialogs/conversion.py:375
 #: electrum/gui/kivy/uix/screens.py:285
 msgid "Invalid amount"
-msgstr "无效的金额"
+msgstr "无效的数量"
 
 #: electrum/lnutil.py:1020
 msgid "Invalid node ID, must be 33 bytes and hexadecimal"
@@ -3468,7 +3468,7 @@ msgstr "请确保您使用了python3来安装它。"
 
 #: electrum/gui/qt/main_window.py:521
 msgid "Make sure you own the seed phrase or the private keys, before you request Bitcoins to be sent to this wallet."
-msgstr "在您使用这个钱包请求付款之前，请再三确定您持有对应的助记词或私钥。"
+msgstr "在您使用这个钱包请求发送之前，请再三确定您持有对应的助记词或私钥。"
 
 #: electrum/plugins/coldcard/qt.py:154
 msgid "Master Fingerprint"
@@ -3527,7 +3527,7 @@ msgstr "主节点激活成功."
 
 #: electrum/gui/qt/masternode_widgets.py:355
 msgid "Masternode already has a collateral payment."
-msgstr "主节点已经有一笔质押付款."
+msgstr "主节点已经有一笔质押链分."
 
 #: electrum/gui/qt/main_window.py:3874
 msgid "Masternode delegate key is not specified"
@@ -3548,7 +3548,7 @@ msgstr "主节点没有IP地址"
 
 #: electrum/gui/qt/masternode_widgets.py:349
 msgid "Masternode has no collateral payment assigned."
-msgstr "主节点没有指定任何质押付款。"
+msgstr "主节点没有指定任何质押链分。"
 
 #: electrum/gui/qt/masternode_dialog.py:648
 msgid "Masternode has not been activated."
@@ -3627,7 +3627,7 @@ msgstr "交易费用"
 
 #: electrum/lnworker.py:968
 msgid "Missing amount"
-msgstr "金额未填写"
+msgstr "数量未填写"
 
 #: electrum/plugins/hw_wallet/plugin.py:124
 msgid "Missing libraries for {}."
@@ -3656,11 +3656,11 @@ msgstr "监控"
 
 #: electrum/gui/qt/masternode_budget_widgets.py:221
 msgid "Monthly Payment:"
-msgstr "每月的付款:"
+msgstr "每月的链分:"
 
 #: electrum/gui/qt/masternode_budget_widgets.py:278
 msgid "Monthly VIRCLE Payment:"
-msgstr "每月的付款:"
+msgstr "每月的链分:"
 
 #: electrum/plugins/revealer/qt.py:221
 msgid "More info at: {}"
@@ -3668,7 +3668,7 @@ msgstr "更多信息：{}"
 
 #: electrum/gui/qt/main_window.py:1554
 msgid "More than one output set to spend max"
-msgstr "不止一个输出被设为花出最大金额"
+msgstr "不止一个输出被设为花出最大数量"
 
 #: electrum/gui/qt/installwizard.py:648
 msgid "Multi-Signature Wallet"
@@ -3780,7 +3780,7 @@ msgstr "未发现1000VIRCLE"
 
 #: electrum/gui/kivy/uix/dialogs/invoices.py:125
 msgid "No Amount"
-msgstr "无金额"
+msgstr "无数量"
 
 #: electrum/util.py:215 electrum/util.py:221
 msgid "No Data"
@@ -3838,7 +3838,7 @@ msgstr "没有密钥库"
 
 #: electrum/gui/qt/main_window.py:1105
 msgid "No message or amount"
-msgstr "无信息或无金额"
+msgstr "无信息或无数量"
 
 #: electrum/gui/qt/main_window.py:1150
 msgid "No more addresses in your wallet."
@@ -4095,7 +4095,7 @@ msgstr "过期的{}固件存在于标有{}的设备。请从{}下载最新的固
 
 #: electrum/gui/qt/main_window.py:1330
 msgid "Outgoing payments"
-msgstr "发出付款"
+msgstr "发出链分"
 
 #: electrum/gui/qt/watchtower_dialog.py:48
 msgid "Outpoint"
@@ -4147,7 +4147,7 @@ msgstr "密码已更新"
 
 #: electrum/util.py:102
 msgid "Paid"
-msgstr "付款"
+msgstr "发送"
 
 #: electrum/plugins/ledger/auth2fa.py:89 electrum/plugins/ledger/auth2fa.py:189
 msgid "Pair"
@@ -4273,7 +4273,7 @@ msgstr "支付失败"
 
 #: electrum/masternode_budget.py:126
 msgid "Payment is more than max"
-msgstr "付款超过限额"
+msgstr "数量超过限额"
 
 #: electrum/gui/qt/main_window.py:4234
 msgid "Payment mode"
@@ -4281,7 +4281,7 @@ msgstr "支付方式"
 
 #: electrum/gui/kivy/uix/screens.py:355 electrum/gui/kivy/uix/screens.py:389
 msgid "Payment received"
-msgstr "收到付款"
+msgstr "收到链分"
 
 #: electrum/gui/qt/main_window.py:1724 electrum/gui/qt/main_window.py:1877
 #: electrum/gui/kivy/main_window.py:354 electrum/gui/kivy/uix/screens.py:271
@@ -4291,15 +4291,15 @@ msgstr "支付请求已超时"
 #: electrum/gui/text.py:422 electrum/gui/qt/main_window.py:1911
 #: electrum/gui/kivy/main_window.py:1011 electrum/gui/stdio.py:218
 msgid "Payment sent."
-msgstr "付款已发送。"
+msgstr "链分已发送。"
 
 #: electrum/gui/qt/main_window.py:1462
 msgid "Payment succeeded"
-msgstr "付款成功"
+msgstr "发送成功"
 
 #: electrum/gui/kivy/main_window.py:240
 msgid "Payment was sent"
-msgstr "付款已发送"
+msgstr "链分已发送"
 
 #: electrum/gui/qt/channel_details.py:183
 msgid "Payments (HTLCs):"
@@ -4340,7 +4340,7 @@ msgstr "请确认"
 
 #: electrum/gui/kivy/uix/screens.py:293
 msgid "Please enter an amount"
-msgstr "请输入金额"
+msgstr "请输入数量"
 
 #: electrum/gui/qt/installwizard.py:447
 msgid "Please enter the master public key (xpub) of your cosigner."
@@ -4754,7 +4754,7 @@ msgstr "远端"
 
 #: electrum/gui/qt/main_window.py:4212
 msgid "Register..."
-msgstr "注册..."
+msgstr "正在注册..."
 
 #: electrum/gui/qt/main_window.py:1611 electrum/gui/qt/main_window.py:3703
 #: electrum/gui/qt/history_list.py:585
@@ -4793,7 +4793,7 @@ msgstr "报告错误"
 
 #: electrum/gui/kivy/uix/ui_screens/invoice.kv:17
 msgid "Request"
-msgstr "付款请求"
+msgstr "发送请求"
 
 #: electrum/gui/kivy/uix/screens.py:414
 msgid "Request copied to clipboard"
@@ -4813,7 +4813,7 @@ msgstr "请求被服务器拒绝"
 
 #: electrum/gui/qt/main_window.py:1206
 msgid "Request saved successfully"
-msgstr "已成功保存付款请求"
+msgstr "已成功保存发送请求"
 
 #: electrum/plugins/email_requests/qt.py:201
 msgid "Request sent."
@@ -4825,7 +4825,7 @@ msgstr "请求已发送."
 
 #: electrum/gui/qt/main_window.py:985
 msgid "Requested amount"
-msgstr "请求的金额"
+msgstr "请求的数量"
 
 #: electrum/lnworker.py:800
 msgid "Requested channel capacity is over protocol allowed maximum."
@@ -5009,7 +5009,7 @@ msgstr "已输入助记词"
 
 #: electrum/gui/qt/seed_dialog.py:183
 msgid "Seed Type"
-msgstr "种子类型"
+msgstr "助记词类型"
 
 #: electrum/gui/qt/main_window.py:2364
 msgid "Seed available"
@@ -5215,7 +5215,7 @@ msgstr "设置密码"
 
 #: electrum/gui/qt/main_window.py:3256
 msgid "Set the value of the change output so that it has similar precision to the other outputs."
-msgstr "把找零输出的金额取整，使得找零输出和其他输出具有类似的小数位数。"
+msgstr "把找零输出的数量取整，使得找零输出和其他输出具有类似的小数位数。"
 
 #: electrum/gui/qt/installwizard.py:31
 msgid "Set wallet file encryption."
@@ -5234,7 +5234,7 @@ msgstr "Shamir秘密拆分"
 
 #: electrum/gui/kivy/uix/dialogs/request_dialog.py:127
 msgid "Share Bitcoin Request"
-msgstr "分享链分付款请求"
+msgstr "分享链分请求"
 
 #: electrum/gui/kivy/uix/dialogs/invoice_dialog.py:120
 msgid "Share Invoice"
@@ -5606,11 +5606,11 @@ msgstr "1000 VIRCLE被发送到的地址"
 
 #: electrum/gui/qt/main_window.py:1292 electrum/gui/qt/main_window.py:4324
 msgid "The amount of fee can be decided freely by the sender. However, transactions with low fees take more time to be processed."
-msgstr "手续费的多少由付款人决定。然而，交易手续费越低，等待确认时间的就会越久。"
+msgstr "手续费的多少由支付人决定。然而，交易手续费越低，等待确认时间的就会越久。"
 
 #: electrum/gui/qt/main_window.py:1269 electrum/gui/qt/main_window.py:4289
 msgid "The amount will be displayed in red if you do not have enough funds in your wallet."
-msgstr "如果您的钱包资金不足，金额会被显示为红色。"
+msgstr "如果您的钱包资金不足，数量会被显示为红色。"
 
 #: electrum/gui/qt/main_window.py:1003
 msgid "The bitcoin address never expires and will always be part of this electrum wallet."
@@ -5634,7 +5634,7 @@ msgid ""
 msgstr ""
 "无法验证手续费数额。对非隔离见证输入进行签名是有风险的：\n"
 "如果此交易在供您准备签名之前就被恶意篡改过，\n"
-"您最后付出的矿工费可能会比显示出来的金额高。"
+"您最后付出的交易费可能会比显示出来的数量高。"
 
 #: electrum/gui/kivy/uix/screens.py:376
 #: electrum/gui/qt/confirm_tx_dialog.py:237
@@ -5707,7 +5707,7 @@ msgstr "交易因字节数太多而被拒绝 (单位 字节)。"
 
 #: electrum/base_wizard.py:601
 msgid "The type of addresses used by your wallet will depend on your seed."
-msgstr "您的种子决定了您的钱包会使用哪一种地址。"
+msgstr "您的助记词决定了您的钱包会使用哪一种地址。"
 
 #: electrum/gui/qt/installwizard.py:295
 msgid ""
@@ -5739,15 +5739,15 @@ msgstr "因此，两步认证被禁用。"
 
 #: electrum/gui/qt/main_window.py:1224
 msgid "This address has already been used. For better privacy, do not reuse it for new payments."
-msgstr "这个地址已经被用过了。为了更好的隐私，请不要再用它接收新的付款了。"
+msgstr "这个地址已经被用过了。为了更好的隐私，请不要再用它接收新的支付了。"
 
 #: electrum/gui/kivy/uix/dialogs/request_dialog.py:116
 msgid "This amount exceeds the maximum you can currently receive with your channels"
-msgstr "金额超出您的通道当前可以接收的最大值。"
+msgstr "数量超出您的通道当前可以接收的最大值。"
 
 #: electrum/gui/kivy/uix/dialogs/invoice_dialog.py:109
 msgid "This amount exceeds the maximum you can currently send with your channels"
-msgstr "金额超出您的通道当前可以发送的最大值。"
+msgstr "数量超出您的通道当前可以发送的最大值。"
 
 #: electrum/gui/qt/network_dialog.py:306
 msgid "This blockchain is used to verify the transactions sent by your transaction server."
@@ -5759,7 +5759,7 @@ msgstr "此通道的收款功能已被冻结。发票中将不会包含此通道
 
 #: electrum/gui/qt/channels_list.py:223
 msgid "This channel is frozen for sending. It will not be used for outgoing payments."
-msgstr "此通道的付款功能已被冻结。对外付款时将不会使用此通道。"
+msgstr "此通道的支付功能已被冻结。对外支付时将不会使用此通道。"
 
 #: electrum/gui/kivy/uix/dialogs/lightning_open_channel.py:168
 #: electrum/gui/qt/main_window.py:1691
@@ -6257,11 +6257,11 @@ msgstr "解冻"
 
 #: electrum/gui/qt/channels_list.py:156
 msgid "Unfreeze (for receiving)"
-msgstr "解冻（收款功能）"
+msgstr "解冻（接收功能）"
 
 #: electrum/gui/qt/channels_list.py:152
 msgid "Unfreeze (for sending)"
-msgstr "解冻（付款功能）"
+msgstr "解冻（发送功能）"
 
 #: electrum/gui/qt/utxo_list.py:202
 msgid "Unfreeze Address"
@@ -6350,7 +6350,7 @@ msgstr "升级钱包格式..."
 #: electrum/plugins/safe_t/safe_t.py:178
 #: electrum/plugins/keepkey/keepkey.py:202
 msgid "Upload a BIP39 mnemonic to generate the seed"
-msgstr "上传一个BIP39助记词来生成种子"
+msgstr "上传一个BIP39助记词来生成助记词"
 
 #: electrum/plugins/safe_t/safe_t.py:179
 #: electrum/plugins/keepkey/keepkey.py:203
@@ -6582,7 +6582,7 @@ msgstr "钱包找零地址"
 
 #: electrum/wallet.py:179
 msgid "Wallet file corruption detected. Please restore your wallet from seed, and compare the addresses in both files"
-msgstr "检测到电子钱包文件损坏。请从种子恢复您的钱包，并比较两个文件中的地址"
+msgstr "检测到电子钱包文件损坏。请从助记词恢复您的钱包，并比较两个文件中的地址"
 
 #: electrum/gui/qt/main_window.py:2412
 msgid "Wallet file not found: {}"
@@ -6707,7 +6707,7 @@ msgstr "有新版本Electrum可用时需要通知您吗？"
 #: electrum/plugins/safe_t/clientbase.py:18
 #: electrum/plugins/keepkey/clientbase.py:17
 msgid "Write down the seed word shown on your {}"
-msgstr "写下您的种子单词并展示在您的{}"
+msgstr "写下您的助记词并展示在您的{}"
 
 #: electrum/gui/qt/main_window.py:3183
 msgid "Write logs to file"
@@ -6816,7 +6816,7 @@ msgstr "您可以输入：一个链分地址，您联系人列表中的一个标
 
 #: electrum/base_wizard.py:433
 msgid "You may extend your seed with custom words."
-msgstr "您可以用自定义单词扩展您的种子。"
+msgstr "您可以用自定义单词扩展您的助记词。"
 
 #: electrum/gui/qt/main_window.py:2107
 msgid "You may load a CSV file using the file icon."
@@ -6828,7 +6828,7 @@ msgstr "您可能有一个不兼容的库。"
 
 #: electrum/plugins/trustedcoin/qt.py:217
 msgid "You need to be online in order to complete the creation of your wallet.  If you generated your seed on an offline computer, click on \"{}\" to close this window, move your wallet file to an online computer, and reopen it with Electrum."
-msgstr "您需要联网才能完成钱包的创建。如果您在断网的计算机上生成了种子，请点击“{}”关闭此窗口，将您的钱包文件移至联网的计算机，然后用Electrum重新打开它。"
+msgstr "您需要联网才能完成钱包的创建。如果您在断网的计算机上生成了助记词，请点击“{}”关闭此窗口，将您的钱包文件移至联网的计算机，然后用Electrum重新打开它。"
 
 #: electrum/gui/qt/main_window.py:584
 msgid "You need to configure a backup directory in your preferences"
@@ -6854,7 +6854,7 @@ msgid ""
 "\n"
 "So please enter the words carefully!"
 msgstr ""
-"无论您的种子的实际长度如何，您都会被要求输入24个单词。如果您输入的单词不正确或拼写错误，则无法更改或返回 - 您需要从头开始重新输入。\n"
+"无论您的助记词的实际长度如何，您都会被要求输入24个单词。如果您输入的单词不正确或拼写错误，则无法更改或返回 - 您需要从头开始重新输入。\n"
 " \n"
 "请仔细输入单词！"
 
@@ -7149,7 +7149,7 @@ msgstr "机密信息备份工具"
 
 #: electrum/plugins/revealer/qt.py:392
 msgid "seed"
-msgstr "种子"
+msgstr "助记词"
 
 #: electrum/wallet.py:879
 msgid "transaction is final"
@@ -7183,7 +7183,7 @@ msgstr "已擦除"
 
 #: electrum/plugins/revealer/qt.py:187
 msgid "your seed extension will <b>not</b> be included in the encrypted backup."
-msgstr "您的种子扩展助记词将<b>不会</b>被包含在加密备份中。"
+msgstr "您的扩展助记词将<b>不会</b>被包含在加密备份中。"
 
 #: electrum/plugins/trezor/qt.py:454 electrum/plugins/safe_t/qt.py:327
 #: electrum/plugins/keepkey/qt.py:417
@@ -7308,7 +7308,7 @@ msgid "Create replaceable transactions."
 msgstr "创建可替换的事务"
 
 msgid "Base unit for Bitcoin amounts."
-msgstr "链分金额的基本单位"
+msgstr "链分数量的基本单位"
 
 msgid "PIN code"
 msgstr "密码"
@@ -7335,7 +7335,7 @@ msgid "Replace-by-fee"
 msgstr "手续费追加"
 
 msgid "Amount sent"
-msgstr "发送的金额"
+msgstr "发送的数量"
 
 msgid "Transaction fee"
 msgstr "交易手续费"
@@ -7368,7 +7368,7 @@ msgid "&Masternode"
 msgstr "主节点(&M)"
 
 msgid "Please enter your mobile and password"
-msgstr "请输入您的手机和密码"
+msgstr "请输入您的手机号码和密码"
 
 msgid "Mobile:"
 msgstr "手机号码:"
@@ -7404,7 +7404,7 @@ msgid "Are you sure to spend the collateral coins of masternode?"
 msgstr "您确定要花费主节点的质押链分吗?"
 
 msgid "Collateral payment must have at least %d confirmations (current: %d)"
-msgstr "质押付款必须至少有%d确认(当前:%d)"
+msgstr "质押链分必须至少有%d确认(当前:%d)"
 
 msgid "Value not yet determined, please wait!"
 msgstr "价值尚未确定，请等待!"
@@ -7460,4 +7460,21 @@ msgstr "您确定要冻结此主节点质押链分吗?"
 msgid "Unfreeze All"
 msgstr "解冻所有"
 
+msgid "Login..."
+msgstr "正在登录..."
+
+msgid "Enter your mobile and password"
+msgstr "输入您的手机号码和密码"
+
+msgid "Search"
+msgstr "查找"
+
+msgid "Export private key"
+msgstr "导出私钥"
+
+msgid "Request amount"
+msgstr "请求数量"
+
+msgid "Private Key"
+msgstr "私钥"
 

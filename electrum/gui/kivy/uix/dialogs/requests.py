@@ -71,6 +71,26 @@ Builder.load_string('''
                 height: self.minimum_height
                 spacing: '2dp'
                 padding: '12dp'
+        Widget:
+            size_hint: None, 0.5
+        BoxLayout:
+            size_hint: 1, None
+            height: '40dp'                        
+            Widget:
+                size_hint: 0.5, None
+                height: '40dp'
+            AddressFilter:
+                opacity: 1
+                size_hint: 0.5, None
+                height: self.minimum_height
+                spacing: '5dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                AddressButton:
+                    id: close
+                    text: _('Close')
+                    on_release: popup.dismiss()                
 ''')
 
 from kivy.properties import BooleanProperty
@@ -143,7 +163,7 @@ class RequestsDialog(Factory.Popup):
                 self.app.wallet.remove_payment_request(req.address, self.app.electrum_config)
                 self.hide_menu()
                 self.update()
-        d = Question(_('Delete request'), cb)
+        d = Question(_('Delete request?'), cb)
         d.open()
 
     def show_menu(self, obj):

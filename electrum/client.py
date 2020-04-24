@@ -89,7 +89,14 @@ class Client:
         register_queue = queue.Queue()        
         self.post_req(url, data, register_queue)
         resp = register_queue.get()
-        return json.loads(resp)
+        try:
+            ret  = json.loads(resp)
+            if ret["code"] == 200:
+                return True
+            return False
+        except Exception as e:
+            return False
+    
     
     def get_money_ratio(self):
         url = 'fundValue/latest'
