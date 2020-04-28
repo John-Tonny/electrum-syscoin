@@ -14,7 +14,7 @@ from electrum.wallet import Wallet, InternalAddressCorruption
 from electrum.paymentrequest import InvoiceStore
 from electrum.util import profiler, InvalidPassword, send_exception_to_crash_reporter, USE_RBF_DEFAULT
 from electrum.plugin import run_hook
-from electrum.util import format_satoshis, format_satoshis_plain
+from electrum.util import format_satoshis, format_satoshis_plain, ADDRESS_PREFIX
 from electrum.paymentrequest import PR_UNPAID, PR_PAID, PR_UNKNOWN, PR_EXPIRED
 from electrum import blockchain
 from electrum.network import Network, TxBroadcastError, BestEffortRequestFailed
@@ -180,7 +180,7 @@ class ElectrumWindow(App):
         self.send_screen.set_URI(uri)
 
     def on_new_intent(self, intent):
-        if intent.getScheme() != 'bitcoin':
+        if intent.getScheme() != ADDRESS_PREFIX[:-1]:
             return
         uri = intent.getDataString()
         self.set_URI(uri)
@@ -379,7 +379,7 @@ class ElectrumWindow(App):
         if is_address(data):
             self.set_URI(data)
             return
-        if data.startswith('bitcoin:'):
+        if data.startswith(ADDRESS_PREFIX):
             self.set_URI(data)
             return
         # try to decode transaction
@@ -694,6 +694,9 @@ class ElectrumWindow(App):
             d = WalletDialog()
             d.open()
         ###john
+        elif name == 'exit':
+            self.on_stop()
+            os._exit(5)            
         elif name == 'conversion':
             self.conversion_dialog()
         elif name == 'account':

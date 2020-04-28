@@ -41,7 +41,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union, NamedTuple
 
 from .i18n import _
-from .util import (NotEnoughFunds, PrintError, UserCancelled, profiler,
+from .util import (NotEnoughFunds, PrintError, UserCancelled, profiler, ADDRESS_PREFIX,
                    format_satoshis, format_fee_satoshis, NoDynamicFeeEstimates,
                    WalletFileException, BitcoinException, AlreadyHaveAddress,
                    InvalidPassword, format_time, timestamp_to_datetime, Satoshis,
@@ -1076,7 +1076,7 @@ class Abstract_Wallet(AddressSynchronizer):
         if not r:
             return
         out = copy.copy(r)
-        out['URI'] = 'bitcoin:' + addr + '?amount=' + format_satoshis(out.get('amount'))
+        out['URI'] = ADDRESS_PREFIX + addr + '?amount=' + format_satoshis(out.get('amount'))
         status, conf = self.get_request_status(addr)
         out['status'] = status
         if conf is not None:

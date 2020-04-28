@@ -37,7 +37,6 @@ Builder.load_string('''
                 size_hint: 0.5, None
                 height: '48dp'
                 on_release:
-                    input.focus = False 
                     popup.dismiss()
             Button:
                 text: _('OK')

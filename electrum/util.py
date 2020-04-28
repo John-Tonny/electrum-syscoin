@@ -73,18 +73,22 @@ if COIN_NAME == 'wenchuang':
     base_units = {'WCL':8, 'mWCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
     base_units_list = ['WCL', 'mWCL', 'bits', 'sat']  # list(dict) does not guarantee order
+    ADDRESS_PREFIX = 'wcl:'    
 elif COIN_NAME == 'sdd':
         base_units = {'SDD':8, 'mSDD':5, 'bits':2, 'sat':0}
         base_units_inverse = inv_dict(base_units)
         base_units_list = ['SDD', 'mSDD', 'bits', 'sat']  # list(dict) does not guarantee order
+        ADDRESS_PREFIX = 'sdd:'
 elif COIN_NAME == 'liuwei':
         base_units = {'VEG':8, 'mVEG':5, 'bits':2, 'sat':0}
         base_units_inverse = inv_dict(base_units)
         base_units_list = ['VEG', 'mVEG', 'bits', 'sat']  # list(dict) does not guarantee order
+        ADDRESS_PREFIX = 'veg:'
 else:
     base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
     base_units_list = ['VCL', 'mVCL', 'bits', 'sat']  # list(dict) does not guarantee order
+    ADDRESS_PREFIX = 'vcl:'
 
 base_asset_units = {'-': 8, 'millis': 5, 'bits': 2, 'toshi': 0}
 base_asset_units_inverse = inv_dict(base_asset_units)
@@ -830,12 +834,12 @@ def parse_URI(uri: str, on_pr: Callable = None, *, loop=None) -> dict:
 
     if ':' not in uri:
         if not bitcoin.is_address(uri):
-            raise InvalidBitcoinURI("Not a bitcoin address")
+            raise InvalidBitcoinURI(_("Not a bitcoin address"))
         return {'address': uri}
 
     u = urllib.parse.urlparse(uri)
-    if u.scheme != 'bitcoin':
-        raise InvalidBitcoinURI("Not a bitcoin URI")
+    if u.scheme != ADDRESS_PREFIX[:-1]:
+        raise InvalidBitcoinURI(_("Not a bitcoin URI"))
     address = u.path
 
     # python for android fails to parse query
@@ -922,7 +926,7 @@ def create_bip21_uri(addr, amount_sat: Optional[int], message: Optional[str],
             raise Exception(f"illegal key for URI: {repr(k)}")
         v = urllib.parse.quote(v)
         query.append(f"{k}={v}")
-    p = urllib.parse.ParseResult(scheme='bitcoin', netloc='', path=addr, params='', query='&'.join(query), fragment='')
+    p = urllib.parse.ParseResult(scheme=ADDRESS_PREFIX[:-1], netloc='', path=addr, params='', query='&'.join(query), fragment='')
     return str(urllib.parse.urlunparse(p))
 
 

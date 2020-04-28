@@ -55,7 +55,7 @@ from electrum import (keystore, simple_config, ecc, constants, util, bitcoin, co
 from electrum.bitcoin import COIN, is_address, TYPE_ADDRESS
 from electrum.plugin import run_hook
 from electrum.i18n import _
-from electrum.util import (format_time, format_satoshis, format_fee_satoshis,
+from electrum.util import (format_time, format_satoshis, format_fee_satoshis,ADDRESS_PREFIX,
                            format_satoshis_plain, NotEnoughFunds, PrintError,
                            UserCancelled, NoDynamicFeeEstimates, profiler,
                            export_meta, import_meta, bh2u, bfh, InvalidPassword,
@@ -81,7 +81,7 @@ from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
 from .fee_slider import FeeSlider
-from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialog,
+from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialog
                    WindowModalDialog, ChoicesLayout, HelpLabel, FromList, Buttons,
                    OkButton, InfoButton, WWLabel, TaskThread, CancelButton, EnterParamsButton,
                    CloseButton, HelpButton, MessageBoxMixin, EnterButton, expiration_values,
@@ -705,7 +705,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         d = self.network.get_donation_address()
         if d:
             host = self.network.get_parameters().host
-            self.pay_to_URI('bitcoin:%s?message=donation for %s'%(d, host))
+            self.pay_to_URI(ADDRESS_PREFIX + '%s?message=donation for %s'%(d, host))
         else:
             self.show_error(_('No donation address for this server'))
 
@@ -2783,7 +2783,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if not data:
             return
         # if the user scanned a bitcoin URI
-        if str(data).startswith("bitcoin:"):
+        if str(data).startswith(ADDRESS_PREFIX):
             self.pay_to_URI(data)
             return
         # else if the user scanned an offline signed tx

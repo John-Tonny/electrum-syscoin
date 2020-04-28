@@ -7553,3 +7553,12 @@ msgstr "已审核"
 
 msgid "No address matching your search"
 msgstr "没有匹配您搜索的地址"
+
+msgid "Not a bitcoin address"
+msgstr "无效的地址"
+
+msgid "Not a bitcoin URI"
+msgstr "无效的URI"
+
+msgid "Exit"
+msgstr "退出"

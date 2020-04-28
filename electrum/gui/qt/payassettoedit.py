@@ -29,7 +29,7 @@ from decimal import Decimal
 from PyQt5.QtGui import QFontMetrics
 
 from electrum import bitcoin
-from electrum.util import bfh
+from electrum.util import bfh, ADDRESS_PREFIX
 from electrum.transaction import TxOutput, push_script
 from electrum.bitcoin import opcodes
 from electrum.logging import Logger
@@ -133,7 +133,7 @@ class PayAssetToEdit(CompletionTextEdit, ScanQRTextEdit, Logger):
         self.payto_asset = None
         if len(lines) == 1:
             data = lines[0]
-            if data.startswith("bitcoin:"):
+            if data.startswith(ADDRESS_PREFIX):
                 self.scan_f(data)
                 return
             try:
@@ -207,7 +207,7 @@ class PayAssetToEdit(CompletionTextEdit, ScanQRTextEdit, Logger):
 
     def qr_input(self):
         data = super(PayAssetToEdit,self).qr_input()
-        if data.startswith("bitcoin:"):
+        if data.startswith(ADDRESS_PREFIX):
             self.scan_f(data)
             # TODO: update fee
 
