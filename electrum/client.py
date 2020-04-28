@@ -85,7 +85,7 @@ class Client:
 
     def post_register(self, mobilephone, address, password=''):
         url = 'useracocunt/accpet'
-        data = {'phone': mobilephone, 'userAccount': address, 'password': password}
+        data = {'phone': mobilephone, 'userAccount': address, 'code': password}
         register_queue = queue.Queue()        
         self.post_req(url, data, register_queue)
         resp = register_queue.get()
@@ -189,6 +189,21 @@ class Client:
             return
         return []
         
+    def post_mobilephone_checkcode(self, mobilephone):
+        url = 'sms/sendCode'
+        data = {'phone': mobilephone, 'action': 'wallet'}
+        register_queue = queue.Queue()        
+        self.post_req(url, data, register_queue)
+        resp = register_queue.get()
+        try:
+            ret  = json.loads(resp)
+            if ret["code"] == 200:
+                return True
+            return False
+        except Exception as e:
+            return False
+        
+        
     def do_search_conversion(self):
         self.conversion_cur_page = 1
         self.conversion_list = []
@@ -243,6 +258,7 @@ class Client:
                 return True, conversion_data
         return False, {}
                 
+    
     def payaccount_add(self, name, account, bank, mode, save=True):
         if self.wallet is None:
             return

@@ -162,7 +162,7 @@ class AddressesDialog(Factory.Popup):
             n += 1
         container.data = cards
         if not n:
-            self.app.show_error('No address matching your search')
+            self.app.show_error(_('No address matching your search'))
 
     def do_use(self, obj):
         self.hide_menu()

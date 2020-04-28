@@ -11,7 +11,9 @@ SendScreen:
     address: ''
     amount: ''
     message: ''
+    show_aggregation: 0
     is_pr: False
+    info: ''
     BoxLayout
         padding: '12dp', '12dp', '12dp', '12dp'
         spacing: '12dp'
@@ -117,13 +119,29 @@ SendScreen:
                 on_release: s.parent.do_clear()
             Button:
                 text: _('Load transaction')
+                disabled: True
                 on_release: s.parent.do_load_transaction()
+            Button:
+                text: {0:_('Start aggregation'), 1:_('Stop aggregation')}[root.show_aggregation]
+                disabled: True
+                on_release:
+                    Clock.schedule_once(lambda dt: root.do_aggregation())
             #Widget:
             #    size_hint: 1, 1
             Button:
                 text: _('Pay')
                 size_hint: 1, 1
                 on_release: s.parent.do_send()
+        Widget:
+            size_hint: 1, 0.2
+        BoxLayout:
+            size_hint: 1, None
+            height: '32dp'
+            Label:
+                text: root.info
+                size_hint: 1, None
+                multiline: False
+                font_size: '24dp'
         Widget:
             size_hint: 1, 1
 

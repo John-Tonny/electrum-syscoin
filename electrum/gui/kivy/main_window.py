@@ -8,7 +8,7 @@ from decimal import Decimal
 import threading
 import asyncio
 
-from electrum.bitcoin import TYPE_ADDRESS
+from electrum.bitcoin import TYPE_ADDRESS, COIN
 from electrum.storage import WalletStorage
 from electrum.wallet import Wallet, InternalAddressCorruption
 from electrum.paymentrequest import InvoiceStore
@@ -85,8 +85,9 @@ from electrum.util import (base_units, NoDynamicFeeEstimates, decimal_point_to_b
                            base_unit_name_to_decimal_point, NotEnoughFunds, UnknownBaseUnit,
                            DECIMAL_POINT_DEFAULT, USE_COLLATERAL_DEFAULT, use_collateral_list)
 
-from electrum.constants import MASTERNODE_PORTS
+from electrum.constants import MASTERNODE_PORTS, AGGREGATION_INTERVAL_TIME, AGGREGATION_MAX_COIN, AGGREGATION_MIN_COIN, AGGREGATION_MAX_INPUTS
 from electrum.client import Client
+
 
 class ElectrumWindow(App):
 
@@ -165,26 +166,15 @@ class ElectrumWindow(App):
     def on_use_change(self, instance, x):
         self.electrum_config.set_key('use_change', self.use_change, USE_RBF_DEFAULT)
 
-    use_unconfirmed = BooleanProperty(False)
+    use_unconfirmed = BooleanProperty(True)
     def on_use_unconfirmed(self, instance, x):
-        self.electrum_config.set_key('confirmed_only', not self.use_unconfirmed, True)
-    '''
-    try:    
-        use_collateral = AliasProperty(_get_use_collateral, _set_use_collateral)    
-    except Exception as e:
-        self.show_error(str(e))
-        
-    def _get_use_collateral(self):
-        try:
-            return self.electrum_config.get('use_collateral', USE_COLLATERAL_DEFAULT)
-        except Exception as e:
-            self.show_error(str(e))
-    '''
-    def _set_use_collateral(self,status):
-        assert status in use_collateral_list
-        self.electrum_config.set_key('use_collateral', status, True)
-        self.use_collateral = self.electrum_config.get('use_collateral', USE_COLLATERAL_DEFAULT)
-        
+        self.electrum_config.set_key('confirmed_only', not self.use_unconfirmed, False)
+    
+    ###john    
+    use_aggregation = BooleanProperty(True)
+    def on_use_aggregation(self, instance, x):
+        self.electrum_config.set_key('use_aggregation', not self.use_aggregation, False)
+    
     def set_URI(self, uri):
         self.switch_to('send')
         self.send_screen.set_URI(uri)
@@ -318,6 +308,8 @@ class ElectrumWindow(App):
         self.masternode_manager = None     
         self.masternode_vps = {}
         self.client = None
+        self.aggregation_nums = 0
+        self.aggregation_password = None        
 
         title = _('Electrum App')
         self.electrum_config = config = kwargs.get('config', None)
@@ -341,22 +333,21 @@ class ElectrumWindow(App):
 
         self.use_rbf = config.get('use_rbf', USE_RBF_DEFAULT)
         self.use_change = config.get('use_change', True)
-        self.use_unconfirmed = not config.get('confirmed_only', False)
+        self.use_unconfirmed = not config.get('confirmed_only', True)
         self.use_collateral = config.get('use_collateral', USE_COLLATERAL_DEFAULT)
+        self.user_use_aggregation = config.get('use_aggregation', True)
 
         # create triggers so as to minimize updating a max of 2 times a sec
         self._trigger_update_wallet = Clock.create_trigger(self.update_wallet, .5)
         self._trigger_update_status = Clock.create_trigger(self.update_status, .5)
         self._trigger_update_history = Clock.create_trigger(self.update_history, .5)
         self._trigger_update_interfaces = Clock.create_trigger(self.update_interfaces, .5)
-
+        
         self._periodic_update_status_during_sync = Clock.schedule_interval(self.update_wallet_synchronizing_progress, .5)
-
+        
         # cached dialogs
         self._settings_dialog = None
         self._password_dialog = None
-        self._login_dialog = None
-        self._conversion_dialog = None
         self._info_dialog = None
         self.fee_status = self.electrum_config.get_fee_status()
 
@@ -663,6 +654,7 @@ class ElectrumWindow(App):
             self.is_exit = True
             self.show_info(_('Press again to exit'))
             return True
+        ###john
         if key == 27 and self.is_exit:
             self.on_stop()
             os._exit(5)
@@ -682,8 +674,7 @@ class ElectrumWindow(App):
         if not self.check_register():
             return
         from .uix.dialogs.conversion import ConversionDialog
-        if self._conversion_dialog is None:
-            self._conversion_dialog = ConversionDialog(self)
+        self._conversion_dialog = ConversionDialog(self)
         self._conversion_dialog.update()
         self._conversion_dialog.open()        
         
@@ -691,8 +682,7 @@ class ElectrumWindow(App):
         if not self.check_register():
             return        
         from .uix.dialogs.info import InfoDialog
-        if self._info_dialog is None:
-            self._info_dialog = InfoDialog(self)
+        self._info_dialog = InfoDialog(self)
         self._info_dialog.update()
         self._info_dialog.open()     
         
@@ -847,7 +837,10 @@ class ElectrumWindow(App):
             c, u, x = self.wallet.get_balance()
             text = self.format_amount(c+x+u)
             #self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\r\n' + str(round(self.client.money_ratio,8))
-            self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\n' + '[size=16dp]%s[/size]'% str(round(self.client.money_ratio,8))            
+            if self.client is None:
+                self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\n' + '[size=16dp]%s[/size]'% str(0)            
+            else:
+                self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '\n' + '[size=16dp]%s[/size]'% str(round(self.client.money_ratio,8))            
             #self.balance = str(text.strip()) + ' [size=22dp]%s[/size]'% self.base_unit + '[sub]%s[/sub]'% str(round(self.client.money_ratio,8))            
             self.fiat_balance = self.fx.format_amount(c+u+x) + ' [size=22dp]%s[/size]'% self.fx.ccy
             #self.money_ratio = str(round(self.client.money_ratio,8))
@@ -857,6 +850,10 @@ class ElectrumWindow(App):
             return
         if not self.wallet.up_to_date:
             self._trigger_update_status()
+            
+        if not (self.send_screen is None):
+            if self.send_screen.get_show_aggregation() == 1:
+                self.aggregation_timer_actions()
 
     def get_max_amount(self, mode):
         from electrum.transaction import TxOutput
@@ -870,6 +867,28 @@ class ElectrumWindow(App):
             addr = str(self.send_screen.screen.address) or self.wallet.dummy_address()
         else:
             addr = DESTROY_ADDRESS
+        outputs = [TxOutput(TYPE_ADDRESS, addr, '!')]
+        try:
+            tx = self.wallet.make_unsigned_transaction(inputs, outputs, self.electrum_config)
+        except NoDynamicFeeEstimates as e:
+            Clock.schedule_once(lambda dt, bound_e=e: self.show_error(str(bound_e)))
+            return ''
+        except NotEnoughFunds:
+            return ''
+        except InternalAddressCorruption as e:
+            self.show_error(str(e))
+            send_exception_to_crash_reporter(e)
+            return ''
+        amount = tx.output_value()
+        __, x_fee_amount = run_hook('get_tx_extra_fee', self.wallet, tx) or (None, 0)
+        amount_after_all_fees = amount - x_fee_amount
+        return format_satoshis_plain(amount_after_all_fees, self.decimal_point())
+
+    def get_aggregation_max_amount(self, addr, inputs):
+        from electrum.transaction import TxOutput
+        if not inputs:
+            return ''
+        
         outputs = [TxOutput(TYPE_ADDRESS, addr, '!')]
         try:
             tx = self.wallet.make_unsigned_transaction(inputs, outputs, self.electrum_config)
@@ -947,6 +966,15 @@ class ElectrumWindow(App):
         self.show_info_bubble( text=error, icon=icon, width=width,
             pos=pos or Window.center, arrow_pos=arrow_pos, exit=exit,
             duration=duration, modal=modal)
+
+    def show_wait(self, error, width='200dp', pos=None, arrow_pos=None,
+        exit=False, duration=10, modal=True):
+        ''' Show an Info Message Bubble.
+        '''
+        self.show_error(error, icon='atlas://electrum/gui/kivy/theming/light/important',
+            duration=duration, modal=modal, exit=exit, pos=pos,
+            arrow_pos=arrow_pos)        
+        
 
     def show_info(self, error, width='200dp', pos=None, arrow_pos=None,
         exit=False, duration=0, modal=False):
@@ -1026,6 +1054,7 @@ class ElectrumWindow(App):
     def _broadcast_thread(self, tx, on_complete):
         status = False
         try:
+            self.show_info("tx size:" + str(len(str(tx))))
             self.network.run_from_another_thread(self.network.broadcast_transaction(tx))
         except TxBroadcastError as e:
             msg = e.get_message_for_gui()
@@ -1168,8 +1197,8 @@ class ElectrumWindow(App):
                 return
         self.stop_wallet()
         os.unlink(wallet_path)
-        self.show_error(_("Wallet removed: {}").format(basename))
         new_path = self.electrum_config.get_wallet_path()
+        self.show_error(_("Wallet removed: {}").format(basename))
         self.load_wallet_by_name(new_path)
 
     def show_seed(self, label):
@@ -1229,7 +1258,10 @@ class ElectrumWindow(App):
     ###john
     def load_masternode(self):
         self.masternode_manager = MasternodeManager(self.wallet, self.electrum_config) 
-        #self.masternode_screen.do_clear()
+        if self.masternode_screen:
+            self.masternode_screen.do_clear()
+        if self.send_screen:
+            self.send_screen.do_clear()
             
     def sign_announce(self, *args):
         threading.Thread(target=self._sign_announce, args=args).start()
@@ -1260,21 +1292,63 @@ class ElectrumWindow(App):
             return self.masternode_register()
         return True
         
+    ###john
     def masternode_register(self):
         from .uix.dialogs.login_dialog import LoginDialog
-        ###john
+        '''
         def callback(mobilephone, password):
+            if len(mobilephone) != 11:
+                self.show_error(_('Mobile must be 11 digits!'))                    
+                return False
+            try:
+                intMobilephone = int(mobilephone)
+            except Exception as e:
+                self.show_error(_('Mobile must be numeric!'))                                    
+                return False
+            
+            if len(password) == 0:
+                self.show_error(_('Checkcode cannot be empty!'))                    
+                return False
+
             address = self.wallet.create_new_address(False)
             status = self.client.post_register(mobilephone, address, password)                
             if not status :                        
                 self.show_error(_("Account Login failed!"))
                 return False
             self.wallet.storage.put('user_register', {mobilephone:(password, address)})
+            #if not (self._info_dialog in None):
+            #    self._info_dialog.set_info(mobilephone, address)            
             self.show_info(_('Account Login successful!'))
             return True            
-        d = LabelDialog(_('Account Login'), callback)
-        d.open()        
-                            
+        
+        def checkback(mobilephone):
+            if len(mobilephone) != 11:
+                self.show_error(_('Mobile must be 11 digits!'))                    
+                return False
+            try:
+                intMobilephone = int(mobilephone)
+            except Exception as e:
+                self.show_error(_('Mobile must be numeric!'))                                    
+                return False
+            
+            status = self.client.post_mobilephone_checkcode(mobilephone)                
+            if not status :                        
+                self.show_error(_("Get checkcode sent failed!"))
+                return False
+            self.show_info(_('Get checkcode send successful!'))
+            return True            
+            '''
+        d = LoginDialog(self) #callback, checkback)
+        d.open() 
+        
+    '''        
+    def _masternode_register(self, *args):
+        threading.Thread(target=self.__masternode_register, args=args).start()
+
+    def __masternode_register(self, *args):
+        threading.Thread(target=self.__masternode_register, args=args).start()
+    '''
+
     def choose_masternode_vps_dialog(self, screen):
         from .uix.dialogs.choice_dialog import ChoiceDialog
         self.masternode_vps = self.client.get_masternodes()
@@ -1283,12 +1357,15 @@ class ElectrumWindow(App):
                 return
             screen.ip = host
             screen.delegate = self.masternode_vps[host]            
-        masternode_vps=[]
-        cur_select = ''
-        for key in self.masternode_vps.keys():
-            masternode_vps.append(key)
-            cur_select = key
-        ChoiceDialog(_('Choose a masternode vps'), sorted(masternode_vps), cur_select, cb2).open()
+        try:
+            masternode_vps=[]
+            cur_select = ''
+            for key in self.masternode_vps.keys():
+                masternode_vps.append(key)
+                cur_select = key
+            ChoiceDialog(_('Choose a masternode vps'), sorted(masternode_vps), cur_select, cb2).open()
+        except Exception as e:
+            pass
         
     def choose_payway_dialog(self, popup):
         from .uix.dialogs.conversion import ConversionDialog
@@ -1366,3 +1443,36 @@ class ElectrumWindow(App):
         from .uix.dialogs.load_transaction import LoadTransactionDialog
         d = LoadTransactionDialog()
         d.open()
+    
+    ###john
+    def aggregation_timer_actions(self):
+        self.aggregation_nums += 1
+        if (self.aggregation_nums % AGGREGATION_INTERVAL_TIME) == 0:
+            aggregation_height = self.wallet.storage.get('aggregation_height')
+            amount = 0
+            nums = 0
+            coins = self.wallet.get_spendable_coins(None, self.electrum_config)                
+            coins.sort(key=lambda k: (k.get('height', 0)))
+        
+            acoins = []
+            for coin in coins:
+                baggregation = True
+                if not aggregation_height is None:
+                    if  coin['height'] < aggregation_height:
+                        baggregation = False
+                if coin['value'] < AGGREGATION_MIN_COIN * COIN and baggregation:
+                    amount += coin['value']
+                    acoins.append(coin)
+                    nums += 1
+                    try:
+                        if nums >= AGGREGATION_MAX_INPUTS:
+                            self.send_aggregation(acoins)
+                            break
+                        if amount >= AGGREGATION_MAX_COIN * COIN:
+                            self.send_aggregation(acoins)
+                            break
+                    except Exception as e:
+                        self.show_error('ppp11:' +str(e))
+                        
+    def send_aggregation(self, acoins):
+        self.send_screen.do_aggregation_send(acoins)    

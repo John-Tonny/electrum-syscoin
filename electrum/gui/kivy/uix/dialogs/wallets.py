@@ -26,7 +26,7 @@ Builder.load_string('''
             filter: '*.*'
             path: root.path
             rootpath: root.path
-            size_hint_y: 0.7
+            size_hint_y: 0.6
         Widget
             size_hint_y: 0.1
         GridLayout:

@@ -719,9 +719,9 @@ class MasternodeManager(object):
     def update_masternodes_status(self, update=False):
         local_height = self.wallet.get_local_height()
         if not update:
-            if self.subcribe_height >= local_height - 5 :
+            if self.subcribe_height >= local_height - 5:
                 return            
-        self.subcribe_height = local_height   
+        self.subcribe_height = local_height
         collateral = []
         for key in self.masternodes.keys():
             mn = self.masternodes[key]

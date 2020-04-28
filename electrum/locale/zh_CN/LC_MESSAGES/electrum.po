@@ -513,7 +513,7 @@ msgstr "发送的数量:"
 #: electrum/gui/kivy/uix/screens.py:366
 #: electrum/gui/qt/confirm_tx_dialog.py:123
 msgid "Amount to be sent"
-msgstr "将要发送的数量。"
+msgstr "将要发送的数量"
 
 #: electrum/gui/qt/main_window.py:1288
 msgid "Amount to be sent."
@@ -2223,7 +2223,7 @@ msgstr "输入您的密码来签名交易"
 
 #: electrum/gui/kivy/main_window.py:1127
 msgid "Enter your PIN code to confirm deletion of {}"
-msgstr "请输入您的密码以确认删除%s"
+msgstr "请输入您的密码以确认删除 {}"
 
 #: electrum/gui/kivy/uix/dialogs/conversion.py:417
 #: electrum/gui/kivy/uix/screens.py:325 electrum/gui/kivy/uix/screens.py:692
@@ -7478,3 +7478,78 @@ msgstr "请求数量"
 msgid "Private Key"
 msgstr "私钥"
 
+msgid "Enter mobile:"
+msgstr "输入您的手机号码:"
+
+msgid "Mobile must be 11 digits!"
+msgstr "手机号码必须为11位!"
+
+msgid "Mobile must be numeric!"
+msgstr "手机号码必须为数字!"
+
+msgid "Page Size"
+msgstr "兑换每页记录数"
+
+
+msgid "Checkcode cannot be empty!"
+msgstr "验证码不能为空!"
+
+msgid "Checkcode:"
+msgstr " 验证码: "
+
+msgid "Use automatic aggregation"
+msgstr "使用链分自动汇总"
+
+msgid "Automatic aggregation"
+msgstr "链分自动汇总"
+
+msgid "Automatically aggregate small amounts of coins."
+msgstr "将您的小额链分自动汇总"
+
+msgid "Masternode has already been activated,cannot be deleted!"
+msgstr "主节点已激活，不能删除!"
+
+msgid "fee too low"
+msgstr "手续费用太低"
+
+msgid "Aggregation"
+msgstr "链分合并"
+
+msgid "Start aggregation"
+msgstr "开始合并"
+
+msgid "Stop aggregation"
+msgstr "停止合并"
+
+msgid "Are you sure you want to stop aggregation?"
+msgstr "你确定想要停止小额链分(<500)合并吗?"
+
+msgid "Are you sure you want to start aggregation?"
+msgstr "你确定想要开始小额链分(<500)合并吗?"
+
+msgid "Convertible proportion"
+msgstr "兑换比率"
+
+msgid "unmatured"
+msgstr "未成熟的"
+
+msgid "unconfirmed"
+msgstr "未确定的"
+
+msgid "Get checkcode"
+msgstr "获取验证码"
+
+msgid "Get checkcode sent failed!"
+msgstr "获取验证码失败!"
+
+msgid "Get checkcode send successful!"
+msgstr "获取验证码成功!"
+
+msgid "Checking"
+msgstr "待审核"
+
+msgid "Checked"
+msgstr "已审核"
+
+msgid "No address matching your search"
+msgstr "没有匹配您搜索的地址"

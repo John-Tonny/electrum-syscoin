@@ -207,7 +207,7 @@ class TxDialog(Factory.Popup):
             return
         delta = new_fee - old_fee
         if delta < 0:
-            self.app.show_error("fee too low")
+            self.app.show_error(_("fee too low"))
             return
         try:
             new_tx = self.wallet.bump_fee(self.tx, delta)

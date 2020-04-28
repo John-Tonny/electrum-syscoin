@@ -82,6 +82,13 @@ Builder.load_string('''
                     description: _("Send your change to separate addresses.")
                     message: _('Send excess coins to change addresses')
                     action: partial(root.boolean_dialog, 'use_change', _('Use change addresses'), self.message)
+                #CardSeparator
+                #SettingsItem:
+                #    status: _('Yes') if app.use_aggregation else _('No')
+                #    title: _('Use automatic aggregation') + ': ' + self.status
+                #    description: _("Automatically aggregate small amounts of coins.")
+                #    message: _('Automatically aggregate small amounts of coins.')
+                #    action: partial(root.boolean_dialog, 'use_aggregation', _('Automatic aggregation'), self.message)
 
                 # disabled: there is currently only one coin selection policy
                 #CardSeparator

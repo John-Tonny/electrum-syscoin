@@ -58,7 +58,7 @@ Builder.load_string('''
         Widget
         CardLabel:
             text: root.status + '  ' +root.conversion_time 
-            font_size: '15sp'
+            font_size: '13sp'
         CardLabel:
             color: .699, .699, .699, 1
             font_size: '14sp'
@@ -303,6 +303,8 @@ class ConversionDialog(Factory.Popup):
             conversion_list = conversion_list[start:stop]
         for data in conversion_list:
             status = data.get('txFlag') if not data.get('txFlag') is None else ''
+            status1 = data.get('checkFlag') if not data.get('checkFlag') is None else ''
+            status += '-' + status1
             sdate = data.get('createTime') if not data.get('createTime') is None else ''
             amount = str(data.get('amount')/bitcoin.COIN) if not data.get('amount') is None else ''
             payWay = data.get('payWay') if not data.get('payWay') is None else '1'
@@ -322,6 +324,8 @@ class ConversionDialog(Factory.Popup):
             
         if is_commit:
             status = conversion_data.get('txFlag') if not conversion_data.get('txFlag') is None else ''
+            status1 = data.get('checkFlag') if not data.get('checkFlag') is None else ''
+            status += '-' + status1
             sdate = conversion_data.get('createTime') if not conversion_data.get('createTime') is None else ''
             amount = str(conversion_data.get('amount')/bitcoin.COIN) if not conversion_data.get('amount') is None else ''
             
@@ -348,6 +352,7 @@ class ConversionDialog(Factory.Popup):
         else:
             ri['icon'] = icon 
         ri['amount'] = str(amount)
+        status, status1 = status.split('-')
         if status == '0':
             status = _('Verifing')
         elif status == '1':
@@ -358,6 +363,15 @@ class ConversionDialog(Factory.Popup):
             status = _('Submit failed')
         else:
             status = _('unknown')
+            
+        if status != '-100':            
+            if status1 == '0':
+                status += "-" + _('Checking')
+            elif status1 == '1':
+                status += "-" + _('Verified')
+            else:
+                status += "-" + _('unknown')
+            
         ri['status'] = status
         ri['alias'] = alias
         ri['account'] = account

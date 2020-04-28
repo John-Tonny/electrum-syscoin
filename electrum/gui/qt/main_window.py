@@ -102,6 +102,8 @@ import copy
 from electrum.crypto import sha256d
 from electrum.transaction import SerializationError
 from electrum.keystore import Xpub
+import re
+from electrum.gui.qt.paytoedit import RE_ALIAS
 
 class StatusBarButton(QPushButton):
     def __init__(self, icon, tooltip, func):
@@ -147,6 +149,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.feerounding_text = ''
         self.conversion_retrys = 0
         self.conversion_data = {}
+        self.aggregation_nums = 0
+        self.aggregation_password = None
 
         self.setup_exception_hook()
 
@@ -804,6 +808,81 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.do_update_fee('conversion')
             self.require_fee_update = False
         self.notify_transactions()
+        if self.aggregation_button.text() == _('Stop aggregation'):
+            self.aggregation_timer_actions()
+        
+    ###john
+    def do_aggregation(self):
+        msg=[]        
+        if self.aggregation_button.text() == _('Stop aggregation'):
+            reply = QMessageBox.question(self, _('Aggregation'), _("Are you sure you want to stop aggregation?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            if reply == QMessageBox.No:
+                return
+            self.aggregation_button.setText(_('Start aggregation'))
+            self.aggregation_nums = 0
+            self.aggregation_password = None
+        else:
+            reply = QMessageBox.question(self, _('Message'), _("Are you sure you want to start aggregation?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            if reply == QMessageBox.No:
+                return
+            if self.wallet.has_keystore_encryption():
+                msg.append(_("Enter your password to proceed"))
+                password = self.password_dialog('\n'.join(msg))
+                if not password:
+                    return
+                self.aggregation_password = password
+            else:
+                self.aggregation_password = None
+            
+            self.aggregation_button.setText(_('Stop aggregation'))
+            self.aggregation_nums = constants.AGGREGATION_INTERVAL_TIME -1        
+    
+    def aggregation_timer_actions(self):
+        self.aggregation_nums += 1
+        if (self.aggregation_nums % constants.AGGREGATION_INTERVAL_TIME) == 0:
+            #self.show_message("aggregation")
+            aggregation_height = self.wallet.storage.get('aggregation_height')
+            amount = 0
+            nums = 0
+            coins = self.wallet.get_spendable_coins(None, self.config)
+            coins.sort(key=lambda k: (k.get('height', 0)))
+            acoins = []
+            for coin in coins:
+                baggregation = True
+                if not aggregation_height is None:
+                    if  coin['height'] < aggregation_height:
+                        baggregation = False
+                if coin['value'] < constants.AGGREGATION_MIN_COIN * bitcoin.COIN and baggregation:
+                    amount += coin['value']
+                    acoins.append(coin)
+                    nums += 1
+                    if nums >= constants.AGGREGATION_MAX_INPUTS:
+                        self.send_aggregation(acoins)
+                    if amount >= constants.AGGREGATION_MAX_COIN * bitcoin.COIN:
+                        self.send_aggregation(acoins)
+                        break
+            
+    def send_aggregation(self, acoins):
+        self.do_send(mode='send', acoins = acoins)    
+    
+    def parse_script(self, x):
+        script = ''
+        for word in x.split():
+            if word[0:3] == 'OP_':
+                opcode_int = opcodes[word]
+                assert opcode_int < 256  # opcode is single-byte
+                script += bitcoin.int_to_hex(opcode_int)
+            else:
+                bfh(word)  # to test it is hex data
+                script += push_script(word)
+        return script
+
+    def parse_address(self, line):
+        r = line.strip()
+        m = re.match('^'+RE_ALIAS+'$', r)
+        address = str(m.group(2) if m else r)
+        assert bitcoin.is_address(address)
+        return address    
 
     def format_amount(self, x, is_diff=False, whitespaces=False):
         return format_satoshis(x, self.num_zeros, self.decimal_point, is_diff=is_diff, whitespaces=whitespaces)
@@ -891,12 +970,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 c, u, x = self.wallet.get_balance()
                 text =  _("Balance" ) + ": %s "%(self.format_amount_and_units(c))
                 if u:
-                    text +=  " [%s unconfirmed]"%(self.format_amount(u, is_diff=True).strip())
+                    text +=  " [%s "%(self.format_amount(u, is_diff=True).strip())
+                    text += _('unconfirmed') + "]"
                 if x:
-                    text +=  " [%s unmatured]"%(self.format_amount(x, is_diff=True).strip())
+                    text +=  " [%s "%(self.format_amount(x, is_diff=True).strip())
+                    text +=  _('unmatured') + "]"
                     
                 if self.client.money_ratio > 0:
-                    text +=  " [%f Convertible proportion]"%(self.client.money_ratio)
+                    text +=  " [" + _('Convertible proportion') + ":"
+                    text +=  "%f "%(self.client.money_ratio) + "]"
                 
                 # append fiat balance and price
                 if self.fx.is_enabled():
@@ -1392,8 +1474,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.preview_button.setToolTip(_('Display the details of your transaction before signing it.'))
         self.send_button = EnterParamsButton(_("Send"), self.do_send, False, 'send')
         self.clear_button = EnterButton(_("Clear"), self.do_clear)
+        self.aggregation_button = EnterButton(_("Start aggregation"), self.do_aggregation)
         buttons = QHBoxLayout()
         buttons.addStretch(1)
+        buttons.addWidget(self.aggregation_button)
         buttons.addWidget(self.clear_button)
         buttons.addWidget(self.preview_button)
         buttons.addWidget(self.send_button)
@@ -1758,7 +1842,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def do_preview(self, preview=True, mode='send'):
         self.do_send(preview, mode= mode)
 
-    def do_send(self, preview = False, mode = 'send'):
+    def do_send(self, preview = False, mode = 'send', acoins = []):
         if run_hook('abort_send', self):
             return
         
@@ -1768,8 +1852,29 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         elif mode == 'conversion':
             max_button = self.max_conversion_button
         
-        outputs, fee_estimator, tx_desc, coins = self.read_send_tab(mode)
-                    
+        if (mode == 'send' or mode == 'conversion') and len(acoins) == 0:
+            outputs, fee_estimator, tx_desc, coins = self.read_send_tab(mode)
+        else:
+            if len(acoins) == 0:
+                return
+            
+            coins = acoins
+            amount = '!'
+            #for coin in coins:
+            #    amount += coin['value']
+            
+            new_address = self.wallet.create_new_address(for_change=True)
+            try:
+                address = self.parse_address(new_address)
+                _type , addr = bitcoin.TYPE_ADDRESS, address
+            except:
+                script = self.parse_script(new_address)
+                _type, addr = bitcoin.TYPE_SCRIPT, script
+            
+            outputs = [TxOutput(_type, addr, amount)]
+            fee_estimator = self.get_send_fee_estimator('send')
+            tx_desc = _('Aggregation')
+            
         if self.check_send_tab_outputs_and_show_errors(outputs):
             return
         try:
@@ -1833,18 +1938,21 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         feerate_warning = simple_config.FEERATE_WARNING_HIGH_FEE
         if fee > feerate_warning * tx.estimated_size() / 1000:
             msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
-
-        if self.wallet.has_keystore_encryption():
-            msg.append("")
-            msg.append(_("Enter your password to proceed"))
-            password = self.password_dialog('\n'.join(msg))
-            if not password:
-                return
+            
+        if len(coins) ==0 and not (self.aggregation_password is None):
+            if self.wallet.has_keystore_encryption():
+                msg.append("")
+                msg.append(_("Enter your password to proceed"))
+                password = self.password_dialog('\n'.join(msg))
+                if not password:
+                    return
+            else:
+                msg.append(_('Proceed?'))
+                password = None
+                if not self.question('\n'.join(msg)):
+                    return
         else:
-            msg.append(_('Proceed?'))
-            password = None
-            if not self.question('\n'.join(msg)):
-                return
+            password = self.aggregation_password
 
         def sign_done(success):
             if success:
@@ -2643,6 +2751,18 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         parent = parent or self
         d = PasswordDialog(parent, msg)
         return d.run()
+    
+    def register_dialog(self, msg=None, parent=None):
+        from .password_dialog import RegisterDialog
+        parent = parent or self
+        d = RegisterDialog(parent, msg)
+        return d.run()
+
+    def login_dialog(self, msg=None, parent=None):
+        from .password_dialog import LoginDialog
+        parent = parent or self
+        d = LoginDialog(parent, msg)
+        return d.run() 
     
     def tx_from_text(self, txt):
         from electrum.transaction import tx_from_str
@@ -4210,7 +4330,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             #self.masternode_remove_button.show()            
 
     def check_register(self):
-        register_info = self.wallet.storage.get('user_register')
+        register_info = None #self.wallet.storage.get('user_register')
         try:
             if register_info is None:
                 mobilephone, pw = self.login_dialog('')
@@ -4249,7 +4369,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             
         def register_thread():
             address = self.masternode_manager.check_register(register_info, mobilephone, pw, pw1, bregister)                    
-            return self.client.post_register(mobilephone, address, pw)
+            #return self.client.post_register(mobilephone, address, pw)
+            return self.client.post_mobilephone_checkcode(mobilephone)
                         
         def on_success(status):
             if not status :                        
@@ -4264,7 +4385,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if bregister:        
             WaitingDialog(self, _('Login...'), register_thread, on_success, on_error)  
         else:
-            return True
+            return True    
                         
     def paymode_state(self, btn):        
         if btn.text() == 'WeiXin' or btn.text() == 'ZhiFuBao':

@@ -37,17 +37,19 @@ Builder.load_string('''
                     action: partial(root.do_action)
                 CardSeparator
                 SettingsItem:
+                    id: mobilephone
                     title: _('Account')
                     description: root.get_mobile_phone()
                     action: partial(root.account_register, self)
                 CardSeparator
                 SettingsItem:
+                    id : profitaddress
                     title: _('Profit Address') 
                     description: root.get_profit_address()
                     action: partial(root.do_action)
                 CardSeparator
                 SettingsItem:
-                    title: _('Page_size') 
+                    title: _('Page Size') 
                     description: '20'
                     action: partial(root.do_action)                    
         Widget:
@@ -94,3 +96,9 @@ class InfoDialog(Factory.Popup):
     
     def account_register(self, item, dt):
         self.app.masternode_register()
+
+    def set_info(self, mobilephone, profitaddress):
+        self.ids.scrollviewlayout.mobilephone.description = mobilephone
+        self.ids.scrollviewlayout.profitaddress.description = profitaddress
+        
+        

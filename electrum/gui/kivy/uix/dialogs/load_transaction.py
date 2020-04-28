@@ -21,12 +21,13 @@ Builder.load_string('''
         padding: '10dp'
         FileChooserListView:
             id: transaction_selector
-            dirselect: False
+            dirselect: True
             filter_dirs: True
             filter: '*.*'
             path: root.path
             rootpath: root.path
             size_hint_y: 0.5
+            height: '48dp'
         Widget
             size_hint_y: 0.1
         GridLayout:

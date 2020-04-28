@@ -214,6 +214,7 @@ class SendScreen(CScreen):
         self.screen.address = ''
         self.payment_request = None
         self.screen.is_pr = False
+        #self.screen.show_aggregation = (self.screen.show_aggregation + 1) % 2
 
     def set_request(self, pr):
         self.screen.address = pr.get_requestor()
@@ -267,7 +268,11 @@ class SendScreen(CScreen):
         # try to decode as URI/address
         self.set_URI(data)
 
-    def do_send(self):        
+    def do_send(self):    
+        self.screen.info = _('Please wait') + '...'
+        Clock.schedule_once(lambda dt: self.do_send1())
+        
+    def do_send1(self):    
         if self.screen.is_pr:
             if self.payment_request.has_expired():
                 self.app.show_error(_('Payment request has expired'))
@@ -291,11 +296,12 @@ class SendScreen(CScreen):
         amount = sum(map(lambda x:x[2], outputs))
         if self.app.electrum_config.get('use_rbf'):
             from .dialogs.question import Question
+            self.screen.info = ''            
             d = Question(_('Should this transaction be replaceable?'), lambda b: self._do_send(amount, message, outputs, b))
             d.open()
         else:
             self._do_send(amount, message, outputs, False)
-
+        
     def _do_send(self, amount, message, outputs, rbf):
         # make unsigned transaction
         config = self.app.electrum_config
@@ -320,17 +326,16 @@ class SendScreen(CScreen):
         
         if bmasternode:
             from .dialogs.question import Question
+            self.screen.info = ''
             d = Question(_('Are you sure to spend the collateral coins of masternode?'), lambda b: self.__do_send(tx, amount, message, outputs, rbf, b))
             d.open()
         else:
             self.__do_send(tx, amount, message, outputs, rbf, True)
-        
-        
-        self.__do_send(tx, amount, message, outputs, rbf, True)
-                    
+                                    
     def __do_send(self, tx, amount, message, outputs, rbf, b):
         if not b:
             return
+        
         if rbf:
             tx.set_rbf(True)
             
@@ -348,6 +353,7 @@ class SendScreen(CScreen):
         if fee > feerate_warning * tx.estimated_size() / 1000:
             msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
         msg.append(_("Enter your PIN code to proceed"))
+        self.screen.info = ''        
         self.app.protected('\n'.join(msg), self.send_tx, (tx, message))
 
     def send_tx(self, tx, message, password):
@@ -362,14 +368,74 @@ class SendScreen(CScreen):
         def on_failure(error):
             self.app.show_error(error)
         if self.app.wallet.can_sign(tx):
-            self.app.show_info(_("Signing transaction...") + "-" + str(len(tx.inputs())))
+            self.app.show_info(_("Signing transaction...")) # + "-" + str(len(tx.inputs())))
             self.app.sign_tx(tx, password, on_success, on_failure)
         else:
             self.app.tx_dialog(tx)
 
     def do_load_transaction(self):
         self.app.load_transaction()
+    
+    def do_aggregation(self):
+        from .dialogs.question import Question
+        def _do_start_aggretation(ok):
+            if ok:
+                self.screen.show_aggregation = (self.screen.show_aggregation + 1) % 2
+                
+        def _do_stop_aggregation(ok):
+            if ok:
+                self.screen.show_aggregation = (self.screen.show_aggregation + 1) % 2
+        '''
+        try:
+            if len(self.screen.amount) == 0:
+            #if (self.screen.show_aggregation  % 2) == 1 :
+                d = Question(_('Are you sure you want to stop aggregation?'), _do_removeall)
+            else:
+                d = Question(_('Are you sure you want to start aggregation?'), _do_removeall)
+            d.open()
+        except Exception as e:
+            self.app.show_error('ppp:'+ str(e))
+        '''
+        try:
+            self.screen.show_aggregation = (self.screen.show_aggregation + 1) % 2
+        except Exception as e:
+            self.app.show_error('ppppp:' + str(e))
+            
+    def do_aggregation_send(self, coins):
+        address = self.app.wallet.create_new_address(False)        
+        amount = self.app.get_aggregation_max_amount(address, coins)            
+        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, address, amount)]
+        message = _('Aggregation')                        
+        amount = sum(map(lambda x:x[2], outputs))
+        if self.app.electrum_config.get('use_rbf'):
+            from .dialogs.question import Question
+            d = Question(_('Should this transaction be replaceable?'), lambda b: self._do_send(coins, amount, message, outputs, b))
+            d.open()
+        else:
+            self._do_aggregation_send(coins, amount, message, outputs, False)            
 
+    def _do_aggregation_send(self, coins, amount, message, outputs, rbf):
+        config = self.app.electrum_config
+        self.app.show_info(str(amount) + '-' + str(len(coins)))
+        '''
+        try:
+            tx = self.app.wallet.make_unsigned_transaction(coins, outputs, config, None)
+        except NotEnoughFunds:
+            self.app.show_error(_("Not enough funds"))
+            return
+        except Exception as e:
+            traceback.print_exc(file=sys.stdout)
+            self.app.show_error(str(e))
+            return 
+        self.__do_send(tx, amount, message, outputs, rbf, True)
+        '''
+     
+    def get_show_aggregation(self):
+        return self.screen.show_aggregation
+    
+    def set_show_aggregation(self, show_aggregation):
+        self.screen.show_aggregation = show_aggregation
+        
 class ReceiveScreen(CScreen):
 
     kvname = 'receive'
@@ -621,10 +687,16 @@ class MasternodeScreen(CScreen):
             except Exception as e:
                 self.app.show_error(str(e))
         
+        if obj.status == 'ENABLED':
+            self.app.show_info(_('Masternode has already been activated,cannot be deleted!'))
+            return
+        
         d = Question(_('Are you sure you want to remove it?'), lambda b: _do_remove(obj, b))
         d.open()
     
-    def do_removeall(self):        
+    def do_removeall(self):   
+        if len(self.app.masternode_manager.masternodes) == 0:
+            return
         from .dialogs.question import Question
         def _do_removeall(ok):
             try:
@@ -657,7 +729,9 @@ class MasternodeScreen(CScreen):
         d = Question(_('Are you sure you want to unfreeze it?'), lambda b: _do_unfreeze(obj, b))
         d.open()
 
-    def do_unfreezeall(self, info=True):        
+    def do_unfreezeall(self, info=True):   
+        if len(self.app.masternode_manager.masternodes) == 0:
+            return        
         from .dialogs.question import Question
         def _do_unfreezeall(ok):
             try:
@@ -825,8 +899,8 @@ class MasternodeScreen(CScreen):
         self.app.send_announce(key, on_success, on_failure)
 
     def get_card(self, utxo, collateral, delegate, status, announced, alias, ip):
-        icon = "atlas://electrum/gui/kivy/theming/light/important" 
-        icon_announced = "atlas://electrum/gui/kivy/theming/light/instantsend_locked" 
+        icon = "atlas://electrum/gui/kivy/theming/light/important_dis" 
+        icon_announced = "atlas://electrum/gui/kivy/theming/light/instantsend_locked_dis" 
         ri = {}
         ri['screen'] = self
         if status == 'ENABLED' or status == 'PRE_ENABLED':
@@ -842,8 +916,9 @@ class MasternodeScreen(CScreen):
         ri['ipaddress'], ri['port'] = ip.split(":")
         
         uxtos = {'prevout_hash': ri['txid'], 'prevout_n': int(ri['index'])}
-        if self.app.wallet.is_frozen_coin(uxtos):        
-            ri['icon'] = ri['icon'] + "_dis"        
+        if self.app.wallet.is_frozen_coin(uxtos):   
+            pos = ri['icon'].find('_dis')
+            ri['icon'] = ri['icon'][:pos]        
         return ri
 
     def update(self, see_all=False):
@@ -887,6 +962,15 @@ class MasternodeScreen(CScreen):
                     
     def show_menu(self, obj):
         self.hide_menu()
+        
+        if obj.icon.find('_dis') < 0:            
+            self.menu_actions = [ ('Unfreeze', self.do_unfreeze), ('Activate', self.do_activate)]
+        else:
+            self.menu_actions = [ ('Freeze', self.do_freeze), ('Activate', self.do_activate)]
+            
+        if obj.status != 'ENABLED' :            
+            self.menu_actions = [('Remove', self.do_remove)] + self.menu_actions
+            
         self.context_menu = ContextMenu(obj, self.menu_actions)
         self.add_widget(self.context_menu)
         self.show_masternode(obj)

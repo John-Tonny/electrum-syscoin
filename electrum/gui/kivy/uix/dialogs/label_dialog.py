@@ -36,7 +36,9 @@ Builder.load_string('''
                 text: _('Cancel')
                 size_hint: 0.5, None
                 height: '48dp'
-                on_release: popup.dismiss()
+                on_release:
+                    input.focus = False 
+                    popup.dismiss()
             Button:
                 text: _('OK')
                 size_hint: 0.5, None
