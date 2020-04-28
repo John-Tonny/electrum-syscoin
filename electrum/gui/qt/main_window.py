@@ -81,7 +81,7 @@ from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
 from .fee_slider import FeeSlider
-from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialog
+from .util import (read_QIcon, ColorScheme, text_dialog, icon_path, WaitingDialog,
                    WindowModalDialog, ChoicesLayout, HelpLabel, FromList, Buttons,
                    OkButton, InfoButton, WWLabel, TaskThread, CancelButton, EnterParamsButton,
                    CloseButton, HelpButton, MessageBoxMixin, EnterButton, expiration_values,

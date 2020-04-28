@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = 久零Electrum
-#title = 文创Electrum
-#title = 送多多Electrum
-#title = 六维Electrum
+title = 久零钱包
+#title = 文创钱包
+#title = 送多多钱包
+#title = 六维钱包
 
 # (str) Package name
 package.name = Electrum

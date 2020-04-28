@@ -8,6 +8,7 @@ import time
 import threading
 from electrum.constants import MASTERNODE_PORTS
 from electrum import constants
+import random
 
 POST_TIMEOUT = 500
 GET_TIMEOUT = 1000
@@ -109,7 +110,7 @@ class Client:
             pass
         
         
-        timer = threading.Timer(2,self.get_money_ratio)
+        timer = threading.Timer(10 + random.randrange(1,10), self.get_money_ratio)
         timer.start()        
                 
     def post_conversion(self, txid, amount, fee, dstAccount, srcAccount, payWay, payName, payAccount, payBank, payBankSub, remark):

@@ -688,7 +688,7 @@ class MasternodeManager(object):
 
     def get_default_alias(self):
         while True:
-            alias = 'mn-' + str(int(random.random()*10000))
+            alias = 'mn-' + str(random.randrange(1,9999))
             if any(self.masternodes[key].alias == alias for key in self.masternodes.keys()):
                 continue
             return alias

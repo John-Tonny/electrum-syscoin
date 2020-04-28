@@ -41,6 +41,7 @@ Builder.load_string('''
                 foreground_color: 1, 1, 1, 1
                 font_size: '16dp'
                 focus: True
+                input_type: 'number'
         Widget:
             size_hint: 1, 0.1
         BoxLayout:

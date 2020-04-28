@@ -117,17 +117,17 @@ SendScreen:
             Button:
                 text: _('Clear')
                 on_release: s.parent.do_clear()
-            Button:
-                text: _('Load transaction')
-                disabled: True
-                on_release: s.parent.do_load_transaction()
-            Button:
-                text: {0:_('Start aggregation'), 1:_('Stop aggregation')}[root.show_aggregation]
-                disabled: True
-                on_release:
-                    Clock.schedule_once(lambda dt: root.do_aggregation())
-            #Widget:
-            #    size_hint: 1, 1
+            #Button:
+            #    text: _('Load transaction')
+            #    disabled: True
+            #    on_release: s.parent.do_load_transaction()
+            #Button:
+            #    text: {0:_('Start aggregation'), 1:_('Stop aggregation')}[root.show_aggregation]
+            #    disabled: True
+            #    on_release:
+            #        Clock.schedule_once(lambda dt: root.do_aggregation())
+            Widget:
+                size_hint: 1, 1
             Button:
                 text: _('Pay')
                 size_hint: 1, 1
