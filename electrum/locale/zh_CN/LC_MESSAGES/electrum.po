@@ -7522,10 +7522,10 @@ msgid "Stop aggregation"
 msgstr "停止合并"
 
 msgid "Are you sure you want to stop aggregation?"
-msgstr "你确定想要停止小额链分(<500)合并吗?"
+msgstr "你确定停止合并小额链分(<500)吗?"
 
 msgid "Are you sure you want to start aggregation?"
-msgstr "你确定想要开始小额链分(<500)合并吗?"
+msgstr "你确定开始合并小额链分(<500)吗?"
 
 msgid "Convertible proportion"
 msgstr "兑换比率"
@@ -7562,3 +7562,9 @@ msgstr "无效的URI"
 
 msgid "Exit"
 msgstr "退出"
+
+msgid "Failed to get address!"
+msgstr "获取地址失败!"
+
+msgid "Aggregation finish!"
+msgstr "合并完成!"

@@ -1715,6 +1715,21 @@ class Deterministic_Wallet(Abstract_Wallet):
                 self._unused_change_addresses.append(address)
             return address
 
+    def create_new_nums_address(self, nums, for_change=False):
+        assert type(for_change) is bool
+        with self.lock:
+            addresses = []
+            for i in range(nums):
+                n = self.db.num_change_addresses() if for_change else self.db.num_receiving_addresses()
+                address = self.derive_address(for_change, n)
+                self.db.add_change_address(address) if for_change else self.db.add_receiving_address(address)
+                self.add_address(address)
+                if for_change:
+                    # note: if it's actually used, it will get filtered later
+                    self._unused_change_addresses.append(address)
+                addresses.append(address)
+            return addresses
+
     def synchronize_sequence(self, for_change):
         limit = self.gap_limit_for_change if for_change else self.gap_limit
         while True:
@@ -2022,3 +2037,4 @@ def restore_wallet_from_text(text, *, path, network=None,
 
     wallet.storage.write()
     return {'wallet': wallet, 'msg': msg}
+

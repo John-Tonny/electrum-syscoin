@@ -15,17 +15,17 @@ Builder.load_string('''
 <LoadTransactionDialog@Popup>:
     title: _('Load transaction')
     id: popup
-    path: os.path.dirname(app.get_wallet_path())
+    path: ''
     BoxLayout:
         orientation: 'vertical'
         padding: '10dp'
         FileChooserListView:
             id: transaction_selector
-            dirselect: True
-            filter_dirs: True
-            filter: '*.*'
+            #dirselect: True
+            filter_dirs: False
+            filters: ['*.txn']
             path: root.path
-            rootpath: root.path
+            #rootpath: root.path
             size_hint_y: 0.5
             height: '48dp'
         Widget
@@ -41,7 +41,7 @@ Builder.load_string('''
                 disabled: not transaction_selector.selection
                 on_release:
                     popup.dismiss()
-                    root.open_transaction(app)
+                    root.open_transaction()
             Button:
                 id: close_button
                 size_hint: 0.1, None
@@ -52,8 +52,15 @@ Builder.load_string('''
 ''')
 
 class LoadTransactionDialog(Factory.Popup):
+    
+    def init(self, app, path):
+        self.app = app
+        if path is None:
+            self.path = os.path.dirname(app.get_wallet_path()) + '/../..'
+        else:
+            self.path = path
 
-    def open_transaction(self, app):
-        pass
-        #app.load_wallet_by_name(self.ids.wallet_selector.selection[0])
-
+    def open_transaction(self):
+        fileName = self.ids.transaction_selector.selection[0]
+        self.app.do_process_from_file(fileName)
+    

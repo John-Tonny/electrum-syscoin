@@ -94,6 +94,18 @@ Builder.load_string('''
                         rgba: 0.9, 0.9, 0.9, 1
                 AddressButton:
                     id: close
+                    text: _('Scan')
+                    on_release: Clock.schedule_once(lambda dt: app.add_addresses(popup))
+            AddressFilter:
+                opacity: 1
+                size_hint: 1, None
+                height: self.minimum_height
+                spacing: '5dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                AddressButton:
+                    id: close
                     text: _('Close')
                     on_release: popup.dismiss()
         RecycleView:

@@ -130,21 +130,21 @@ class LoginDialog(Factory.Popup):
             return
         
         self.info = _('Please wait') + '...'
-        Clock.schedule_once(lambda dt: self._do_Ok(mobilephone, password))
+        Clock.schedule_once(lambda dt: self._do_Ok(mobilephone, password), 0.5)
 
     def _do_Ok(self, mobilephone, password):
-        try:
-            address = self.app.wallet.create_new_address(False)
-            status = self.app.client.post_register(mobilephone, address, password)    
-            self.info = ''
-            if not status :                        
-                self.app.show_error(_("Account Login failed!"))
-                return
-            self.app.wallet.storage.put('user_register', {mobilephone:(password, address)})
-            self.app.show_info(_('Account Login successful!'))
-            self.dismiss()
-        except Exception as e:
-            self.app.show_error("ppp:" +str(e))
+        address = self.app.get_app_new_address()
+        if address == '':
+            self.app.show_error(_('Failed to get address!'))
+            return
+        status = self.app.client.post_register(mobilephone, address, password)    
+        self.info = ''
+        if not status :                        
+            self.app.show_error(_("Account Login failed!"))
+            return
+        self.app.wallet.storage.put('user_register', {mobilephone:(password, address)})
+        self.app.show_info(_('Account Login successful!'))
+        self.dismiss()
         
     def do_checkcode(self):
         mobilephone = self.ids.mobilephone.text
@@ -158,7 +158,7 @@ class LoginDialog(Factory.Popup):
             return
         
         self.info = _('Please wait') + '...'
-        Clock.schedule_once(lambda dt: self._do_checkcode(mobilephone))
+        Clock.schedule_once(lambda dt: self._do_checkcode(mobilephone), 0.5)
         
     def _do_checkcode(self, mobilephone):
         status = self.app.client.post_mobilephone_checkcode(mobilephone)                

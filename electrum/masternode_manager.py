@@ -772,7 +772,7 @@ class MasternodeManager(object):
             
             self.save()
             
-    def check_register(self, register_info, mobilephone, password, password1, bregister):        
+    def check_register(self, register_info, mobilephone, password, password1, bregister, address):        
         if bregister:
             if password != password1:
                 raise Exception("password is not equal")
@@ -786,9 +786,8 @@ class MasternodeManager(object):
         if bregister:
             if not (register_info is None):
                 raise Exception("mobilephone is have register")
-            address = self.wallet.create_new_address(False)            
             self.wallet.storage.put('user_register', {mobilephone:(password, address)})
-            return address
+            return
             
         if register_info.get(mobilephone) is None:
             raise Exception("no register")
@@ -797,7 +796,6 @@ class MasternodeManager(object):
         if pw != password:
             raise Exception("password incorrect")
         
-        return address
     
     def is_used_collateral_from_coin(self, coin):
         key = coin.get('prevout_hash') + '-' + str(coin.get('prevout_n'))

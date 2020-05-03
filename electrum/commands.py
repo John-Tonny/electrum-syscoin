@@ -640,6 +640,11 @@ class Commands:
         return self.wallet.create_new_address(False)
 
     @command('w')
+    def createnewnumsaddress(self, nums):
+        """Create a new receiving address, beyond the gap limit of the wallet"""
+        return self.wallet.create_new_nums_address(nums, False)
+
+    @command('w')
     def getunusedaddress(self):
         """Returns the first unused address of the wallet, or None if all addresses are used.
         An address is considered as used if it has received a transaction, or if it is used in a payment request."""

@@ -24,6 +24,13 @@ import copy
 import traceback
 import sys
 
+from kivy.uix.floatlayout import FloatLayout
+from kivy.clock import Clock
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+
+
 Builder.load_string('''
 #:import partial functools.partial
 #:import _ electrum.gui.kivy.i18n._
@@ -277,6 +284,11 @@ class ConversionDialog(Factory.Popup):
         
         self.disable_pin = True
         
+        self.floater = None
+        self.logo = None
+        self.spiderman = None
+        self.enter = None        
+        
     def show_conversion(self):
         self.app.show_info("show convert")
         pass
@@ -347,10 +359,6 @@ class ConversionDialog(Factory.Popup):
         icon_announced = "atlas://electrum/gui/kivy/theming/light/instantsend_locked" 
         ri = {}
         ri['screen'] = self
-        if status == '1':
-            ri['icon'] = icon_announced
-        else:
-            ri['icon'] = icon 
         ri['amount'] = str(amount)
         status, status1 = status.split('-')
         if status == '0':
@@ -368,9 +376,14 @@ class ConversionDialog(Factory.Popup):
             if status1 == '0':
                 status += "-" + _('Checking')
             elif status1 == '1':
-                status += "-" + _('Verified')
+                status += "-" + _('Checked')
             else:
                 status += "-" + _('unknown')
+            
+        if status1 == '1':
+            ri['icon'] = icon_announced
+        else:
+            ri['icon'] = icon 
             
         ri['status'] = status
         ri['alias'] = alias
@@ -404,6 +417,10 @@ class ConversionDialog(Factory.Popup):
             self.destroy_commit(tx)
             return
         
+        self.app.show_info(_('Please wait') + '...', 120)
+        Clock.schedule_once(lambda dt: self._do_destroy(), 1)                
+        
+    def _do_destroy(self):             
         try:
             self.check_conversion()
         except Exception as e:
@@ -435,6 +452,7 @@ class ConversionDialog(Factory.Popup):
         message = ''
         amount = sum(map(lambda x:x[2], outputs))
         if self.app.electrum_config.get('use_rbf'):
+            self.app.hide_info()
             from electrum.gui.kivy.uix.dialogs.question import Question
             d = Question(_('Should this transaction be replaceable?'), lambda b: self._do_send(amount, message, outputs, b))
             d.open()
@@ -471,6 +489,7 @@ class ConversionDialog(Factory.Popup):
         if fee > feerate_warning * tx.estimated_size() / 1000:
             msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
         msg.append(_("Enter your PIN code to proceed"))
+        self.app.hide_info()
         self.app.protected('\n'.join(msg), self.send_tx, (tx, message))
 
     def send_tx(self, tx, message, password):
@@ -505,15 +524,30 @@ class ConversionDialog(Factory.Popup):
         self.app.broadcast_conversion(tx, on_complete, pr)
 
     def do_search(self):
+        self.app.show_info(_('Please wait') + '...', 10)
+        Clock.schedule_once(lambda dt: self._do_search(), 1)                
+
+    def _do_search(self):
         self.app.client.do_search_conversion()
+        self.app.hide_info()        
         self.update()
     
     def do_back_page(self):
+        self.app.show_info(_('please wait') + '...', 10)
+        Clock.schedule_once(lambda dt: self._do_back_page(), 1)                
+        
+    def _do_back_page(self):
         self.app.client.do_back_conversion()
+        self.app.hide_info()        
         self.update()
-    
+
     def do_next_page(self):
+        self.app.show_info(_('please wait') + '...', 10)
+        Clock.schedule_once(lambda dt: self._do_next_page(), 1)                
+    
+    def _do_next_page(self):
         self.app.client.do_next_conversion()
+        self.app.hide_info()        
         self.update()
     
     def destroy_commit(self, tx):        
@@ -628,3 +662,22 @@ class ConversionDialog(Factory.Popup):
             elif self.app.client.conversion_cur_page < total_page:
                 self.next_pr = False
                 self.back_pr = False
+    
+    def add_floater(self):
+        self.floater = FloatLayout()
+        self.logo = Image(source='atlas://electrum/gui/kivy/theming/light/collateral_addr', pos_hint={'center_x': 0.5, 'center_y': .6})
+        self.spiderman = Label(
+                text='[size=24][i]With Great Power comes Great Responsibility[/i][/size]',
+                markup=True,
+                pos_hint={'center_x': 0.5, 'center_y': .2})
+        self.enter = Button(text='enter', size_hint=(0.2,0.1), pos_hint={'center_x': 0.5, 'center_y': .1})
+        self.floater.add_widget(self.logo)
+        self.floater.add_widget(self.spiderman)
+        self.floater.add_widget(self.enter)
+    
+    def remove_floater(self):
+        if self.floater is not None:
+            self.floater.remove_widget(self.logo)
+            self.floater.remove_widget(self.spiderman)
+            self.floater.remove_widget(self.enter)
+            

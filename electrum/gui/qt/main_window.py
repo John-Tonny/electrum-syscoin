@@ -810,14 +810,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.notify_transactions()
         if self.aggregation_button.text() == _('Stop aggregation'):
             self.aggregation_timer_actions()
-        
-    ###john
+    
+    ###john               
     def do_aggregation(self):
         msg=[]        
         if self.aggregation_button.text() == _('Stop aggregation'):
             reply = QMessageBox.question(self, _('Aggregation'), _("Are you sure you want to stop aggregation?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
             if reply == QMessageBox.No:
                 return
+            
             self.aggregation_button.setText(_('Start aggregation'))
             self.aggregation_nums = 0
             self.aggregation_password = None
@@ -825,17 +826,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             reply = QMessageBox.question(self, _('Message'), _("Are you sure you want to start aggregation?"), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
             if reply == QMessageBox.No:
                 return
-            if self.wallet.has_keystore_encryption():
-                msg.append(_("Enter your password to proceed"))
-                password = self.password_dialog('\n'.join(msg))
-                if not password:
-                    return
-                self.aggregation_password = password
-            else:
-                self.aggregation_password = None
-            
-            self.aggregation_button.setText(_('Stop aggregation'))
-            self.aggregation_nums = constants.AGGREGATION_INTERVAL_TIME -1        
+            self.aggregation_start()
     
     def aggregation_timer_actions(self):
         self.aggregation_nums += 1
@@ -858,12 +849,20 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     nums += 1
                     if nums >= constants.AGGREGATION_MAX_INPUTS:
                         self.send_aggregation(acoins)
+                        return
                     if amount >= constants.AGGREGATION_MAX_COIN * bitcoin.COIN:
                         self.send_aggregation(acoins)
-                        break
-            
+                        return 
+            self.aggregation_finish()
+                
     def send_aggregation(self, acoins):
         self.do_send(mode='send', acoins = acoins)    
+    
+    def aggregation_finish(self):
+        self.aggregation_password = None
+        self.aggregation_nums = 0
+        self.aggregation_button.setText(_('Start aggregation'))
+        self.show_message(_('Aggregation finish!'), title=_('Info'))                
     
     def parse_script(self, x):
         script = ''
@@ -1990,7 +1989,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         WaitingDialog(self, msg, task, on_success, on_failure)
 
     def broadcast_transaction(self, tx, tx_desc, mode='send'):
-
         def broadcast_thread():
             # non-GUI thread
             pr = self.payment_request
@@ -2522,6 +2520,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                 "%s"%self.wallet.storage.path,
                 _('If your wallet contains funds, make sure you have saved its seed.')])):
             self._delete_wallet()
+
+    ###john
+    @protected
+    def aggregation_start(self, password):
+        self.aggregation_password = password        
+        self.aggregation_button.setText(_('Stop aggregation'))
+        self.aggregation_nums = constants.AGGREGATION_INTERVAL_TIME - 2        
+        
 
     @protected
     def _delete_wallet(self, password):
@@ -4368,7 +4374,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return False
             
         def register_thread():
-            address = self.masternode_manager.check_register(register_info, mobilephone, pw, pw1, bregister)                    
+            address = self.get_app_new_address()
+            self.masternode_manager.check_register(register_info, mobilephone, pw, pw1, bregister, address)                    
             #return self.client.post_register(mobilephone, address, pw)
             return self.client.post_mobilephone_checkcode(mobilephone)
                         
@@ -5009,3 +5016,16 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         else:
             self.fee_conversion_label1.hide()                
             self.fee_conversion_slider.hide()
+
+    def get_app_new_address(self):
+        if not self.wallet:
+            return ''
+        try:
+            addr = self.wallet.get_unused_address()
+            if addr is None:
+                addr = self.wallet.get_receiving_address() or ''
+        except InternalAddressCorruption as e:
+            addr = ''
+            self.show_error(str(e))
+            send_exception_to_crash_reporter(e)
+        return addr

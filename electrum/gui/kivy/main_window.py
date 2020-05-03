@@ -44,7 +44,7 @@ from .uix.dialogs import OutputList, OutputItem
 from .uix.dialogs import TopLabel, RefLabel
 
 ###john
-from electrum.constants import DESTROY_ADDRESS
+from electrum.constants import DESTROY_ADDRESS, AGGREGATION_INTERVAL_TIME
 from electrum.masternode_manager import MasternodeManager
 
 #from kivy.core.window import Window
@@ -855,7 +855,7 @@ class ElectrumWindow(App):
             self._trigger_update_status()
             
         if not (self.send_screen is None):
-            if self.send_screen.get_show_aggregation() == 1:
+            if self.send_screen.screen.show_aggregation == 1:
                 self.aggregation_timer_actions()
 
     def get_max_amount(self, mode):
@@ -1057,7 +1057,6 @@ class ElectrumWindow(App):
     def _broadcast_thread(self, tx, on_complete):
         status = False
         try:
-            self.show_info("tx size:" + str(len(str(tx))))
             self.network.run_from_another_thread(self.network.broadcast_transaction(tx))
         except TxBroadcastError as e:
             msg = e.get_message_for_gui()
@@ -1070,7 +1069,8 @@ class ElectrumWindow(App):
     def broadcast(self, tx, pr=None):
         def on_complete(ok, msg):
             if ok:
-                self.show_info(_('Payment sent.'))
+                if self.aggregation_password is None:
+                    self.show_info(_('Payment sent.'))
                 if self.send_screen:
                     self.send_screen.do_clear()
                 if pr:
@@ -1082,10 +1082,17 @@ class ElectrumWindow(App):
                 self.show_error(msg)
 
         if self.network and self.network.is_connected():
-            self.show_info(_('Sending'))
+            if self.aggregation_password is None:
+                self.show_info(_('Sending'))
             threading.Thread(target=self._broadcast_thread, args=(tx, on_complete)).start()
         else:
             self.show_info(_('Cannot broadcast transaction') + ':\n' + _('Not connected'))
+
+    def add_addresses(self, screen):
+        try:
+            self.wallet.create_new_nums_address(50)
+        except Exception as e:
+            self.show_error("kk11:" + str(e))
 
     def description_dialog(self, screen):
         from .uix.dialogs.label_dialog import LabelDialog
@@ -1129,7 +1136,7 @@ class ElectrumWindow(App):
             assert u == self.base_unit
         def cb(amount):
             screen.amount = amount
-        popup = AmountDialog(show_max, mode, amount, cb)
+        popup = AmountDialog(self, show_max, mode, amount, cb)
         popup.open()
 
     def invoices_dialog(self, screen):
@@ -1443,14 +1450,27 @@ class ElectrumWindow(App):
         popup.bank = ''
 
     def load_transaction(self):
+        sdpath = './'
         from .uix.dialogs.load_transaction import LoadTransactionDialog
+        from jnius import autoclass        
+        try:
+            Environment = autoclass('android.os.Environment')
+            sdpath = Environment.getExternalStorageDirectory().getAbsolutePath()
+        # Not on Android
+        except Exception as e:
+            self.show_error(str(e))
+            return
+            #sdpath = App.get_running_app().user_data_dir
+            
         d = LoadTransactionDialog()
+        d.init(self, sdpath)
         d.open()
     
     ###john
     def aggregation_timer_actions(self):
         self.aggregation_nums += 1
         if (self.aggregation_nums % AGGREGATION_INTERVAL_TIME) == 0:
+            self.show_info("nums:" + str(self.aggregation_nums))
             aggregation_height = self.wallet.storage.get('aggregation_height')
             amount = 0
             nums = 0
@@ -1467,15 +1487,64 @@ class ElectrumWindow(App):
                     amount += coin['value']
                     acoins.append(coin)
                     nums += 1
-                    try:
-                        if nums >= AGGREGATION_MAX_INPUTS:
-                            self.send_aggregation(acoins)
-                            break
-                        if amount >= AGGREGATION_MAX_COIN * COIN:
-                            self.send_aggregation(acoins)
-                            break
-                    except Exception as e:
-                        self.show_error('ppp11:' +str(e))
-                        
+                    if nums >= AGGREGATION_MAX_INPUTS:
+                        self.send_aggregation(acoins)
+                        return
+                    if amount >= AGGREGATION_MAX_COIN * COIN:
+                        self.send_aggregation(acoins)
+                        return            
+            self.aggregation_finish()
+            
     def send_aggregation(self, acoins):
         self.send_screen.do_aggregation_send(acoins)    
+        
+    def aggregation_finish(self):
+        self.aggregation_password = None
+        self.aggregation_nums = 0
+        self.send_screen.screen.show_aggregation = 0
+        self.show_info(_('Aggregation finish!'))                        
+        
+    def hide_info(self):
+        try:
+            if self.info_bubble is not None:                
+                self.info_bubble.hide()
+        except Exception as e:
+            self.show_error("pppp11:"+ str(e))
+
+    def get_app_new_address(self):
+        if not self.wallet:
+            return ''
+        try:
+            addr = self.wallet.get_unused_address()
+            if addr is None:
+                addr = self.wallet.get_receiving_address() or ''
+        except InternalAddressCorruption as e:
+            addr = ''
+            self.show_error(str(e))
+            send_exception_to_crash_reporter(e)
+        return addr
+        
+    def do_process_from_file(self, fileName):
+        tx = self.read_tx_from_file(fileName)
+        if tx:
+            self.tx_dialog(tx)
+    
+    def read_tx_from_file(self, fileName):
+        if not fileName:
+            return
+        try:
+            with open(fileName, "r") as f:
+                file_content = f.read()
+        except (ValueError, IOError, os.error) as reason:
+            self.show_error(_("Electrum was unable to open your transaction file") + "\n" + str(reason))
+            return
+        return self.tx_from_text(file_content)
+
+    def tx_from_text(self, txt):
+        from electrum.transaction import tx_from_str, Transaction
+        try:
+            tx = tx_from_str(txt)
+            return Transaction(tx)
+        except BaseException as e:
+            self.show_error(_("Electrum was unable to parse your transaction") + ":\n" + str(e))
+            return

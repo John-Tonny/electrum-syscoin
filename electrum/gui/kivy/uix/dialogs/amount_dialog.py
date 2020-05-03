@@ -4,18 +4,30 @@ from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 from decimal import Decimal
 
+from kivy.clock import Clock
+from electrum.gui.kivy.i18n import _
+
 Builder.load_string('''
 
 <AmountDialog@Popup>
     id: popup
     title: _('Amount')
+    info: ''
     AnchorLayout:
         anchor_x: 'center'
         BoxLayout:
             orientation: 'vertical'
             size_hint: 0.9, 1
             Widget:
-                size_hint: 1, 0.2
+                size_hint: 1, 0.1
+            BoxLayout:
+                size_hint: 1, None
+                height: '30dp'
+                Label:
+                    text: root.info
+                    size_hint: 1, None
+                    multiline: False
+                    font_size: '20dp'
             BoxLayout:
                 size_hint: 1, None
                 height: '80dp'
@@ -92,7 +104,8 @@ Builder.load_string('''
                     text: _('Max')
                     on_release:
                         kb.is_fiat = False
-                        kb.amount = app.get_max_amount(kb.mode)
+                        root.get_max_amount(kb.mode)
+                        #kb.amount = app.get_max_amount(kb.mode)
                 Button:
                     size_hint: 1, None
                     height: '48dp'
@@ -121,13 +134,14 @@ from kivy.properties import BooleanProperty
 
 class AmountDialog(Factory.Popup):
     show_max = BooleanProperty(False)
-    def __init__(self, show_max, mode, amount, cb):
+    def __init__(self, app, show_max, mode, amount, cb):
         Factory.Popup.__init__(self)
         self.show_max = show_max
         self.callback = cb
         self.ids.kb.mode = mode
         if amount:
             self.ids.kb.amount = amount
+        self.app = app
 
     def update_amount(self, c):
         kb = self.ids.kb
@@ -148,3 +162,12 @@ class AmountDialog(Factory.Popup):
             kb.fiat_amount = amount
         else:
             kb.amount = amount
+
+    def get_max_amount(self, mode):
+        self.info = _('Please wait') + '...'
+        Clock.schedule_once(lambda dt: self._get_max_amount(mode), 0.5)
+        
+    def _get_max_amount(self, mode):
+        self.ids.kb.amount = self.app.get_max_amount(mode)
+        self.info = ''
+        
