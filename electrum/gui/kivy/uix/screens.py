@@ -372,12 +372,13 @@ class SendScreen(CScreen):
                 self.app.broadcast(tx, self.payment_request)
                 self.app.wallet.set_label(tx.txid(), message)
             else:
+                self.app.hide_info()
                 self.app.tx_dialog(tx)
         def on_failure(error):
             self.app.show_error(error)
         if self.app.wallet.can_sign(tx):
             if self.app.aggregation_password is None:
-                self.app.show_info(_("Signing transaction...")) # + "-" + str(len(tx.inputs())))
+                self.app.show_info(_("Signing transaction...kkk")) # + "-" + str(len(tx.inputs())))
             self.app.sign_tx(tx, password, on_success, on_failure)
         else:
             self.app.tx_dialog(tx)

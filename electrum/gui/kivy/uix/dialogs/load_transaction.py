@@ -25,7 +25,7 @@ Builder.load_string('''
             filter_dirs: False
             filters: ['*.txn']
             path: root.path
-            #rootpath: root.path
+            rootpath: root.path
             size_hint_y: 0.5
             height: '48dp'
         Widget
@@ -59,7 +59,7 @@ class LoadTransactionDialog(Factory.Popup):
             self.path = os.path.dirname(app.get_wallet_path()) + '/../..'
         else:
             self.path = path
-
+            
     def open_transaction(self):
         fileName = self.ids.transaction_selector.selection[0]
         self.app.do_process_from_file(fileName)

@@ -3,6 +3,7 @@ from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 from decimal import Decimal
+from kivy.clock import Clock
 
 Builder.load_string('''
 <AddressLabel@Label>
@@ -95,7 +96,7 @@ Builder.load_string('''
                 AddressButton:
                     id: close
                     text: _('Scan')
-                    on_release: Clock.schedule_once(lambda dt: app.add_addresses(popup))
+                    on_release: Clock.schedule_once(lambda dt: root.do_scan())
             AddressFilter:
                 opacity: 1
                 size_hint: 1, None
@@ -202,3 +203,12 @@ class AddressesDialog(Factory.Popup):
         if self.context_menu is not None:
             self.ids.box.remove_widget(self.context_menu)
             self.context_menu = None
+            
+    def _do_scan(self):
+        self.app.wallet.create_new_nums_address(50)
+        self.app.show_info(_('Address scan finish!'))
+        self.update()
+        
+    def do_scan(self):
+        self.app.show_info(_('Address scaning...'))
+        Clock.schedule_once(lambda dt: self._do_scan(), 0.5)        

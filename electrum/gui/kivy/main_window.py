@@ -46,6 +46,7 @@ from .uix.dialogs import TopLabel, RefLabel
 ###john
 from electrum.constants import DESTROY_ADDRESS, AGGREGATION_INTERVAL_TIME
 from electrum.masternode_manager import MasternodeManager
+import json
 
 #from kivy.core.window import Window
 #Window.softinput_mode = 'below_target'
@@ -1088,12 +1089,6 @@ class ElectrumWindow(App):
         else:
             self.show_info(_('Cannot broadcast transaction') + ':\n' + _('Not connected'))
 
-    def add_addresses(self, screen):
-        try:
-            self.wallet.create_new_nums_address(50)
-        except Exception as e:
-            self.show_error("kk11:" + str(e))
-
     def description_dialog(self, screen):
         from .uix.dialogs.label_dialog import LabelDialog
         text = screen.message
@@ -1449,19 +1444,12 @@ class ElectrumWindow(App):
             return
         popup.bank = ''
 
-    def load_transaction(self):
-        sdpath = './'
-        from .uix.dialogs.load_transaction import LoadTransactionDialog
-        from jnius import autoclass        
-        try:
-            Environment = autoclass('android.os.Environment')
-            sdpath = Environment.getExternalStorageDirectory().getAbsolutePath()
-        # Not on Android
-        except Exception as e:
-            self.show_error(str(e))
+    def load_transaction(self):        
+        sdpath = self.get_ExternalStorageDirectory()
+        if sdpath == '':
             return
-            #sdpath = App.get_running_app().user_data_dir
             
+        from .uix.dialogs.load_transaction import LoadTransactionDialog
         d = LoadTransactionDialog()
         d.init(self, sdpath)
         d.open()
@@ -1505,11 +1493,8 @@ class ElectrumWindow(App):
         self.show_info(_('Aggregation finish!'))                        
         
     def hide_info(self):
-        try:
-            if self.info_bubble is not None:                
-                self.info_bubble.hide()
-        except Exception as e:
-            self.show_error("pppp11:"+ str(e))
+        if self.info_bubble is not None:                
+            self.info_bubble.hide()
 
     def get_app_new_address(self):
         if not self.wallet:
@@ -1548,3 +1533,33 @@ class ElectrumWindow(App):
         except BaseException as e:
             self.show_error(_("Electrum was unable to parse your transaction") + ":\n" + str(e))
             return
+    
+        
+    def get_ExternalStorageDirectory(self):
+        from jnius import autoclass
+        try:
+            Environment = autoclass('android.os.Environment')
+            sdpath = Environment.getExternalStorageDirectory().getAbsolutePath()
+        # Not on Android
+        except Exception as e:    
+            sdpath = ''
+            self.show_error(str(e))
+            
+        return sdpath
+    
+    def export_transaction(self, tx):
+        sdpath = self.get_ExternalStorageDirectory()
+        if sdpath == '':
+            return
+        from .uix.dialogs.save_transaction import SaveTransactionDialog
+        d = SaveTransactionDialog()
+        d.init(self, sdpath, tx)
+        d.open()                
+           
+    def save_transaction(self, fileName, tx):
+        if fileName:
+            with open(fileName, 'w+') as f:
+                f.write(json.dumps(tx.as_dict(), indent=4) + '\n')
+            self.show_info(_("Transaction exported successfully"))
+            
+        

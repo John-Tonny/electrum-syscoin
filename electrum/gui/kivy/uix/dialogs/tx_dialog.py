@@ -96,6 +96,11 @@ Builder.load_string('''
             Button:
                 size_hint: 0.5, None
                 height: '48dp'
+                text: _('Export')
+                on_release: root.export_transaction()
+            Button:
+                size_hint: 0.5, None
+                height: '48dp'
                 text: _('Close')
                 on_release: root.dismiss()
 ''')
@@ -243,6 +248,10 @@ class TxDialog(Factory.Popup):
         text = bfh(raw_tx)
         text = base_encode(text, base=43)
         self.app.qr_dialog(_("Raw Transaction"), text, text_for_clipboard=raw_tx)
+
+    ###john
+    def export_transaction(self):
+        self.app.export_transaction(self.tx)        
 
     def remove_local_tx(self):
         txid = self.tx.txid()

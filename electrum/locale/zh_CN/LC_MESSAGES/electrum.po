@@ -7568,3 +7568,21 @@ msgstr "获取地址失败!"
 
 msgid "Aggregation finish!"
 msgstr "合并完成!"
+
+msgid "Export transaction"
+msgstr "导出交易"
+
+msgid "Save transaction"
+msgstr "保存交易"
+
+msgid "Filename:"
+msgstr "文件名:"
+
+msgid "The file name cannot be empty!"
+msgstr "文件名不能为空!"
+
+msgid "Address scan finish!"
+msgstr "地址扫描完成!"
+
+msgid "Address scaning..."
+msgstr "正在扫描地址..."
