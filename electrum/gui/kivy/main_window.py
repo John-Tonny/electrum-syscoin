@@ -1459,7 +1459,6 @@ class ElectrumWindow(App):
     def aggregation_timer_actions(self):
         self.aggregation_nums += 1
         if (self.aggregation_nums % AGGREGATION_INTERVAL_TIME) == 0:
-            self.show_info("nums:" + str(self.aggregation_nums))
             aggregation_height = self.wallet.storage.get('aggregation_height')
             amount = 0
             nums = 0

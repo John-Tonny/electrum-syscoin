@@ -1938,7 +1938,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if fee > feerate_warning * tx.estimated_size() / 1000:
             msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
             
-        if len(coins) ==0 and not (self.aggregation_password is None):
+        if len(acoins) ==0 and (self.aggregation_password is None):
             if self.wallet.has_keystore_encryption():
                 msg.append("")
                 msg.append(_("Enter your password to proceed"))

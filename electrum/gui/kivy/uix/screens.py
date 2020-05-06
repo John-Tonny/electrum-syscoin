@@ -378,7 +378,7 @@ class SendScreen(CScreen):
             self.app.show_error(error)
         if self.app.wallet.can_sign(tx):
             if self.app.aggregation_password is None:
-                self.app.show_info(_("Signing transaction...kkk")) # + "-" + str(len(tx.inputs())))
+                self.app.show_info(_("Signing transaction...")) # + "-" + str(len(tx.inputs())))
             self.app.sign_tx(tx, password, on_success, on_failure)
         else:
             self.app.tx_dialog(tx)
@@ -435,7 +435,6 @@ class SendScreen(CScreen):
             traceback.print_exc(file=sys.stdout)
             self.app.show_error(str(e))
             return 
-        self.app.show_info("tx:" + self.app.aggregation_password)
         self.send_tx(tx, message, self.app.aggregation_password)
         
         
