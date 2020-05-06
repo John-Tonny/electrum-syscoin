@@ -26,7 +26,7 @@ Builder.load_string('''
             shorten: True
         Widget
         AddressLabel:
-            text: (root.amount if root.status == 'Funded' else root.status) + '     ' + root.memo
+            text: (root.amount if root.status == _('Funded') else root.status) + '     ' + root.memo
             color: .699, .699, .699, 1
             font_size: '13sp'
             shorten: True
@@ -191,8 +191,9 @@ class AddressesDialog(Factory.Popup):
             req['fund'] = balance
         self.app.show_addr_details(req, status)
 
+    ###john
     def ext_search(self, card, search):
-        return card['memo'].find(search) >= 0 or card['amount'].find(search) >= 0
+        return card['memo'].find(search) >= 0 or card['amount'].find(search) >= 0 or card['address'].find(search) >= 0
 
     def show_menu(self, obj):
         self.hide_menu()
@@ -204,6 +205,7 @@ class AddressesDialog(Factory.Popup):
             self.ids.box.remove_widget(self.context_menu)
             self.context_menu = None
             
+    ###john
     def _do_scan(self):
         self.app.wallet.create_new_nums_address(50)
         self.app.show_info(_('Address scan finish!'))

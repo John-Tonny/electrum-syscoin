@@ -117,9 +117,9 @@ SendScreen:
             Button:
                 text: _('Clear')
                 on_release: s.parent.do_clear()
-            Button:
-                text: _('Load transaction')
-                on_release: s.parent.do_load_transaction()
+            #Button:
+            #    text: _('Load transaction')
+            #    on_release: s.parent.do_load_transaction()
             Button:
                 text: {0:_('Start aggregation'), 1:_('Stop aggregation')}[root.show_aggregation]
                 on_release: s.parent.do_aggregation()

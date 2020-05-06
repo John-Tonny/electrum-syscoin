@@ -594,7 +594,7 @@ def user_dir():
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-wcl")
         elif COIN_NAME == 'sdd':
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-sdd")
-        elif COIN_NAME == 'veg':
+        elif COIN_NAME == 'liuwei':
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-veg")
         else:
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum")

@@ -199,10 +199,10 @@ class Client:
         try:
             ret  = json.loads(resp)
             if ret["code"] == 200:
-                return True
-            return False
+                return True, ''
+            return False, ret['pagePrompt']
         except Exception as e:
-            return False
+            return False, str(e)
         
         
     def do_search_conversion(self):

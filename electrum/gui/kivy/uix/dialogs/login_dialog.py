@@ -161,10 +161,11 @@ class LoginDialog(Factory.Popup):
         Clock.schedule_once(lambda dt: self._do_checkcode(mobilephone), 0.5)
         
     def _do_checkcode(self, mobilephone):
-        status = self.app.client.post_mobilephone_checkcode(mobilephone)                
+        status, errMsg = self.app.client.post_mobilephone_checkcode(mobilephone)                
         self.info = ''
         if not status:                        
-            self.app.show_error(_("Get checkcode sent failed!"))
+            #self.app.show_error(_("Get checkcode sent failed!"))
+            self.app.show_error(errMsg)
             return
         self.app.show_info(_('Get checkcode send successful!'))
         

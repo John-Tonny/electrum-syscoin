@@ -4339,7 +4339,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         register_info = None #self.wallet.storage.get('user_register')
         try:
             if register_info is None:
-                mobilephone, pw = self.login_dialog('')
+                mobilephone, pw = self.login_dialog('', self)
                 pw1 = pw
                 if (pw is None) or (mobilephone is None) :
                     # User cancelled password input
@@ -5029,3 +5029,22 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_error(str(e))
             send_exception_to_crash_reporter(e)
         return addr
+
+    def get_checkcode(self, mobilephone):
+        if len(mobilephone) != 11:
+            self.show_message(_('Mobile must be 11 digits!'),
+                                  title=_('Error'))            
+            return
+        try:
+            intMobilephone = int(mobilephone)
+        except Exception as e:
+            self.show_message(_('Mobile must be numeric!'),
+                                  title=_('Error'))                    
+            return
+        
+        status, errMsg = self.client.post_mobilephone_checkcode(mobilephone)                
+        if not status:                        
+            self.show_error(errMsg)
+            return
+        self.show_message(_('Get checkcode send successful!'),
+                              title=_('Info'))                    

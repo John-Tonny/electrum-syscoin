@@ -7368,7 +7368,7 @@ msgid "&Masternode"
 msgstr "主节点(&M)"
 
 msgid "Please enter your mobile and password"
-msgstr "请输入您的手机号码和密码"
+msgstr "请输入您的手机号码和验证码"
 
 msgid "Mobile:"
 msgstr "手机号码:"

@@ -1336,9 +1336,10 @@ class ElectrumWindow(App):
                 self.show_error(_('Mobile must be numeric!'))                                    
                 return False
             
-            status = self.client.post_mobilephone_checkcode(mobilephone)                
+            status, errMsg = self.client.post_mobilephone_checkcode(mobilephone)                
             if not status :                        
-                self.show_error(_("Get checkcode sent failed!"))
+                #self.show_error(_("Get checkcode sent failed!"))
+                self.show_error(errMsg)
                 return False
             self.show_info(_('Get checkcode send successful!'))
             return True            

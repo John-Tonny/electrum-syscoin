@@ -214,7 +214,7 @@
         orientation: 'vertical'
         BoxLayout:
             size_hint_y: None
-            height: 30
+            height: 50
             orientation: 'horizontal'
             Widget:
                 # Just for spacing
@@ -224,12 +224,14 @@
                 text: 'Name'
                 text_size: self.size
                 halign: 'left'
+                valign: 'middle'
                 bold: True
             Label:
                 text: 'Size'
                 text_size: self.size
                 size_hint_x: None
                 halign: 'right'
+                valign: 'middle'
                 bold: True
             Widget:
                 # Just for spacing

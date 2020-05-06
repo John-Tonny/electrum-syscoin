@@ -28,7 +28,7 @@ import math
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QVBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QVBoxLayout, QCheckBox, QPushButton
 
 from electrum.i18n import _
 from electrum.plugin import run_hook
@@ -339,27 +339,36 @@ class RegisterDialog(WindowModalDialog):
         return self.mobilephone.text(), self.pw.text(), self.pw1.text()
     
 class LoginDialog(WindowModalDialog):
-
     def __init__(self, parent=None, msg=None):
         msg = msg or _('Please enter your mobile and password')
         WindowModalDialog.__init__(self, parent, _("Login"))
+        self.app = parent        
         self.mobilephone = QLineEdit()
         self.pw = pw = QLineEdit()
         pw.setEchoMode(2)
+        checkcode_button = QPushButton(_('Get checkcode'))
+        checkcode_button.clicked.connect(self.do_checkcode)        
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel(msg))
         grid = QGridLayout()        
         grid.setSpacing(8)
         grid.addWidget(QLabel(_('Mobile:')), 1, 0)
-        grid.addWidget(self.mobilephone, 1, 1)
+        grid.addWidget(self.mobilephone, 1, 1, 1, 2)
+        
         grid.addWidget(QLabel(_('Checkcode:')), 2, 0)
-        grid.addWidget(pw, 2, 1)
+        grid.addWidget(pw, 2, 1)        
+        grid.addWidget(checkcode_button, 2, 2)        
         vbox.addLayout(grid)
+        
         vbox.addLayout(Buttons(CancelButton(self), OkButton(self)))
         self.setLayout(vbox)
         run_hook('register_dialog', self.mobilephone, pw, grid, 1)
 
     def run(self):
         if not self.exec_():
-            return
-        return self.mobilephone.text(), self.pw.text()
+            return None, None
+        return self.mobilephone.text(), self.pw.text()    
+       
+    def do_checkcode(self):
+        mobilephone = self.mobilephone.text()
+        self.app.get_checkcode(mobilephone)

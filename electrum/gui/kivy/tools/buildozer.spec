@@ -13,7 +13,7 @@ package.name = Electrum
 package.domain = org.vircle
 #package.domain = org.wchuang
 #package.domain = org.sdduo
-#package.domain = org.lwei
+#package.domain = org.liuwei
 
 # (str) Source code where the main.py live
 source.dir = .
