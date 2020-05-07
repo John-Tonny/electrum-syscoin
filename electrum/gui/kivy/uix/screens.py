@@ -689,9 +689,9 @@ class MasternodeScreen(CScreen):
             except Exception as e:
                 self.app.show_error(str(e))
         
-        if obj.status == 'ENABLED':
-            self.app.show_info(_('Masternode has already been activated,cannot be deleted!'))
-            return
+        #if obj.status == 'ENABLED' or obj.status == 'PRE_ENABLED':
+        #    self.app.show_info(_('Masternode has already been activated,cannot be deleted!'))
+        #    return
         
         d = Question(_('Are you sure you want to remove it?'), lambda b: _do_remove(obj, b))
         d.open()
