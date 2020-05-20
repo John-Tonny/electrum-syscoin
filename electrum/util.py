@@ -64,6 +64,7 @@ def inv_dict(d):
 
 ca_path = certifi.where()
 
+#COIN_NAME = 'vircle_test'
 COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
 #COIN_NAME = 'sdd'
@@ -84,6 +85,11 @@ elif COIN_NAME == 'liuwei':
         base_units_inverse = inv_dict(base_units)
         base_units_list = ['VEG', 'mVEG', 'bits', 'sat']  # list(dict) does not guarantee order
         ADDRESS_PREFIX = 'veg:'
+elif COIN_NAME == 'vircle':
+    base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
+    base_units_inverse = inv_dict(base_units)
+    base_units_list = ['VCL', 'mVCL', 'bits', 'sat']  # list(dict) does not guarantee order
+    ADDRESS_PREFIX = 'vcl:'
 else:
     base_units = {'VCL':8, 'mVCL':5, 'bits':2, 'sat':0}
     base_units_inverse = inv_dict(base_units)
@@ -578,6 +584,8 @@ def user_dir():
             return os.path.join(os.environ["HOME"], ".electrum-sdd")
         elif COIN_NAME == 'liuwei':
             return os.path.join(os.environ["HOME"], ".electrum-veg")
+        elif COIN_NAME == 'vircle':
+            return os.path.join(os.environ["HOME"], ".electrum-vircle")
         else:
             return os.path.join(os.environ["HOME"], ".electrum")
     elif "APPDATA" in os.environ:
@@ -587,6 +595,8 @@ def user_dir():
             return os.path.join(os.environ["APPDATA"], "Electrum-sdd")            
         elif COIN_NAME == 'liuwei':
             return os.path.join(os.environ["APPDATA"], "Electrum-veg")            
+        elif COIN_NAME == 'vircle':
+            return os.path.join(os.environ["APPDATA"], "Electrum-vircle")            
         else:
             return os.path.join(os.environ["APPDATA"], "Electrum")
     elif "LOCALAPPDATA" in os.environ:
@@ -596,6 +606,8 @@ def user_dir():
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-sdd")
         elif COIN_NAME == 'liuwei':
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-veg")
+        elif COIN_NAME == 'vircle':
+            return os.path.join(os.environ["LOCALAPPDATA"], "Electrum-vircle")
         else:
             return os.path.join(os.environ["LOCALAPPDATA"], "Electrum")
     else:

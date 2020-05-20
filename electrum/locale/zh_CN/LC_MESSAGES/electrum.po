@@ -7586,3 +7586,6 @@ msgstr "地址扫描完成!"
 
 msgid "Address scaning..."
 msgstr "正在扫描地址..."
+
+msgid "Conversion1"
+msgstr "结转"

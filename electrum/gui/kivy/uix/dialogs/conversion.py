@@ -235,7 +235,11 @@ Builder.load_string('''
             Button:
                 text: _('Conversion')
                 size_hint: 1, 1
-                on_release: Clock.schedule_once(lambda dt: root.do_destroy())
+                on_release: Clock.schedule_once(lambda dt: root.do_destroy(0))
+            #Button:
+            #    text: _('Conversion1')
+            #    size_hint: 1, 1
+            #    on_release: Clock.schedule_once(lambda dt: root.do_destroy(1))
             IconButton:
                 id: back_page
                 size_hint: 0.6, 1
@@ -318,7 +322,10 @@ class ConversionDialog(Factory.Popup):
             status1 = data.get('checkFlag') if not data.get('checkFlag') is None else ''
             status += '-' + status1
             sdate = data.get('createTime') if not data.get('createTime') is None else ''
-            amount = str(data.get('amount')/bitcoin.COIN) if not data.get('amount') is None else ''
+            try:
+                amount = str(data.get('amount')/bitcoin.COIN) if not data.get('amount') is None else ''
+            except Exception as e:
+                amount = ''
             payWay = data.get('payWay') if not data.get('payWay') is None else '1'
             payWay = self.get_pay_mode_from_num(payWay)
             payName = data.get('payName') if not data.get('payName') is None else ''
@@ -339,7 +346,10 @@ class ConversionDialog(Factory.Popup):
             status1 = data.get('checkFlag') if not data.get('checkFlag') is None else ''
             status += '-' + status1
             sdate = conversion_data.get('createTime') if not conversion_data.get('createTime') is None else ''
-            amount = str(conversion_data.get('amount')/bitcoin.COIN) if not conversion_data.get('amount') is None else ''
+            try:
+                amount = str(conversion_data.get('amount')/bitcoin.COIN) if not conversion_data.get('amount') is None else ''
+            except Exception as e:
+                amount = ''
             
             if conversion_data.get('payWay') is None:
                 payWay = _('weixin')
@@ -404,9 +414,10 @@ class ConversionDialog(Factory.Popup):
         #self.alias = obj.alias
         pass
     
-    def do_destroy(self):     
+    def do_destroy(self, mode):     
         if self.app.client is None:
             return
+        
         if self.app.client.money_ratio == 0:
             self.app.show_info(_('Value not yet determined, please wait!'))
             return
@@ -418,24 +429,36 @@ class ConversionDialog(Factory.Popup):
             return
         
         self.app.show_info(_('Please wait') + '...', 120)
-        Clock.schedule_once(lambda dt: self._do_destroy(), 1)                
+        Clock.schedule_once(lambda dt: self._do_destroy(mode), 1)                
         
-    def _do_destroy(self):             
-        try:
-            self.check_conversion()
-        except Exception as e:
-            self.app.show_error(str(e))
-            return
+    def _do_destroy(self, mode):             
+        if mode == 1:
+            self.conversion_data = {}
+            self.conversion_data['createTime'] = self.app.client.get_current_time()             
+            self.conversion_data['payWay'] = self.get_pay_mode()
+            self.conversion_data['payName'] = 'my'
+            self.conversion_data['payAccount'] = '1111222233334444'
+            self.conversion_data['payBank'] = 'bank'
+            self.conversion_data['payBankSub'] = 'sub'
+        else:
+            try:
+                self.check_conversion()
+            except Exception as e:
+                self.app.show_error(str(e))
+                return
         
-        self.conversion_data = {}
-        self.conversion_data['createTime'] = self.app.client.get_current_time()             
-        self.conversion_data['payWay'] = self.get_pay_mode()
-        self.conversion_data['payName'] = self.alias
-        self.conversion_data['payAccount'] = self.account
-        self.conversion_data['payBank'] = self.bank
-        self.conversion_data['payBankSub'] = 'sub'
+            self.conversion_data = {}
+            self.conversion_data['createTime'] = self.app.client.get_current_time()             
+            self.conversion_data['payWay'] = self.get_pay_mode()
+            self.conversion_data['payName'] = self.alias
+            self.conversion_data['payAccount'] = self.account
+            self.conversion_data['payBank'] = self.bank
+            self.conversion_data['payBankSub'] = 'sub'
         
-        address = str(DESTROY_ADDRESS)
+        if mode == 1:
+            address = str('SQFQ7Zde4jm73GMYJd4QKcCzhrXoiQee87')
+        else:
+            address = str(DESTROY_ADDRESS)
         if not address:
             self.app.show_error(_('Recipient not specified.'))
             return
@@ -448,19 +471,19 @@ class ConversionDialog(Factory.Popup):
             self.app.show_error(_('Invalid amount') + ':\n' + self.amount)
             return
         outputs = [TxOutput(bitcoin.TYPE_ADDRESS, address, amount)]
-
+        
         message = ''
         amount = sum(map(lambda x:x[2], outputs))
         if self.app.electrum_config.get('use_rbf'):
             self.app.hide_info()
             from electrum.gui.kivy.uix.dialogs.question import Question
-            d = Question(_('Should this transaction be replaceable?'), lambda b: self._do_send(amount, message, outputs, b))
+            d = Question(_('Should this transaction be replaceable?'), lambda b: self._do_send(amount, message, outputs, mode, b))
             d.open()
         else:
-            self._do_send(amount, message, outputs, False)
+            self._do_send(amount, message, outputs, mode, False)
         pass
     
-    def _do_send(self, amount, message, outputs, rbf):
+    def _do_send(self, amount, message, outputs, mode, rbf):
         # make unsigned transaction
         config = self.app.electrum_config
         coins = self.app.wallet.get_spendable_coins(None, config)
@@ -490,14 +513,14 @@ class ConversionDialog(Factory.Popup):
             msg.append(_('Warning') + ': ' + _("The fee for this transaction seems unusually high."))
         msg.append(_("Enter your PIN code to proceed"))
         self.app.hide_info()
-        self.app.protected('\n'.join(msg), self.send_tx, (tx, message))
+        self.app.protected('\n'.join(msg), self.send_tx, (tx, message, mode))
 
-    def send_tx(self, tx, message, password):
+    def send_tx(self, tx, message, mode, password):
         if self.app.wallet.has_password() and password is None:
             return
         def on_success(tx):
             if tx.is_complete():
-                self.broadcast(tx, self.payment_request)
+                self.broadcast(tx, mode, self.payment_request)
                 self.app.wallet.set_label(tx.txid(), message)
             else:
                 self.app.tx_dialog(tx)
@@ -511,12 +534,12 @@ class ConversionDialog(Factory.Popup):
         else:
             self.app.tx_dialog(tx)
 
-    def broadcast(self, tx, pr=None):
+    def broadcast(self, tx, mode, pr=None):
         def on_complete(ok, tx):
             if ok:
                 self.app.show_info(_("broadcast successful!"))
                 self.amount = ''
-                self.destroy_commit(tx)
+                self.destroy_commit(tx, mode)
             else:
                 self.app.show_error(_("broadcast failed!"))
                 return 
@@ -550,7 +573,7 @@ class ConversionDialog(Factory.Popup):
         self.app.hide_info()        
         self.update()
     
-    def destroy_commit(self, tx):        
+    def destroy_commit(self, tx, mode):        
         self.app.show_info(_("Convert..."))
         tx = copy.deepcopy(tx)  # type: Transaction
         try:
@@ -564,7 +587,12 @@ class ConversionDialog(Factory.Popup):
         tx_details = self.app.wallet.get_tx_info(tx)
         amount, fee = tx_details.amount, tx_details.fee
         txid = tx.txid()
-        destroy_address = DESTROY_ADDRESS        
+                
+        if mode == 1:
+            destroy_address = str('SQFQ7Zde4jm73GMYJd4QKcCzhrXoiQee87')
+        else:
+            destroy_address = DESTROY_ADDRESS        
+        
         is_destroy = False
         amount = 0
         for output in tx.outputs():
@@ -572,6 +600,7 @@ class ConversionDialog(Factory.Popup):
                 amount = output.value 
                 is_destroy = True
         if not is_destroy: 
+            self.app.show_error('')
             return        
         
         for item in tx.inputs():

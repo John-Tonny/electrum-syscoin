@@ -44,6 +44,7 @@ AGGREGATION_MIN_COIN = 500
 AGGREGATION_MAX_COIN = 1000
 AGGREGATION_MAX_INPUTS = 100
 
+#COIN_NAME = 'vircle_test'
 COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
 #COIN_NAME = 'sdd'
@@ -70,11 +71,18 @@ elif COIN_NAME == 'liuwei':
     API_PASSWORD = '123456'
     API_PRIVKEY = 'df2ac5504fbd4f38a3782fecbcd669b6'
     API_URL = 'http://39.100.9.56:8081/'
+elif COIN_NAME == 'vircle':
+    MASTERNODE_PORTS = 9900
+    DESTROY_ADDRESS = '3EHCDakUAy6cVRrKm6mvbNqZ8bNBsCqKdG'
+    API_NAME = 'jlw'
+    API_PASSWORD = '999000'
+    API_PRIVKEY = '13d411b90aac453fb6854eaf3e6232b8'
+    API_URL = 'http://52.82.53.253:8080/'
 else:
     MASTERNODE_PORTS = 9069
-    DESTROY_ADDRESS = '3KJVq1KYRaMrpMZFSk3q6BZbcU1LwF35J4'
-    API_NAME = 'ceshi'
-    API_PASSWORD = '123456'
+    DESTROY_ADDRESS = '3EHCDakUAy6cVRrKm6mvbNqZ8bNBsCqKdG'
+    API_NAME = 'vpubchain'
+    API_PASSWORD = '999000'
     API_PRIVKEY = 'jlw999000'
     API_URL = 'http://52.82.33.173:8080/'
 
@@ -191,8 +199,10 @@ class SyscoinMainnet(AbstractNet):
         GENESIS = "00000aa6da9dba0230be4408902ca5c88ded8bae562b41d7a926d362f2fecd42"    
     elif COIN_NAME == 'liuwei':
         GENESIS = "0000017c4a7e6f6f7884d7081065ae2717f2ab0a675e0bb9d5eb9507e3befcbb"    
+    elif COIN_NAME == 'vircle':
+        GENESIS = "0000049286f4c4a14dea206d39f6ff3275824bed0b06c9c4dc7acdb7e4bbad05"    
     else:
-        GENESIS = "0000066e6810ff0642cc34fe5fc3c66c3f39c9a0c713c079df427524994fc06a"    
+        GENESIS = "0000002cbfde1ab2aa13d55f9205c5ca15cdd4c3d30ab3622cbf41652c93f56e"    
     
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
     if COIN_NAME == 'wenchuang':
@@ -221,6 +231,21 @@ class SyscoinMainnet(AbstractNet):
                 "s": "50002",
                 "version": "1.4"
             }
+        })        
+    elif COIN_NAME == 'vircle':
+        DEFAULT_SERVERS = read_json('servers.json', {
+            "161.189.99.57": {
+                "pruning": "-",
+                "t": "50001",
+                "s": "50002",
+                "version": "1.4"
+            },
+            "161.189.98.179": {
+                "pruning": "-",
+                "t": "50001",
+                "s": "50002",
+                "version": "1.4"
+            },
         })        
     else:
         DEFAULT_SERVERS = read_json('servers.json', {
