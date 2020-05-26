@@ -1,18 +1,18 @@
 [app]
 
 # (str) Title of your application
-title = 久零钱包
+#title = 久零钱包
 #title = 文创钱包
-#title = 餸掇掇钱包
+title = 餸掇掇钱包
 #title = 六维钱包
 
 # (str) Package name
 package.name = Electrum
 
  # (str) Package domain (needed for android/ios packaging)
-package.domain = org.vircle
+#package.domain = org.vircle
 #package.domain = org.wchuang
-#package.domain = org.sdduo
+package.domain = org.sdduo
 #package.domain = org.liuwei
 
 # (str) Source code where the main.py live
@@ -52,12 +52,12 @@ requirements =
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/gui/kivy/theming/splash.png
-#presplash.filename = %(source.dir)s/electrum/gui/icons/electrum_presplash.png
-presplash.filename = %(source.dir)s/electrum/gui/icons/electrum_presplash_vircle.png
+presplash.filename = %(source.dir)s/electrum/gui/icons/electrum_presplash.png
+#presplash.filename = %(source.dir)s/electrum/gui/icons/electrum_presplash_vircle.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/electrum/gui/icons/electrum_launcher.png
-icon.filename = %(source.dir)s/electrum/gui/icons/electrum_launcher_vircle.png
+icon.filename = %(source.dir)s/electrum/gui/icons/electrum_launcher.png
+#icon.filename = %(source.dir)s/electrum/gui/icons/electrum_launcher_vircle.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait

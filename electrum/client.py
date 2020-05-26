@@ -91,7 +91,7 @@ class Client:
         self.post_req(url, data, register_queue)
         resp = register_queue.get()
         try:
-            ret  = json.loads(resp)
+            ret  = json.loads(resp, strict=False)
             if ret["code"] == 200:
                 return True
             return False
@@ -103,7 +103,7 @@ class Client:
         url = 'fundValue/latest'
         self.get_req(url, None, self.money_queue)
         try:
-            resp = json.loads(self.money_queue.get())
+            resp = json.loads(self.money_queue.get(), strict=False)
             if resp['code'] == 200:
                 self.money_ratio = resp['data']['fundValue']
         except Exception as e:
@@ -132,7 +132,7 @@ class Client:
         conversion_queue = queue.Queue()        
         self.post_req(url, data, conversion_queue)
         resp = conversion_queue.get()
-        return json.loads(resp)
+        return json.loads(resp, strict=False)
         
     def get_masternodes(self):
         phone = self.get_phone()
@@ -140,7 +140,7 @@ class Client:
         masternode_queue = queue.Queue()        
         self.get_req(url, None, masternode_queue)
         resp = masternode_queue.get()
-        resp = json.loads(resp)
+        resp = json.loads(resp, strict=False)
         if False:
             resp = {}
             data = [{'ip':'52.82.14.25:9069', 'genkey': '5KTbFcwYns3QmTuzFMEoSbqxoF3u1a2DneNKbsuRAJoAJoLMhAw'},
@@ -174,7 +174,7 @@ class Client:
         account_queue = queue.Queue()        
         self.get_req(url, None, account_queue)
         resp = account_queue.get()
-        return json.loads(resp)
+        return json.loads(resp, strict=False)
     
     def get_conversion(self, pageNo=1, pageSize=20):
         phone = self.get_phone()        
@@ -182,7 +182,7 @@ class Client:
         conversion_queue = queue.Queue()        
         self.get_req(url, None, conversion_queue)
         resp = conversion_queue.get()
-        resp = json.loads(resp)
+        resp = json.loads(resp, strict=False)
         if resp['code'] == 200:
             data = resp['data']
             self.conversion_total = data['total']
@@ -197,12 +197,12 @@ class Client:
         self.post_req(url, data, register_queue)
         resp = register_queue.get()
         try:
-            ret  = json.loads(resp)
+            ret  = json.loads(resp, strict=False)
             if ret["code"] == 200:
                 return True, ''
             return False, ret['pagePrompt']
         except Exception as e:
-            return False, str(e)
+            return False, str(e) + '-' + resp
         
         
     def do_search_conversion(self):

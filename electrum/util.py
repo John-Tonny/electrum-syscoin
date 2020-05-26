@@ -65,9 +65,9 @@ def inv_dict(d):
 ca_path = certifi.where()
 
 #COIN_NAME = 'vircle_test'
-COIN_NAME = 'vircle'
+#COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
-#COIN_NAME = 'sdd'
+COIN_NAME = 'sdd'
 #COIN_NAME = 'liuwei'
 
 if COIN_NAME == 'wenchuang':

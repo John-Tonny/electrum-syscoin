@@ -45,9 +45,9 @@ AGGREGATION_MAX_COIN = 1000
 AGGREGATION_MAX_INPUTS = 100
 
 #COIN_NAME = 'vircle_test'
-COIN_NAME = 'vircle'
+#COIN_NAME = 'vircle'
 #COIN_NAME = 'wenchuang'
-#COIN_NAME = 'sdd'
+COIN_NAME = 'sdd'
 #COIN_NAME = 'liuwei'
 
 if COIN_NAME == 'wenchuang':
@@ -77,7 +77,7 @@ elif COIN_NAME == 'vircle':
     API_NAME = 'jlw'
     API_PASSWORD = '999000'
     API_PRIVKEY = '13d411b90aac453fb6854eaf3e6232b8'
-    API_URL = 'http://52.82.53.253:8080/'
+    API_URL = 'http://47.105.77.95:8081/'
 else:
     MASTERNODE_PORTS = 9069
     DESTROY_ADDRESS = '3EHCDakUAy6cVRrKm6mvbNqZ8bNBsCqKdG'
